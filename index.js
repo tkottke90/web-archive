@@ -5,6 +5,9 @@ import { basename, resolve } from 'path';
 import _ from 'lodash';
 import { URL } from 'url';
 import { database, saveDatabase } from './lib/database.js';
+import secrets from './secrets.json' assert { type: 'json' };
+
+console.dir(secrets);
 
 /**
  * @typedef RedditT3
@@ -102,7 +105,7 @@ function getData(url) {
   const options = {
     headers: {
       'user-agent': 'insomnia/2023.1.0',
-      cookie: 'reddit_session=36557870%2C2023-06-12T01%3A19%3A03%2C3abe43446e4ae5fa7690aaa0d743d053329a9853; edgebucket=TyDdMSTT3scGd9EcP2; token_v2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleUpoYkdjaU9pSlNVekkxTmlJc0ltdHBaQ0k2SWxOSVFUSTFOanB6UzNkc01ubHNWMFZ0TWpWbWNYaHdUVTQwY1dZNE1YRTJPV0ZGZFdGeU1ucExNVWRoVkd4amRXTlpJaXdpZEhsd0lqb2lTbGRVSW4wLmV5SnpkV0lpT2lKMWMyVnlJaXdpWlhod0lqb3hOamcyTmpFNU16Y3lMamM1TkRreU5Td2lhV0YwSWpveE5qZzJOVE15T1RjeUxqYzVORGt5TkN3aWFuUnBJam9pVEZrMFUyWXhTR05FU2xOSWNsWkRlbGh0TTNCdGNYWldUV3hzYkhaUklpd2lZMmxrSWpvaU9YUk1iMFl3YzI5d05WSktaMEVpTENKc2FXUWlPaUowTWw5c2NtczRaU0lzSW1GcFpDSTZJblF5WDJ4eWF6aGxJaXdpYkdOaElqb3hOREkxTWpJM016WTRNalV5TENKelkzQWlPaUpsU25ocmEyUkhUemxEUVVsb1pDMUdZVFZmWjJZMVZWOXROREZXVDJ0T1YzQlJTSE5hVGpVdFdYbDFaRXB1ZGxaQkxXUlVOR1pSWDFsSk1WVkpUVUpIUWtGR2FWTjBlV0pSV1VGcmJVUlBXbEZuUkUxT1JIQnlhVk5SVVRSRmJIRk1SemhKVVVKdFltdFJNVnBoVFdOaFZ6TjNaMEpMYVdORk4yVldTSEJqTW05aFZXSnBOVFJrZGpad2VVeHFlWEJQVldac00wNXFiVXhYZUZBNVJFMWljVEF5Y0ZkT1dsUnRZMUl4Y0ZoUlYweGZiMXBQT1ZNek9YVlZlbDlUWVRCU09FOUxjWFpIUW05NVRWazRYMGhhVjAxYWFVZDJabmh1Y0hJd1drWXdkM0UzTTB4UlYzQm1ObkpITnpsclYxUXdSRXMwWDFKNGRuWkVZVlJIV0VwbGJYQTNVbDkwTXpGVExXcEJVR05mVERsT2NVSkhZWFkzV0hKeWRGZGlkRjh4VVRWVmVtbHFVbGRLZWpST1FuazFZM1pyWlhaM1ZHSk9aV3htTkROYWEweE1ORnBqWkUxaVptMXpOazl1U25nMGRFTnVPR1pWWWtGQlJGOWZNVGhUTWtaRklpd2ljbU5wWkNJNkltOXZkR1ZqWlVGRUxYcEZPR2hmUm5sR1luSm1VMnBzYmpGMGNVUTFhMlF6YkMxUFNFeGFkRjlLYkc4aUxDSm1iRzhpT2pKOS5WeVF6YjZUWGlkaGFXckxmZUdsQkx3UzNQNzNLV0JXa3piTG9GMW5JN3lZMG51Smphb3djaDdDUzJ0VHRJVTRXMjBlSXM5V2MtMDRSZEtZNW9SMHpkTm9nLWNwU0hqQ19SODRYNG84WWx2aFlldW9YV3h1LXBWYTViZ0wtSGFxUDJKdnlTbFlZUmdOLUx0UTlxSlZ3ZkZKbm1sVHdlcEcwb1JVOXZlenpaU2lnVXlJdjhjdEVqRnYzV0kwNkczZk5LQWpvaWtXeG4welBYX3c5REM0VTMzQmZqV3Y4azhzNkFNNkZ3UWRQRk0zNDlGWGhkQWZtd3h6cTNrV3lMd1UtSXRhdVZ2SlJlQ2h4QWthdzFBTU5sNkl3U3NGaHlaZDAxd2YwS291UHdieXFOUFh2blZpTzJBN0RlVW92YzlTclVicm5Ia0pUYUtjYVJBblgzNVZ6RWciLCJleHAiOjE2ODY2MTkyNTIsImxvZ2dlZEluIjp0cnVlLCJzY29wZXMiOlsiKiIsImVtYWlsIiwicGlpIl0sImNpZCI6Ijl0TG9GMHNvcDVSSmdBIn0.l-f1h0gmJSc8Ye1WcWUVii4RYN-wUapBZCMYheHYH88; loid=0000000000000lrk8e.2.1425227368252.Z0FBQUFBQmtobktIbG5XRjk5N05zdVVZVXJqQy0tYTdUOU50eGsxd1lHdW1wSGY4aGktTkFZbG9Ud1NzNWZnbWUwSE1lUWFzVXJpVXp1d0hXME9RSjhlckQ2MFZ4UDVBZG1PeUhxcFVzeGE0amRRNG9nUjNMRG5tRFp6T1hLa1pzOENLeW8tNHllVGs; csv=2'
+      cookie: secrets.token
     }
   }
 
@@ -155,7 +158,7 @@ async function* fetchRedditData(url) {
   }
 }
 
-const baseUrl = new URL('/user/altotom90/upvoted.json', `https://www.reddit.com`);
+const baseUrl = new URL(secrets.upVotesPath, `https://www.reddit.com`);
 
 let reqCount = 0
 for await (let posts of fetchRedditData(baseUrl)) {
