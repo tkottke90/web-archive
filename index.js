@@ -160,7 +160,8 @@ async function* fetchRedditData(url) {
 
 const baseUrl = new URL(secrets.upVotesPath, `https://www.reddit.com`);
 
-let reqCount = 0
+let reqCount = 0;
+let newCount = 0;
 for await (let posts of fetchRedditData(baseUrl)) {
   reqCount++;
   console.log(`> Page: ${reqCount}`)
@@ -172,6 +173,7 @@ for await (let posts of fetchRedditData(baseUrl)) {
       return;
     }
 
+    newCount++;
     database.set(parsed.id, parsed);
     const record = database.get(parsed.id);
     
@@ -192,5 +194,14 @@ for await (let posts of fetchRedditData(baseUrl)) {
     }
   }));
 }
+
+console.log(`
+=== Update Complete ==
+======================
+Summary:
+  Database Size:   ${database.size}
+  New Items Added: ${newCount}
+======================
+`);
 
 writeFileSync('./output/_database.json', JSON.stringify(Array.from(database), null, 2), 'utf-8');
