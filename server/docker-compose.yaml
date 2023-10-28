@@ -1,0 +1,18 @@
+version: '3'
+services:
+  scraper-db:
+    container_name: web-storage-db
+    image: postgres:11-alpine # https://hub.docker.com/_/postgres
+    volumes:
+      - ./database_setup:/docker-entrypoint-initdb.d
+      - web-scraper--postgres-data:/var/lib/postgresql/data
+    restart: always
+    environment:
+      POSTGRES_DB: web_storage_dev_storage
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 5442:5432
+
+volumes:
+  web-scraper--postgres-data:
