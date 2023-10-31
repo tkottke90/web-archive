@@ -1,11 +1,6 @@
 import express from 'express';
 import controllers from './controllers';
-import {
-  HttpEventMiddleware,
-  ErrorLogger,
-  ErrorResponder,
-  SafeErrorHandler
-} from './middleware';
+import { HttpEventMiddleware } from './middleware';
 
 const app = express();
 
@@ -16,7 +11,4 @@ app.use(HttpEventMiddleware);
 
 controllers(app);
 
-app.use(ErrorLogger);
-app.use(ErrorResponder);
-app.use(SafeErrorHandler);
 export default app;

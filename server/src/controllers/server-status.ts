@@ -6,7 +6,7 @@ import pgk from '../../package.json';
 export class ServerStatusController {
   @Get('/')
   getRoot(@Response() res: express.Response) {
-    res.json({ version: pgk.version });
+    res.json({ name: 'Web Storage', version: pgk.version });
   }
 
   @Get('/healthcheck')
