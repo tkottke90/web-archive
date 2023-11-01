@@ -1,6 +1,7 @@
 import express from 'express';
 import controllers from './controllers';
 import { HttpEventMiddleware } from './middleware';
+import './db';
 
 const app = express();
 
