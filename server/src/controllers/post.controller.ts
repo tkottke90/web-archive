@@ -4,10 +4,13 @@ import {
   Next,
   Post,
   Query,
-  Response
+  Response,
+  Request,
+  Body
 } from '@decorators/express';
 import express from 'express';
 import {
+  PostCreateDTO,
   PostCreateSchema,
   PostQueryDTO,
   PostQuerySchema
@@ -18,6 +21,11 @@ import {
 } from '../middleware/zod.middleware';
 import { Inject } from '@decorators/di';
 import { PostDao } from '../dao/post.dao';
+import multer from 'multer';
+const upload = multer({
+  dest: './uploads',
+  limits: { fieldSize: 25 * 1024 * 1024 }
+});
 
 @Controller('/post')
 export class PostController {
@@ -38,16 +46,32 @@ export class PostController {
     }
   }
 
-  @Post('/', [ZodBodyValidator(PostCreateSchema)])
+  // @Post('/', [ZodBodyValidator(PostCreateSchema)])
+  @Post('/', [
+    upload.fields([{ name: 'file' }]),
+    ZodBodyValidator(PostCreateSchema)
+  ])
   async createPost(
+    @Request('files') files: Record<string, Express.Multer.File[]>,
     @Response() res: express.Response,
-    @Query() query: PostQueryDTO,
+    @Body() body: PostCreateDTO,
     @Next() next: express.NextFunction
   ) {
     try {
-      const posts = await this.postDao.find(query);
+      const { file } = files;
 
-      res.send(posts.map((p) => this.postDao.toDTO(p)));
+      const result = await this.postDao.create({
+        ...body,
+        files: file.map((f) => ({
+          encoding: f.encoding,
+          filename: f.path,
+          original_filename: f.originalname,
+          mime: f.mimetype,
+          size: f.size
+        }))
+      });
+
+      res.json(result);
     } catch (error) {
       next(error);
     }

@@ -40,12 +40,18 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       input.files
         ? {
             createMany: {
-              data: input.files.map((file) => ({ label: file.label }))
+              data: input.files.map((file) => ({
+                encoding: file.encoding,
+                filename: file.filename,
+                original_filename: file.original_filename,
+                mime: file.mime,
+                size: file.size
+              }))
             }
           }
         : undefined;
 
-    this.client.post.create({
+    return this.client.post.create({
       data: {
         author: input.author,
         label: input.label,

@@ -4,14 +4,17 @@ import { BaseSchema } from './utilities';
 export const PostFileSchema = BaseSchema(
   z.object({
     post: z.string(),
-    uuid: z.string().uuid(),
-    label: z.string()
+    original_filename: z.string(),
+    filename: z.string(),
+    size: z.number(),
+    mime: z.string(),
+    encoding: z.string()
   })
 );
 
 export const PostFileCreateSchema = PostFileSchema.omit({
   self: true,
-  uuid: true,
+  post: true,
   createdAt: true,
   updatedAt: true
 });

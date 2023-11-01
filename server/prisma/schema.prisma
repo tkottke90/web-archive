@@ -29,8 +29,11 @@ model PostFile {
   id     Int @id @default(autoincrement())
   postId Int
 
-  uuid  String @default(uuid())
-  label String @default("")
+  original_filename  String
+  filename String 
+  size Int
+  mime String
+  encoding String
 
   post Post @relation(fields: [postId], references: [id])
 

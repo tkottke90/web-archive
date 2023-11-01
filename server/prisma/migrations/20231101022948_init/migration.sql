@@ -14,8 +14,11 @@ CREATE TABLE "Post" (
 CREATE TABLE "PostFile" (
     "id" SERIAL NOT NULL,
     "postId" INTEGER NOT NULL,
-    "uuid" TEXT NOT NULL,
-    "label" TEXT NOT NULL DEFAULT '',
+    "original_filename" TEXT NOT NULL,
+    "filename" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "mime" TEXT NOT NULL,
+    "encoding" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
