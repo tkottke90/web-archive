@@ -1,18 +1,13 @@
 import { Container, Inject, Injectable } from '@decorators/di';
 import { BaseDao } from './base.dao';
-import { Post, PostFile, PostMetadata, PostTag, Prisma } from '@prisma/client';
+import { Post, Prisma } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostCreateDTO, PostDTO, PostQueryDTO } from '../dto/post.dto';
 import { ROUTES } from '../config';
 import { PostFileDao } from './post-file.dao';
 import { PostTagDao } from './post-tag.dao';
 import { PostMetadataDao } from './post-metadata.dto';
-
-export type PostWithAssociations = Post & {
-  metadata: PostMetadata[];
-  files: PostFile[];
-  postTags: PostTag[];
-};
+import { PostWithAssociations } from '../interfaces';
 
 @Injectable()
 export class PostDao extends BaseDao<Post, PostDTO> {
@@ -33,7 +28,11 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       skip,
       orderBy: orderBy,
       where: this.toPersistance(data),
-      include: { postTags: true, files: true, metadata: true }
+      include: {
+        postTags: { include: { tags: true } },
+        files: true,
+        metadata: true
+      }
     }) as unknown as PostWithAssociations[];
   }
 
@@ -87,7 +86,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
 
       metadata: input.metadata.map(this.postMetadataDao.toDTO),
       files: input.files.map(this.postFileDao.toDTO),
-      tags: [],
+      tags: input.postTags.map(this.postTagDao.toDTO),
 
       createdAt: input.createdAt,
       updatedAt: input.updatedAt

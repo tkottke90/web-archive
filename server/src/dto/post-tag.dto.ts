@@ -4,12 +4,12 @@ import { BaseSchema } from './utilities';
 export const PostTag = BaseSchema(
   z.object({
     post: z.string(),
-    tag: z.string()
+    tag: z.string(),
+    value: z.string()
   })
-);
+).omit({ self: true });
 
 export const PostTagCreate = PostTag.omit({
-  self: true,
   createdAt: true,
   updatedAt: true
 });

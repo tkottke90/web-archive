@@ -3,6 +3,8 @@ import { BaseDao } from './base.dao';
 import { PostTag } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostTagDTO } from '../dto/post-tag.dto';
+import { PostTagAssociation } from '../interfaces';
+import { ROUTES } from '../config';
 
 @Injectable()
 export class PostTagDao extends BaseDao<PostTag, any> {
@@ -10,8 +12,14 @@ export class PostTagDao extends BaseDao<PostTag, any> {
     super(client);
   }
 
-  toDTO(entity: PostTag): PostTagDTO {
-    throw new Error('Method not implemented.');
+  toDTO(entity: PostTagAssociation): PostTagDTO {
+    return {
+      post: `${ROUTES.POSTS}/${entity.postId}`,
+      tag: `${ROUTES.TAGS}/${entity.tagId}`,
+      value: entity.tag.label,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt
+    };
   }
   toPersistance(entity: PostTagDTO): Partial<PostTag> {
     throw new Error('Method not implemented.');
