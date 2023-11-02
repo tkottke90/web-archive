@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { LoggerService } from '../services';
 
 /**
  * Parse a body parameter, convert the values from strings to
@@ -7,6 +8,17 @@ import { Request, Response, NextFunction } from 'express';
  */
 export function MultipartJson(key: string) {
   return (req: Request, res: Response, next: NextFunction) => {
+    if (
+      req.headers['content-type'] &&
+      !req.headers['content-type'].startsWith('multipart/form-data')
+    ) {
+      LoggerService.log(
+        'info',
+        `MultipartJson Middleware Skipped - Content-Type: ${req.headers['content-type']}`
+      );
+      return next();
+    }
+
     try {
       if (req.body[key]) {
         if (Array.isArray(req.body[key])) {
