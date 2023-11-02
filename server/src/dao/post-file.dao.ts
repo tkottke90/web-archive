@@ -11,6 +11,10 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     super(client);
   }
 
+  getById(id: number) {
+    return this.client.postFile.findFirst(this.idSelector(id));
+  }
+
   toDTO(entity: PostFile): PostFileDTO {
     return {
       self: `${ROUTES.POSTS}/${entity.postId}/files/${entity.id}`,

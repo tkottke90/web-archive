@@ -6,7 +6,8 @@ import {
   Query,
   Response,
   Request,
-  Body
+  Body,
+  Params
 } from '@decorators/express';
 import express from 'express';
 import {
@@ -17,11 +18,15 @@ import {
 } from '../dto/post.dto';
 import {
   ZodBodyValidator,
+  ZodIdValidator,
   ZodQueryValidator
 } from '../middleware/zod.middleware';
 import { Inject } from '@decorators/di';
 import { PostDao } from '../dao/post.dao';
 import multer from 'multer';
+import { MultipartJson } from '../middleware';
+import { PostFileDao } from '../dao/post-file.dao';
+import { NotFoundError } from '../utilities/errors.util';
 const upload = multer({
   dest: './uploads',
   limits: { fieldSize: 25 * 1024 * 1024 }
@@ -29,7 +34,10 @@ const upload = multer({
 
 @Controller('/post')
 export class PostController {
-  constructor(@Inject('PostDao') private readonly postDao: PostDao) {}
+  constructor(
+    @Inject('PostDao') private readonly postDao: PostDao,
+    @Inject('PostFileDao') private readonly postFileDao: PostFileDao
+  ) {}
 
   @Get('/', [ZodQueryValidator(PostQuerySchema)])
   async getPosts(
@@ -46,20 +54,29 @@ export class PostController {
     }
   }
 
+  @Get('/:postId/files/:fileId/content', [ZodIdValidator('fileId')])
+  async getPostContent(
+    @Params('fileId') fileId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const content = await this.postFileDao.getById(fileId);
+
+      if (!content) {
+        throw new NotFoundError('Unable to get file');
+      }
+
+      res.contentType(content.mime);
+      res.sendFile(`${process.cwd()}/${content.filename}`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Post('/', [
     upload.fields([{ name: 'file' }]),
-    (req, res, next) => {
-      try {
-        if (req.body.metadata) {
-          req.body.metadata = req.body.metadata.map((item: string) =>
-            JSON.parse(item)
-          );
-        }
-        next();
-      } catch (err) {
-        next(err);
-      }
-    },
+    MultipartJson('metadata'),
     ZodBodyValidator(PostCreateSchema)
   ])
   async createPost(
