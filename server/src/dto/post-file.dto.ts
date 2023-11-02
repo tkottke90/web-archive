@@ -18,3 +18,6 @@ export const PostFileCreateSchema = PostFileSchema.omit({
   createdAt: true,
   updatedAt: true
 });
+
+export type PostFileDTO = z.infer<typeof PostFileSchema>;
+export type PostFileCreateDTO = z.infer<typeof PostFileCreateSchema>;

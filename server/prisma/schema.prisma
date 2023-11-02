@@ -41,26 +41,13 @@ model PostFile {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
-model MetadataType {
-  id     Int    @id @default(autoincrement())
-  postId Int
-  name   String
-
-  postMetadata PostMetadata[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-}
-
 model PostMetadata {
   id     Int    @id @default(autoincrement())
   postId Int
-  typeId Int?
   name   String
   value  String
 
   post Post          @relation(fields: [postId], references: [id])
-  type MetadataType? @relation(fields: [typeId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt

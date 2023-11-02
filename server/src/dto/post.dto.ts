@@ -1,19 +1,23 @@
 import { z } from 'zod';
 import { BaseSchema, QueryFields } from './utilities';
-import { PostMetadataCreate } from './post-metadata.dto';
-import { PostFileCreateSchema } from './post-file.dto';
+import { PostMetadata, PostMetadataCreate } from './post-metadata.dto';
+import { PostFileCreateSchema, PostFileSchema } from './post-file.dto';
+import { PostTag } from './post-tag.dto';
 
 export const PostSchema = BaseSchema(
   z.object({
     label: z.string(),
     author: z.string(),
-    source: z.string().url()
+    source: z.string().url(),
+    metadata: z.array(PostMetadata).optional(),
+    files: z.array(PostFileSchema).optional(),
+    tags: z.array(PostTag).optional()
   })
 );
 
 export const PostCreateSchema = PostSchema.merge(
   z.object({
-    metadata: z.array(PostMetadataCreate).optional(),
+    metadata: z.array(PostMetadataCreate.omit({ post: true })).optional(),
     files: z.array(PostFileCreateSchema).optional()
   })
 ).omit({

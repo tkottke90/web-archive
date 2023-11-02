@@ -1,13 +1,27 @@
 import { Container, Inject, Injectable } from '@decorators/di';
 import { BaseDao } from './base.dao';
-import { Post, Prisma } from '@prisma/client';
+import { Post, PostFile, PostMetadata, PostTag, Prisma } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostCreateDTO, PostDTO, PostQueryDTO } from '../dto/post.dto';
 import { ROUTES } from '../config';
+import { PostFileDao } from './post-file.dao';
+import { PostTagDao } from './post-tag.dao';
+import { PostMetadataDao } from './post-metadata.dto';
+
+export type PostWithAssociations = Post & {
+  metadata: PostMetadata[];
+  files: PostFile[];
+  postTags: PostTag[];
+};
 
 @Injectable()
 export class PostDao extends BaseDao<Post, PostDTO> {
-  constructor(@Inject('PrismaClient') private client: DBClient) {
+  constructor(
+    @Inject('PrismaClient') private readonly client: DBClient,
+    @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
+    @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
+    @Inject('PostMetadataDao') private readonly postMetadataDao: PostMetadataDao
+  ) {
     super(client);
   }
 
@@ -18,8 +32,9 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       take,
       skip,
       orderBy: orderBy,
-      where: this.toPersistance(data)
-    });
+      where: this.toPersistance(data),
+      include: { postTags: true, files: true, metadata: true }
+    }) as unknown as PostWithAssociations[];
   }
 
   create(input: PostCreateDTO) {
@@ -62,13 +77,17 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     });
   }
 
-  toDTO(input: Post): PostDTO {
+  toDTO(input: PostWithAssociations): PostDTO {
     return {
       self: `${ROUTES.POSTS}/${input.id}`,
 
       author: input.author,
       label: input.label,
       source: input.source,
+
+      metadata: input.metadata.map(this.postMetadataDao.toDTO),
+      files: input.files.map(this.postFileDao.toDTO),
+      tags: [],
 
       createdAt: input.createdAt,
       updatedAt: input.updatedAt

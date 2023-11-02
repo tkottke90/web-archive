@@ -26,21 +26,9 @@ CREATE TABLE "PostFile" (
 );
 
 -- CreateTable
-CREATE TABLE "MetadataType" (
-    "id" SERIAL NOT NULL,
-    "postId" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "MetadataType_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "PostMetadata" (
     "id" SERIAL NOT NULL,
     "postId" INTEGER NOT NULL,
-    "typeId" INTEGER,
     "name" TEXT NOT NULL,
     "value" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -74,9 +62,6 @@ ALTER TABLE "PostFile" ADD CONSTRAINT "PostFile_postId_fkey" FOREIGN KEY ("postI
 
 -- AddForeignKey
 ALTER TABLE "PostMetadata" ADD CONSTRAINT "PostMetadata_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PostMetadata" ADD CONSTRAINT "PostMetadata_typeId_fkey" FOREIGN KEY ("typeId") REFERENCES "MetadataType"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PostTag" ADD CONSTRAINT "PostTag_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

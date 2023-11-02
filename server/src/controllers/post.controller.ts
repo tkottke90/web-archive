@@ -46,9 +46,20 @@ export class PostController {
     }
   }
 
-  // @Post('/', [ZodBodyValidator(PostCreateSchema)])
   @Post('/', [
     upload.fields([{ name: 'file' }]),
+    (req, res, next) => {
+      try {
+        if (req.body.metadata) {
+          req.body.metadata = req.body.metadata.map((item: string) =>
+            JSON.parse(item)
+          );
+        }
+        next();
+      } catch (err) {
+        next(err);
+      }
+    },
     ZodBodyValidator(PostCreateSchema)
   ])
   async createPost(
