@@ -54,6 +54,44 @@ export class PostController {
     }
   }
 
+  @Get('/:postId', [ZodIdValidator('postId')])
+  async getPost(
+    @Params('postId') postId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const post = await this.postDao.getById(postId);
+
+      if (!post) {
+        throw new NotFoundError('No Post with ID found ' + postId);
+      }
+
+      res.json(this.postDao.toDTO(post));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Get('/:postId/files/:fileId', [ZodIdValidator('fileId')])
+  async getFile(
+    @Params('fileId') fileId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const content = await this.postFileDao.getById(fileId);
+
+      if (!content) {
+        throw new NotFoundError('Unable to get file');
+      }
+
+      res.json(this.postFileDao.toDTO(content));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Get('/:postId/files/:fileId/content', [ZodIdValidator('fileId')])
   async getPostContent(
     @Params('fileId') fileId: number,

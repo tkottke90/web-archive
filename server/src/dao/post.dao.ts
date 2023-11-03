@@ -9,6 +9,12 @@ import { PostTagDao } from './post-tag.dao';
 import { PostMetadataDao } from './post-metadata.dto';
 import { PostWithAssociations } from '../interfaces';
 
+const POST_DETAILS = {
+  postTags: { include: { tags: true } },
+  files: true,
+  metadata: true
+};
+
 @Injectable()
 export class PostDao extends BaseDao<Post, PostDTO> {
   constructor(
@@ -20,6 +26,13 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     super(client);
   }
 
+  getById(id: number) {
+    return this.client.post.findFirst({
+      where: { id },
+      include: POST_DETAILS
+    }) as unknown as PostWithAssociations;
+  }
+
   find(query: PostQueryDTO) {
     const { take, skip, orderBy, data } = this.parseQuery(query);
 
@@ -28,11 +41,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       skip,
       orderBy: orderBy,
       where: this.toPersistance(data),
-      include: {
-        postTags: { include: { tags: true } },
-        files: true,
-        metadata: true
-      }
+      include: POST_DETAILS
     }) as unknown as PostWithAssociations[];
   }
 

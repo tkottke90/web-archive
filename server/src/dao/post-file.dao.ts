@@ -19,6 +19,7 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     return {
       self: `${ROUTES.POSTS}/${entity.postId}/files/${entity.id}`,
       post: `${ROUTES.POSTS}/${entity.postId}`,
+      media: `${ROUTES.POSTS}/${entity.postId}/files/${entity.id}/content`,
       encoding: entity.encoding,
       filename: entity.filename,
       original_filename: entity.original_filename,

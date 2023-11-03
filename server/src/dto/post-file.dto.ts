@@ -4,6 +4,7 @@ import { BaseSchema } from './utilities';
 export const PostFileSchema = BaseSchema(
   z.object({
     post: z.string(),
+    media: z.string(),
     original_filename: z.string(),
     filename: z.string(),
     size: z.number(),
@@ -15,6 +16,7 @@ export const PostFileSchema = BaseSchema(
 export const PostFileCreateSchema = PostFileSchema.omit({
   self: true,
   post: true,
+  media: true,
   createdAt: true,
   updatedAt: true
 });
