@@ -1,5 +1,23 @@
 import { z } from 'zod';
-import { BaseSchema } from './utilities';
+import { BaseSchema, QueryFields } from './utilities';
+
+export const TagSchema = BaseSchema(
+  z.object({
+    label: z.string()
+  })
+);
+
+export const TagCreateSchema = TagSchema.omit({
+  self: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const TagQuerySchema = QueryFields(TagSchema);
+
+export type TagDTO = z.infer<typeof TagSchema>;
+export type TagCreateDTO = z.infer<typeof TagCreateSchema>;
+export type TagQueryDTO = z.infer<typeof TagQuerySchema>;
 
 export const PostTag = BaseSchema(
   z.object({
@@ -9,7 +27,11 @@ export const PostTag = BaseSchema(
   })
 ).omit({ self: true });
 
-export const PostTagCreate = PostTag.omit({
+export const PostTagCreate = PostTag.merge(
+  z.object({
+    tag: TagSchema.optional()
+  })
+).omit({
   createdAt: true,
   updatedAt: true
 });

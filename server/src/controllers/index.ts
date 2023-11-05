@@ -7,8 +7,9 @@ import { attachControllers } from '@decorators/express';
 import { Application } from 'express';
 import { ServerStatusController } from './server-status';
 import { PostController } from './post.controller';
+import { TagController } from './tag.controller';
 
-const controllers = [PostController, ServerStatusController];
+const controllers = [PostController, ServerStatusController, TagController];
 
 export default function (app: Application) {
   attachControllers(app, controllers);
