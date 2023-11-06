@@ -11,6 +11,14 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
     super(client);
   }
 
+  addTag(input: TagCreateDTO) {
+    return this.client.tag.create({
+      data: {
+        label: input.label
+      }
+    });
+  }
+
   find(query: TagQueryDTO) {
     const { take, skip, orderBy, data } = this.parseQuery(query);
 
@@ -22,12 +30,8 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
     });
   }
 
-  addTag(input: TagCreateDTO) {
-    return this.client.tag.create({
-      data: {
-        label: input.label
-      }
-    });
+  getById(id: number) {
+    return this.prisma.tag.findFirst({ where: { id } });
   }
 
   removeTag(id: number) {

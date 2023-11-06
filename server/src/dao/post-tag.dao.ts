@@ -23,6 +23,12 @@ export class PostTagDao extends BaseDao<PostTag, any> {
     }) as unknown as PostTagAssociation;
   }
 
+  async delete(postId: number, tagId: number) {
+    return this.client.postTag.delete({
+      where: { postId_tagId: { postId, tagId } }
+    });
+  }
+
   find(postId: number, tagId: number) {
     return this.client.postTag.findFirst({
       where: {

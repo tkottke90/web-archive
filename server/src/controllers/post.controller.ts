@@ -7,7 +7,8 @@ import {
   Response,
   Request,
   Body,
-  Params
+  Params,
+  Delete
 } from '@decorators/express';
 import express from 'express';
 import {
@@ -28,6 +29,8 @@ import { MultipartJson } from '../middleware';
 import { PostFileDao } from '../dao/post-file.dao';
 import { NotFoundError } from '../utilities/errors.util';
 import { PostTagDao } from '../dao/post-tag.dao';
+import { TagDao } from '../dao/tag.dao';
+import { ROUTES } from '../config';
 const upload = multer({
   dest: './uploads',
   limits: { fieldSize: 25 * 1024 * 1024 }
@@ -38,7 +41,8 @@ export class PostController {
   constructor(
     @Inject('PostDao') private readonly postDao: PostDao,
     @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
-    @Inject('PostTagDao') private readonly postTagDao: PostTagDao
+    @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
+    @Inject('TagDao') private readonly tagDao: TagDao
   ) {}
 
   @Get('/', [ZodQueryValidator(PostQuerySchema)])
@@ -130,11 +134,51 @@ export class PostController {
       if (result) {
         res.status(204);
       } else {
-        res.status(202);
+        const post = await this.postDao.getById(postId);
+        const tag = await this.tagDao.getById(tagId);
+
+        if (!post || !tag) {
+          const err = new NotFoundError(
+            'Unable to link Post and Tag, something is missing.  Please make sure you have created the Tag before trying to link it'
+          );
+
+          err.details.createTagMethod = 'POST';
+          err.details.createTagUrl = `${ROUTES.TAGS}/`;
+          err.details.createTagSchema = { label: 'string' };
+
+          throw err;
+        }
+
         result = await this.postTagDao.create(postId, tagId);
+        res.status(202);
       }
 
       res.send(this.postTagDao.toDTO(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Delete('/:postId/tags/:tagId', [
+    ZodIdValidator('postId'),
+    ZodIdValidator('tagId')
+  ])
+  async removeTag(
+    @Params('postId') postId: number,
+    @Params('tagId') tagId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const result = await this.postTagDao.find(postId, tagId);
+
+      if (!result) {
+        throw new NotFoundError('Post/Tag Link not found');
+      }
+
+      await this.postTagDao.delete(postId, tagId);
+
+      res.status(204).send();
     } catch (error) {
       next(error);
     }
