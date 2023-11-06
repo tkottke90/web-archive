@@ -30,6 +30,12 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
     });
   }
 
+  removeTag(id: number) {
+    return this.client.tag.delete({
+      where: { id }
+    });
+  }
+
   toDTO(entity: Tag): TagDTO {
     return {
       self: `${ROUTES.TAGS}/${entity.id}`,

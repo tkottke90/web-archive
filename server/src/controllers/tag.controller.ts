@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Next,
+  Params,
   Post,
   Query,
   Response
@@ -18,6 +20,7 @@ import {
 } from '../dto/post-tag.dto';
 import {
   ZodBodyValidator,
+  ZodIdValidator,
   ZodQueryValidator
 } from '../middleware/zod.middleware';
 import { TagDao } from '../dao/tag.dao';
@@ -51,6 +54,21 @@ export class TagController {
       const result = await this.tagDao.addTag(body);
 
       res.json(this.tagDao.toDTO(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Delete('/:tag', [ZodIdValidator('tag')])
+  async deleteTag(
+    @Params('tag') tagId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      await this.tagDao.removeTag(tagId);
+
+      res.status(204).send();
     } catch (error) {
       next(error);
     }

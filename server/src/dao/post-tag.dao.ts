@@ -12,12 +12,6 @@ export class PostTagDao extends BaseDao<PostTag, any> {
     super(client);
   }
 
-  // addTag(input: PostTagCreateDTO): PostTag {
-  //   return {
-
-  //   };
-  // }
-
   toDTO(entity: PostTagAssociation): PostTagDTO {
     return {
       post: `${ROUTES.POSTS}/${entity.postId}`,
