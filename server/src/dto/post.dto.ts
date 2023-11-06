@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BaseSchema, QueryFields } from './utilities';
+import { BaseSchema, FuzzyNumber, QueryFields } from './utilities';
 import { PostMetadata, PostMetadataCreate } from './post-metadata.dto';
 import { PostFileCreateSchema, PostFileSchema } from './post-file.dto';
 import { PostTag } from './post-tag.dto';
@@ -26,7 +26,9 @@ export const PostCreateSchema = PostSchema.merge(
   updatedAt: true
 });
 
-export const PostQuerySchema = QueryFields(PostSchema);
+export const PostQuerySchema = QueryFields(PostSchema).merge(
+  z.object({ tag: FuzzyNumber.optional() })
+);
 
 export type PostDTO = z.infer<typeof PostSchema>;
 export type PostCreateDTO = z.infer<typeof PostCreateSchema>;

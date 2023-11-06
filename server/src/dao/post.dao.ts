@@ -36,11 +36,17 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   find(query: PostQueryDTO) {
     const { take, skip, orderBy, data } = this.parseQuery(query);
 
+    const where: Prisma.PostWhereInput = this.toPersistance(data);
+
+    if (data.tag) {
+      where.postTags = { some: { tagId: data.tag } };
+    }
+
     return this.client.post.findMany({
       take,
       skip,
       orderBy: orderBy,
-      where: this.toPersistance(data),
+      where,
       include: POST_DETAILS
     }) as unknown as PostWithAssociations[];
   }
