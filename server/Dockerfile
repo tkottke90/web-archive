@@ -1,27 +1,17 @@
 FROM node:18 AS build_stage
 
-WORKDIR /usr/build/
-
-COPY package*.json ./
-
-RUN npm install
-
-COPY . .
-
-RUN npm run build
-
-FROM node:18
-
 WORKDIR /usr/app/
 
-COPY --from=build_stage /usr/build/dist /usr/app/dist
-COPY package*.json ./
+COPY ./dist .
+COPY ./prisma ./prisma
+COPY README.md .
+COPY package.json .
+COPY package-lock.json .
 
-COPY ./server .
+RUN npm install --production
+RUN npx prisma generate
 
-RUN npm ci
-
-CMD [ "node", "server/index.js"]
+CMD [ "node", "index.js"]
 
 ENV PORT 3000
 ENV NODE_ENV production

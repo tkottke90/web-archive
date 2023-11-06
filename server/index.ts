@@ -5,7 +5,7 @@ import { LoggerService } from './src/services';
 config();
 
 const PORT = Number(process.env.PORT) ?? 5000;
-const HOST = process.env.HOST ?? '127.0.0.1';
+const HOST = process.env.HOST ?? '0.0.0.0';
 
 App.listen(PORT, HOST, () => {
   LoggerService.log('info', `Server started at: http://${HOST}:${PORT}`);
