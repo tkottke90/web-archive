@@ -1,4 +1,4 @@
-import { Container } from "@decorators/di";
+import { Container } from '@decorators/di';
 
 type tempLevels = 'info';
 
