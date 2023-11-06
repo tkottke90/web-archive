@@ -27,6 +27,7 @@ import multer from 'multer';
 import { MultipartJson } from '../middleware';
 import { PostFileDao } from '../dao/post-file.dao';
 import { NotFoundError } from '../utilities/errors.util';
+import { PostTagDao } from '../dao/post-tag.dao';
 const upload = multer({
   dest: './uploads',
   limits: { fieldSize: 25 * 1024 * 1024 }
@@ -36,7 +37,8 @@ const upload = multer({
 export class PostController {
   constructor(
     @Inject('PostDao') private readonly postDao: PostDao,
-    @Inject('PostFileDao') private readonly postFileDao: PostFileDao
+    @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
+    @Inject('PostTagDao') private readonly postTagDao: PostTagDao
   ) {}
 
   @Get('/', [ZodQueryValidator(PostQuerySchema)])
@@ -107,6 +109,32 @@ export class PostController {
 
       res.contentType(content.mime);
       res.sendFile(`${process.cwd()}/${content.filename}`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Post('/:postId/tags/:tagId', [
+    ZodIdValidator('postId'),
+    ZodIdValidator('tagId')
+  ])
+  async addTag(
+    @Params('postId') postId: number,
+    @Params('tagId') tagId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      let result = await this.postTagDao.find(postId, tagId);
+
+      if (result) {
+        res.status(204);
+      } else {
+        res.status(202);
+        result = await this.postTagDao.create(postId, tagId);
+      }
+
+      res.send(this.postTagDao.toDTO(result));
     } catch (error) {
       next(error);
     }

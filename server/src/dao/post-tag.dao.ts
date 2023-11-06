@@ -5,18 +5,39 @@ import { DBClient } from '../db';
 import { PostTagDTO } from '../dto/post-tag.dto';
 import { PostTagAssociation } from '../interfaces';
 import { ROUTES } from '../config';
+import { TagDao } from './tag.dao';
 
 @Injectable()
 export class PostTagDao extends BaseDao<PostTag, any> {
-  constructor(@Inject('PrismaClient') private client: DBClient) {
+  constructor(
+    @Inject('PrismaClient') private client: DBClient,
+    @Inject('TagDao') private tagDao: TagDao
+  ) {
     super(client);
+  }
+
+  async create(postId: number, tagId: number) {
+    return this.client.postTag.create({
+      data: { postId, tagId },
+      include: { tags: true }
+    }) as unknown as PostTagAssociation;
+  }
+
+  find(postId: number, tagId: number) {
+    return this.client.postTag.findFirst({
+      where: {
+        postId,
+        tagId
+      },
+      include: { tags: true }
+    }) as unknown as PostTagAssociation;
   }
 
   toDTO(entity: PostTagAssociation): PostTagDTO {
     return {
       post: `${ROUTES.POSTS}/${entity.postId}`,
       tag: `${ROUTES.TAGS}/${entity.tagId}`,
-      value: entity.tag.label,
+      value: entity.tags.label,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt
     };
