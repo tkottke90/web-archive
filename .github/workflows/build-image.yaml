@@ -48,9 +48,16 @@ jobs:
         working-directory: server
         run: ls -halt && npm run cicd-lint
 
-      - name: Write Lint Results
-        working-directory: server
-        run: cat eslint.results.html >> $GITHUB_STEP_SUMMARY
+      - name: Annotate code linting results
+        uses: ataylorme/eslint-annotate-action@1.2.0
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          report-json: 'eslint-report.json'
+
+      - name: Update summary
+        run: |
+          npm_config_yes=true npx github:10up/eslint-json-to-md --path ./eslint-report.json --output ./eslint-report.md
+          cat eslint-report.md >> $GITHUB_STEP_SUMMARY
 
   build:
     needs: [lint]
