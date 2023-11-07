@@ -48,12 +48,6 @@ jobs:
         working-directory: server
         run: ls -halt && npm run cicd-lint
 
-      - name: Annotate code linting results
-        uses: ataylorme/eslint-annotate-action@1.2.0
-        with:
-          repo-token: '${{ secrets.GITHUB_TOKEN }}'
-          report-json: './server/eslint-report.json'
-
       - name: Update summary
         working-directory: server
         run: |
