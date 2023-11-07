@@ -43,7 +43,7 @@ jobs:
         run: npm install
 
       - name: Lint Server
-        run: cd server && npm run cicd-lint
+        run: cd server && ls -halt && npm run cicd-lint
 
   build:
     needs: [lint]
