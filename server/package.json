@@ -7,7 +7,7 @@
     "build": "tsc",
     "format": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "lint": "eslint --fix src/**/*",
-    "cicd-lint": "eslint src/**/*",
+    "cicd-lint": "eslint src/**/* --format html --output-file eslint.results.html",
     "start": "nodemon"
   },
   "keywords": [],
