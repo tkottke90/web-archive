@@ -49,6 +49,7 @@ jobs:
         run: ls -halt && npm run cicd-lint
 
       - name: Write Lint Results
+        working-directory: server
         run: cat eslint.results.html >> $GITHUB_STEP_SUMMARY
 
   build:
