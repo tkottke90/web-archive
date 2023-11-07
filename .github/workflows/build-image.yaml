@@ -40,7 +40,7 @@ jobs:
           node-version: 18
 
       - name: Install Packages
-        run: npm ci
+        run: npm install
 
       - name: Lint Server
         run: cd server && npm run cicd-lint
