@@ -6,23 +6,11 @@ name: Release
 # documentation.
 
 on:
-  push:
-    branches: [ "release/*" ]
-    # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
-
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
-
+  workflow_call:
 
 jobs:
-  lint:
-    uses: tkottke90/web-archive/.github/workflows/lint.yaml@main
-
   build:
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -44,7 +32,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
+      - name: Install Packages
+        run: npm ci
 
       - name: Lint Server
         run: cd server && npm run cicd-lint
