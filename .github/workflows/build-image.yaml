@@ -48,6 +48,9 @@ jobs:
         working-directory: server
         run: ls -halt && npm run cicd-lint
 
+      - name: Write Lint Results
+        run: echo eslint.results.html >> $GITHUB_STEP_SUMMARY
+
   build:
     needs: [lint]
     runs-on: ubuntu-latest
