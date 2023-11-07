@@ -40,10 +40,12 @@ jobs:
           node-version: 18
 
       - name: Install Packages
+        working-directory: server
         run: npm install
 
       - name: Lint Server
-        run: cd server && ls -halt && npm run cicd-lint
+        working-directory: server
+        run: ls -halt && npm run cicd-lint
 
   build:
     needs: [lint]
@@ -67,8 +69,3 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-
-
-      - name: Lint Server
-        run: cd server && ls -halt && npm run cicd-lint
