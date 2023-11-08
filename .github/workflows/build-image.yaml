@@ -54,6 +54,7 @@ jobs:
           npm_config_yes=true npx github:10up/eslint-json-to-md --path ./eslint-report.json --output ./eslint-report.md
           cat eslint-report.md >> $GITHUB_STEP_SUMMARY
 
+
   build-and-deploy:
     uses: ./.github/workflows/build-docker.yaml
     if: ${{ github.event_name != 'pull_request' }}
