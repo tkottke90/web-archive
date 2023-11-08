@@ -1,10 +1,5 @@
 name: CICD
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 on:
   workflow_dispatch:
   pull_request:
@@ -21,7 +16,7 @@ jobs:
   Build:
     uses: ./.github/workflows/build.yaml
     name: Build Image
-    needs: [lint]
+    needs: [Lint]
     with:
       deploy: ${{ github.event_name != 'pull_request' }}
       target_dir: "server"
@@ -30,10 +25,18 @@ jobs:
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
     name: Deploy
-    needs: [build]
+    needs: [Build]
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
       packages: write
     with:
       image: ${{ needs.build.outputs.image }}
+
+  Release:
+    name: Create Release
+    needs: [Deploy]
+    if: ${{ github.ref_type == 'tag' }}
+    steps:
+      - name: Temp
+        run: echo "Release"
