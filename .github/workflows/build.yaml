@@ -68,7 +68,7 @@ jobs:
           if [[ $REF_TYPE == "tag" ]]; then
             VERSION=$REF
           else
-            if [[ $REF == release/* ]]; then
+            if [[ $REF == *release/* ]]; then
               VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)-RC
             else
               VERSION=$(echo $SHA | cut -b 1-8)-DEV-SNAPSHOT
