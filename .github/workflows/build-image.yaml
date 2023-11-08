@@ -22,41 +22,11 @@ env:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node Env
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install Packages
-        working-directory: server
-        run: npm install
-
-      - name: Lint Server
-        working-directory: server
-        run: ls -halt && npm run cicd-lint
-
-      - name: Update summary
-        working-directory: server
-        run: |
-          npm_config_yes=true npx github:10up/eslint-json-to-md --path ./eslint-report.json --output ./eslint-report.md
-          cat eslint-report.md >> $GITHUB_STEP_SUMMARY
+    uses: ./.github/workflows/lint-server.yaml
 
 
   build-and-deploy:
+    needs: [lint]
     uses: ./.github/workflows/build-docker.yaml
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
