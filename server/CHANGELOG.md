@@ -1,3 +1,9 @@
+#### 1.0.7 (2023-11-08)
+
+##### Refactors
+
+*  add logging for version (d4e92a5e)
+
 #### 1.0.6 (2023-11-08)
 
 ##### Other Changes
