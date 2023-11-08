@@ -32,11 +32,3 @@ jobs:
       packages: write
     with:
       image: ${{ needs.build.outputs.image }}
-
-  Release:
-    name: Create Release
-    needs: [Deploy]
-    if: ${{ github.ref_type == 'tag' }}
-    steps:
-      - name: Temp
-        run: echo "Release"
