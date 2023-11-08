@@ -17,7 +17,7 @@ env:
   TAG: 
 
 jobs:
-  
+
 
   Lint:
     name: Lint Server
@@ -27,7 +27,7 @@ jobs:
     uses: ./.github/workflows/build.yaml
     name: Build Image
     needs: [lint]
-    inputs:
+    with:
       deploy: ${{ github.event_name != 'pull_request' }}
 
   Deploy:
