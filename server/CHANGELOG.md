@@ -1,3 +1,9 @@
+#### 1.0.4 (2023-11-08)
+
+##### Refactors
+
+*  Rm permissions setting from release (5fb2e4e8)
+
 #### 1.0.3 (2023-11-08)
 
 ##### Refactors
