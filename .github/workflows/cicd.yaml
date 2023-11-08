@@ -29,12 +29,23 @@ jobs:
     needs: [lint]
     with:
       deploy: ${{ github.event_name != 'pull_request' }}
+      branch: ${{ github.ref_name }}
+      commit: ${{ github.sha }}
+
+  PreRelease:
+    uses: ./.github/workflows/build-docker.yaml
+    name: Deploy
+    needs: [build]
+    if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      contents: read
+      packages: write
 
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
     name: Deploy
     needs: [build]
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.event_name != 'pull_request' && github.ref_type == 'tag' }}
     permissions:
       contents: read
       packages: write

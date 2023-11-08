@@ -3,6 +3,12 @@ name: Lint Server
 on:
   workflow_call:
     inputs:
+      branch:
+        type: string
+        required: true
+      commit:
+        type: string
+        required: true
       image_tag:
         type: string
         default: 'latest'
@@ -46,8 +52,8 @@ jobs:
         working-directory: server
         env:
           API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
-          COMMIT: ${{ github.sha }}
-          BRANCH: ${{ github.ref_name }}
+          COMMIT: ${{ inputs.commit }}
+          BRANCH: ${{ inputs.branch }}
         run: |
           echo "# Image Details" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
