@@ -72,9 +72,6 @@ jobs:
           VERSION=$(npm pkg get version | sed 's/\"//g')
           git checkout -b release/v$VERSION
           git push --set-upstream origin release/v$VERSION
-      
-      - name: Trigger CICD
-        uses: ./.github/workflows/cicd.yaml
 
   release:
     name: Create Release
@@ -91,3 +88,8 @@ jobs:
           VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)
           git tag -a $VERSION
           git push --follow-tags
+
+  cicd_trigger:
+    name: CICD Trigger
+    needs: [release-candidate]
+    uses: ./.github/workflows/cicd.yaml
