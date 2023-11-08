@@ -3,6 +3,12 @@ name: Lint Server
 on:
   workflow_call:
 
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   Builder:
     runs-on: ubuntu-latest
@@ -23,12 +29,30 @@ jobs:
         working-directory: server
         run: npm run build
 
-      - name: Build Server
-        working-directory: server
-        run: tar -cvf build.tar dist/
+      # - name: Save Build Artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: build
+      #     path: build.tar
 
-      - name: Save Build Artifacts
-        uses: actions/upload-artifact@v3
+      - name: Build Image
+        working-directory: server
+        env:
+          API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        run: |
+          echo "# Image Details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "COMMIT: $(git rev-parse HEAD)" >> $GITHUB_STEP_SUMMARY
+          echo "BRANCH: $(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_STEP_SUMMARY
+          
+          docker build \
+            -t $API_IMAGE \
+            --build-arg \"COMMIT=$(git rev-parse HEAD)\" \
+            --build-arg \"BRANCH=$(git rev-parse --abbrev-ref HEAD)\"  \
+            .
+
+
+      - name: Upload image
+        uses: ishworkh/container-image-artifact-upload@v1.0.0
         with:
-          name: build
-          path: build.tar
+          image: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
