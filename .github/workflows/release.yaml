@@ -28,17 +28,17 @@ jobs:
           node-version: 18
       
       - name: Calculate Patch
-        if: ${{ inputs.version === 'Patch' }}
+        if: ${{ inputs.version == 'Patch' }}
         working-directory: server
         run: npm version patch
       
       - name: Calculate Minor
-        if: ${{ inputs.version === 'Minor' }}
+        if: ${{ inputs.version == 'Minor' }}
         working-directory: server
         run: npm version minor
       
       - name: Calculate Major
-        if: ${{ inputs.version === 'Major' }}
+        if: ${{ inputs.version == 'Major' }}
         working-directory: server
         run: npm version major
 
@@ -75,21 +75,21 @@ jobs:
         run: npm install
 
       - name: Bump Version - Patch
-        if: ${{ inputs.version === 'Patch' }}
+        if: ${{ inputs.version == 'Patch' }}
         working-directory: server
         run: |
           npm version patch
           npm run changelog-patch
       
       - name: Bump Version - Minor
-        if: ${{ inputs.version === 'Minor' }}
+        if: ${{ inputs.version == 'Minor' }}
         working-directory: server
         run: |
           npm version minor
           npm run changelog-minor
       
       - name: Bump Version - Major
-        if: ${{ inputs.version === 'Major' }}
+        if: ${{ inputs.version == 'Major' }}
         working-directory: server
         run: |
           npm version major
