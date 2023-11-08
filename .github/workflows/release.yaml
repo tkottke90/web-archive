@@ -6,10 +6,10 @@ on:
       version:
         description: 'Version Increment'
         type: choice
-        choice:
-          - Patch
-          - Minor
-          - Major
+        options:
+        - Patch
+        - Minor
+        - Major
         default: 'Minor'
 
 jobs:
