@@ -1,3 +1,9 @@
+#### 1.0.5 (2023-11-08)
+
+##### Refactors
+
+*  Rm depenency on other workflow (a99c364c)
+
 #### 1.0.4 (2023-11-08)
 
 ##### Refactors
