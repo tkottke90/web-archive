@@ -25,7 +25,6 @@ jobs:
         uses: ./.github/workflows/build.yaml
 
       - name: Download math result for job 1
-        working-directory: server
         uses: actions/download-artifact@v3
         with:
           name: build
