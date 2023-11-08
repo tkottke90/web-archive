@@ -48,7 +48,7 @@ jobs:
         env:
           TYPE: ${{ inputs.version }}
         run: |
-          VERSION=$(npm pkg get version)
+          VERSION=$(npm pkg get version | sed 's/\"//g')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "# Version Details" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
