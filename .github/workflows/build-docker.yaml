@@ -21,6 +21,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Packages
+        working-directory: server
+        run: npm install
+
       - name: Build Server
         uses: ./.github/workflows/build.yaml
 
@@ -39,7 +48,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Unarchive Dist
-        run: tar -zxvf build
+        run: tar -zxvf build --directory server
 
       - name: Build and push Docker image
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
