@@ -95,5 +95,5 @@ jobs:
         if: ${{ inputs.deploy }}
         uses: ishworkh/container-image-artifact-upload@v1.0.0
         with:
-          image: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
+          image: ${{ steps.img_build.outputs.imgname }}
           retention_days: "2"
