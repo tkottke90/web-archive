@@ -1,3 +1,9 @@
+#### 1.0.6 (2023-11-08)
+
+##### Other Changes
+
+*  Create Changelog for v1.0.0 (2aacf9aa)
+
 #### 1.0.5 (2023-11-08)
 
 ##### Refactors
