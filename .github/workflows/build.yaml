@@ -46,16 +46,18 @@ jobs:
         working-directory: server
         env:
           API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
+          COMMIT: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
         run: |
           echo "# Image Details" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "COMMIT: $(git rev-parse HEAD)" >> $GITHUB_STEP_SUMMARY
-          echo "BRANCH: $(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_STEP_SUMMARY
+          echo "COMMIT: $COMMIT" >> $GITHUB_STEP_SUMMARY
+          echo "BRANCH: $BRANCH" >> $GITHUB_STEP_SUMMARY
           
           docker build \
             -t $API_IMAGE \
-            --build-arg \"COMMIT=$(git rev-parse HEAD)\" \
-            --build-arg \"BRANCH=$(git rev-parse --abbrev-ref HEAD)\"  \
+            --build-arg "COMMIT=$(git rev-parse HEAD)" \
+            --build-arg "BRANCH=$(git rev-parse --abbrev-ref HEAD)"  \
             .
 
       - name: Upload image
