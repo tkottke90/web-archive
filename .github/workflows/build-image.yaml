@@ -58,3 +58,6 @@ jobs:
   build-and-deploy:
     uses: ./.github/workflows/build-docker.yaml
     if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      contents: read
+      packages: write
