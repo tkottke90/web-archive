@@ -38,11 +38,11 @@ jobs:
           node-version: 18
 
       - name: Install Packages
-        working-directory: ${{ inputs.target_env }}
+        working-directory: ${{ inputs.target_dir }}
         run: npm install
 
       - name: Build Server
-        working-directory: ${{ inputs.target_env }}
+        working-directory: ${{ inputs.target_dir }}
         run: pwd && npm run build
 
       # Allows me to create various versions of the software depending on how the automation is run
@@ -52,7 +52,7 @@ jobs:
       #    - Importantly, PR builds are not pushed to the registry as that would get super messy
       - name: Get Version
         id: version
-        working-directory: ${{ inputs.target_env }}
+        working-directory: ${{ inputs.target_dir }}
         env:
           REF_TYPE: ${{ github.ref_type }}
           REF: ${{ github.ref }}
@@ -72,7 +72,7 @@ jobs:
 
       - name: Build Image
         id: img_build
-        working-directory: ${{ inputs.target_env }}
+        working-directory: ${{ inputs.target_dir }}
         env:
           API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
           COMMIT: ${{ github.sha }}
