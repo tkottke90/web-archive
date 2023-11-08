@@ -13,12 +13,7 @@ on:
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
 
-env:
-  TAG: 
-
 jobs:
-
-
   Lint:
     name: Lint Server
     uses: ./.github/workflows/lint-server.yaml
@@ -29,23 +24,16 @@ jobs:
     needs: [lint]
     with:
       deploy: ${{ github.event_name != 'pull_request' }}
-      branch: ${{ github.ref_name }}
+      branch: ${{ github.ref }}
       commit: ${{ github.sha }}
-
-  PreRelease:
-    uses: ./.github/workflows/build-docker.yaml
-    name: Deploy
-    needs: [build]
-    if: ${{ github.event_name != 'pull_request' }}
-    permissions:
-      contents: read
-      packages: write
 
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
-    name: Deploy
+    name: Deploy Release
     needs: [build]
     if: ${{ github.event_name != 'pull_request' && github.ref_type == 'tag' }}
     permissions:
       contents: read
       packages: write
+    with:
+      image: ${{ needs.build.outputs.image }}

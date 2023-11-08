@@ -2,13 +2,13 @@ name: Build Docker Image
 
 on:
   workflow_call:
-
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
-
+    inputs:
+      registry:
+        type: string
+        default: ghcr.io
+      image:
+        type: string
+        required: true
 
 jobs:
   build:
@@ -24,16 +24,16 @@ jobs:
       - name: Build Server
         uses: ./.github/workflows/build.yaml
 
-      - name: Download math result for job 1
-        uses: actions/download-artifact@v3
+      - name: Download image
+        uses: ishworkh/container-image-artifact-download@v1.0.0
         with:
-          name: build
+          image: ${{ inputs.image }}
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
+      - name: Log into registry ${{ inputs.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ inputs.registry }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}

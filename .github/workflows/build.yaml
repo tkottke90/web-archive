@@ -15,6 +15,10 @@ on:
       deploy:
         type: boolean
         default: false
+    outputs:
+      image:
+        value: ${{ jobs.Builder.outputs.img }}
+
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -25,6 +29,8 @@ env:
 jobs:
   Builder:
     runs-on: ubuntu-latest
+    outputs:
+      img: ${{ steps.img_build.outputs.imgname }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -49,6 +55,7 @@ jobs:
       #     path: build.tar
 
       - name: Build Image
+        id: img_build
         working-directory: server
         env:
           API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
@@ -65,6 +72,8 @@ jobs:
             --build-arg "COMMIT=$(git rev-parse HEAD)" \
             --build-arg "BRANCH=$(git rev-parse --abbrev-ref HEAD)"  \
             .
+
+          echo "imgname=$API_IMAGE" >> $GITHUB_OUTPUT
 
       - name: Upload image
         if: ${{ inputs.deploy }}
