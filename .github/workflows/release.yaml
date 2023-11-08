@@ -98,7 +98,10 @@ jobs:
       - name: Commit Changes
         env:
           VERSION: ${{ needs.version.outputs.version }}
+          AUTHOR: ${{ github.triggering_actor }}
         run: |
+          git config --global user.name 'Github Actions (Bot)'
+          git config --global user.email $AUTHOR
           git add -A
           git commit -m "automation: Create Changelog for $VERSION"
           git push
