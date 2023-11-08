@@ -62,7 +62,7 @@ jobs:
     needs: [version]
     if: ${{ endsWith(github.ref, 'main') }}
     permissions:
-      contents: true
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -122,7 +122,7 @@ jobs:
     needs: [version]
     if: ${{ contains(github.ref, 'release/') }}
     permissions:
-      contents: true
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
