@@ -9,15 +9,9 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches: [ "release/*" ]
+    branches: ["release/*"]
     # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
-
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+    tags: ["v*.*.*"]
 
 jobs:
   lint:
@@ -31,9 +25,9 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
 
   BuildAndDeploy:
+    uses: ./.github/workflows/build-docker.yaml
     name: Build & Deploy
     needs: [lint]
-    uses: ./.github/workflows/build-docker.yaml
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
