@@ -12,7 +12,7 @@ on:
     branches: ["release/*"]
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
-
+    
 jobs:
   Lint:
     name: Lint Server
@@ -26,6 +26,7 @@ jobs:
       deploy: ${{ github.event_name != 'pull_request' }}
       branch: ${{ github.ref }}
       commit: ${{ github.sha }}
+      image_tag: "${{ github.ref_type == 'tag' && github.ref_name || contains(github.ref, 'release/v') && '-RC' || '-SNAPSHOT' }}"
 
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
