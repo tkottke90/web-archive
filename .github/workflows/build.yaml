@@ -2,6 +2,13 @@ name: Lint Server
 
 on:
   workflow_call:
+    inputs:
+      image_tag:
+        type: string
+        default: 'latest'
+      deploy:
+        type: boolean
+        default: false
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -38,7 +45,7 @@ jobs:
       - name: Build Image
         working-directory: server
         env:
-          API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
         run: |
           echo "# Image Details" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -51,9 +58,9 @@ jobs:
             --build-arg \"BRANCH=$(git rev-parse --abbrev-ref HEAD)\"  \
             .
 
-
       - name: Upload image
+        if: ${{ inputs.deploy }}
         uses: ishworkh/container-image-artifact-upload@v1.0.0
         with:
-          image: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          image: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
           retention_days: "2"

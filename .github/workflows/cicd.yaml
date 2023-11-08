@@ -14,20 +14,20 @@ on:
     tags: ["v*.*.*"]
 
 jobs:
-  lint:
+  Lint:
     name: Lint Server
     uses: ./.github/workflows/lint-server.yaml
 
-  build:
+  Build:
     uses: ./.github/workflows/build.yaml
     name: Build Image
     needs: [lint]
     if: ${{ github.event_name == 'pull_request' }}
 
-  BuildAndDeploy:
+  Deploy:
     uses: ./.github/workflows/build-docker.yaml
-    name: Build & Deploy
-    needs: [lint]
+    name: Deploy
+    needs: [build]
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
