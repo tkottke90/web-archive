@@ -43,7 +43,7 @@ jobs:
 
       - name: Build Server
         working-directory: ${{ inputs.target_env }}
-        run: npm run build
+        run: pwd && npm run build
 
       # Allows me to create various versions of the software depending on how the automation is run
       #  - When a tag is created, a new latest tagged version is created
