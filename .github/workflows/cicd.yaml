@@ -26,6 +26,8 @@ jobs:
     uses: ./.github/workflows/lint-server.yaml
 
   build:
+    name: Build Image
+    needs: [lint]
     if: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/build.yaml
 
