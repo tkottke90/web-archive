@@ -54,6 +54,7 @@ jobs:
           npm run changelog-major
 
       - name: Commit Changes
+        working-directory: server
         env:
           AUTHOR: ${{ github.triggering_actor }}
         run: |
@@ -66,6 +67,7 @@ jobs:
           git push
 
       - name: Create Release Branch
+        working-directory: server
         run: |
           VERSION=$(npm pkg get version | sed 's/\"//g')
           git checkout -b release/v$VERSION
