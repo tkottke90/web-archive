@@ -12,54 +12,10 @@ on:
         - Major
         default: 'Minor'
 
-jobs:
-  version:
-    name: Calculate Next Version
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version_output.outputs.version }}
-    steps:      
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node Env
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      
-      - name: Calculate Patch
-        if: ${{ inputs.version == 'Patch' }}
-        working-directory: server
-        run: npm version patch
-      
-      - name: Calculate Minor
-        if: ${{ inputs.version == 'Minor' }}
-        working-directory: server
-        run: npm version minor
-      
-      - name: Calculate Major
-        if: ${{ inputs.version == 'Major' }}
-        working-directory: server
-        run: npm version major
-
-      - name: Record Version
-        id: version_output
-        working-directory: server
-        env:
-          TYPE: ${{ inputs.version }}
-        run: |
-          VERSION=$(npm pkg get version | sed 's/\"//g')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "# Version Details" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Next Version Type: $TYPE" >> $GITHUB_STEP_SUMMARY
-          echo "Next Version: $VERSION" >> $GITHUB_STEP_SUMMARY
-
-  
+jobs:  
   release-candidate:
     name: Create Release Branch
     runs-on: ubuntu-latest
-    needs: [version]
     if: ${{ endsWith(github.ref, 'main') }}
     permissions:
       contents: write
@@ -99,22 +55,20 @@ jobs:
 
       - name: Commit Changes
         env:
-          VERSION: ${{ needs.version.outputs.version }}
           AUTHOR: ${{ github.triggering_actor }}
         run: |
+          VERSION=$(npm pkg get version | sed 's/\"//g')
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add -A
-          git commit -m "automation: Create Changelog for $VERSION"
+          git commit -m "automation: Create Changelog for v$VERSION"
           git push
 
       - name: Create Release Branch
-        env:
-          VERSION: ${{ needs.version.outputs.version }}
         run: |
-          git checkout -b release/$VERSION
-          BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
-          git push --set-upstream origin $BRANCH
+          VERSION=$(npm pkg get version | sed 's/\"//g')
+          git checkout -b release/v$VERSION
+          git push --set-upstream origin release/v$VERSION
 
   release:
     name: Create Release
@@ -127,11 +81,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node Env
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install Packages
-        working-directory: server
-        run: npm install
+      - name: Create Tag
+        run: |
+          VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)
+          git tag -a $VERSION
+          git push --follow-tags
