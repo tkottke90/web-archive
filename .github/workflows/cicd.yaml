@@ -24,9 +24,8 @@ jobs:
     needs: [lint]
     with:
       deploy: ${{ github.event_name != 'pull_request' }}
-      branch: ${{ github.ref }}
-      commit: ${{ github.sha }}
-      image_tag: "${{ github.ref_type == 'tag' && github.ref_name || contains(github.ref, 'release/v') && '-RC' || '-SNAPSHOT' }}"
+      target_dir: "server"
+      
 
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
