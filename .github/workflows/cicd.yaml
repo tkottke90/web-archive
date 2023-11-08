@@ -22,10 +22,15 @@ env:
 
 jobs:
   lint:
+    name: Lint Server
     uses: ./.github/workflows/lint-server.yaml
 
+  build:
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: ./.github/workflows/build.yaml
 
   build-and-deploy:
+    name: Build & Deploy
     needs: [lint]
     uses: ./.github/workflows/build-docker.yaml
     if: ${{ github.event_name != 'pull_request' }}

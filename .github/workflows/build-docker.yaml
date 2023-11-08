@@ -21,6 +21,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Build Server
+        uses: ./.github/workflows/build.yaml
+
+      - name: Download math result for job 1
+        working-directory: server
+        uses: actions/download-artifact@v3
+        with:
+          name: build
+
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
@@ -29,3 +38,14 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Unarchive Dist
+        run: tar -zxvf build
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: server
+          file: ./server/Dockerfile
+          push: true
+          tags: latest
