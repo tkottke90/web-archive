@@ -1,0 +1,99 @@
+name: Lint Server
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        type: string
+        default: 'latest'
+      deploy:
+        type: boolean
+        default: false
+      target_dir:
+        type: string
+        default: "."
+    outputs:
+      image:
+        value: ${{ jobs.Builder.outputs.img }}
+
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  Builder:
+    runs-on: ubuntu-latest
+    outputs:
+      img: ${{ steps.img_build.outputs.imgname }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Packages
+        working-directory: ${{ inputs.target_dir }}
+        run: npm install
+
+      - name: Build Server
+        working-directory: ${{ inputs.target_dir }}
+        run: pwd && npm run build
+
+      # Allows me to create various versions of the software depending on how the automation is run
+      #  - When a tag is created, a new latest tagged version is created
+      #  - When pushes are made to a `release` branch, a new Release Candidate is created
+      #  - When a PR is created/updated OR when the workflow is run manually, a snapshot image is created
+      #    - Importantly, PR builds are not pushed to the registry as that would get super messy
+      - name: Get Version
+        id: version
+        working-directory: ${{ inputs.target_dir }}
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [[ $REF_TYPE == "tag" ]]; then
+            VERSION=$REF
+          else
+            if [[ $REF == release/* ]]; then
+              VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)-RC
+            else
+              VERSION=$(echo $SHA | cut -b 1-8)-DEV-SNAPSHOT
+            fi
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Image
+        id: img_build
+        working-directory: ${{ inputs.target_dir }}
+        env:
+          API_IMAGE: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          COMMIT: ${{ github.sha }}
+          BRANCH: ${{ github.ref }}
+        run: |
+          echo "# Image Details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "COMMIT: $COMMIT" >> $GITHUB_STEP_SUMMARY
+          echo "BRANCH: $BRANCH" >> $GITHUB_STEP_SUMMARY
+          
+          docker build \
+            -t $API_IMAGE \
+            --build-arg "COMMIT=$(git rev-parse HEAD)" \
+            --build-arg "BRANCH=$(git rev-parse --abbrev-ref HEAD)"  \
+            .
+
+          echo "imgname=$API_IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Upload image
+        if: ${{ inputs.deploy }}
+        uses: ishworkh/container-image-artifact-upload@v1.0.0
+        with:
+          image: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
+          retention_days: "2"

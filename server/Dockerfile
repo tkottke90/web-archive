@@ -1,5 +1,13 @@
 FROM node:18 AS build_stage
 
+ARG BRANCH
+ARG COMMIT
+
+ENV BRANCH=${BRANCH}
+ENV COMMIT=${COMMIT}
+
+RUN echo "Image Details: $BRANCH | $COMMIT"
+
 WORKDIR /usr/app/
 
 COPY ./dist .

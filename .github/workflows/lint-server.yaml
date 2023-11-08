@@ -1,0 +1,31 @@
+name: Lint Server
+
+on:
+  workflow_call:
+
+
+jobs:
+  Linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Packages
+        working-directory: server
+        run: npm install
+
+      - name: Lint Server
+        working-directory: server
+        run: ls -halt && npm run cicd-lint
+
+      - name: Update summary
+        working-directory: server
+        run: |
+          npm_config_yes=true npx github:10up/eslint-json-to-md --path ./eslint-report.json --output ./eslint-report.md
+          cat eslint-report.md >> $GITHUB_STEP_SUMMARY
