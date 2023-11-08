@@ -82,6 +82,7 @@ jobs:
         working-directory: ${{ inputs.target_dir }}
         env:
           API_IMAGE: "${{ inputs.registry }}/${{ inputs.image_name || env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          VERSION: ${{ steps.version.outputs.version }}
           COMMIT: ${{ github.sha }}
           BRANCH: ${{ github.ref }}
           FILE: ${{ inputs.dockerfile }}
@@ -96,6 +97,7 @@ jobs:
             -t $API_IMAGE \
             --build-arg "COMMIT=$(git rev-parse HEAD)" \
             --build-arg "BRANCH=$(git rev-parse --abbrev-ref HEAD)"  \
+            --build-arg "VERSION=$VERSION"  \
             .
 
           echo "imgname=$API_IMAGE" >> $GITHUB_OUTPUT
