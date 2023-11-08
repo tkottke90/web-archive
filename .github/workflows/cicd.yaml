@@ -19,19 +19,18 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
 
-
 jobs:
   lint:
     name: Lint Server
     uses: ./.github/workflows/lint-server.yaml
 
   build:
+    uses: ./.github/workflows/build.yaml
     name: Build Image
     needs: [lint]
     if: ${{ github.event_name == 'pull_request' }}
-    uses: ./.github/workflows/build.yaml
 
-  build-and-deploy:
+  BuildAndDeploy:
     name: Build & Deploy
     needs: [lint]
     uses: ./.github/workflows/build-docker.yaml
