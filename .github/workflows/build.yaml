@@ -92,7 +92,7 @@ jobs:
           echo "BRANCH: $BRANCH" >> $GITHUB_STEP_SUMMARY
           
           docker build \
-            -f $FILE
+            -f $FILE \
             -t $API_IMAGE \
             --build-arg "COMMIT=$(git rev-parse HEAD)" \
             --build-arg "BRANCH=$(git rev-parse --abbrev-ref HEAD)"  \
