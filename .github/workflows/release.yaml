@@ -92,4 +92,6 @@ jobs:
   cicd_trigger:
     name: CICD Trigger
     needs: [release-candidate]
+    permissions:
+      packages: write
     uses: ./.github/workflows/cicd.yaml
