@@ -94,4 +94,5 @@ jobs:
     needs: [release-candidate]
     permissions:
       packages: write
+      contents: read
     uses: ./.github/workflows/cicd.yaml
