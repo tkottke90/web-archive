@@ -88,11 +88,3 @@ jobs:
           VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)
           git tag -a $VERSION
           git push --follow-tags
-
-  cicd_trigger:
-    name: CICD Trigger
-    needs: [release-candidate]
-    permissions:
-      packages: write
-      contents: read
-    uses: ./.github/workflows/cicd.yaml
