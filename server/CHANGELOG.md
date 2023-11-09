@@ -1,3 +1,9 @@
+#### 0.0.5 (2023-11-09)
+
+##### Refactors
+
+*  Add read permssions for contents (2a2cd1d4)
+
 #### 0.0.4 (2023-11-08)
 
 ##### Refactors
