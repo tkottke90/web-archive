@@ -15,11 +15,14 @@ COPY ./prisma ./prisma
 COPY README.md .
 COPY package.json .
 COPY package-lock.json .
+COPY bin/entrypoint.sh .
 
 RUN npm install --production
 RUN npx prisma generate
 
 CMD [ "node", "index.js"]
+
+ENTRYPOINT [ "./entrypoint.sh" ]
 
 ENV PORT 3000
 ENV NODE_ENV production
