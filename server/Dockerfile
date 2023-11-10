@@ -20,9 +20,7 @@ COPY bin/entrypoint.sh .
 RUN npm install --production
 RUN npx prisma generate
 
-CMD [ "node", "index.js"]
-
-ENTRYPOINT [ "./entrypoint.sh" ]
+CMD [ "./entrypoint.sh" ]
 
 ENV PORT 3000
 ENV NODE_ENV production
