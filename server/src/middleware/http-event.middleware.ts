@@ -17,7 +17,7 @@ export function HttpEventMiddleware(
 
     LoggerService.log(
       'info',
-      `${req.method} ${req.originalUrl} [${duration} ms]`,
+      `${req.method} ${req.originalUrl} [${duration.toFixed(2)} ms]`,
       {
         method: req.method,
         url: req.url,
