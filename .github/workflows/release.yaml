@@ -86,5 +86,5 @@ jobs:
       - name: Create Tag
         run: |
           VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)
-          git tag -a $VERSION
+          git tag -a $VERSION -m "Create Release ($VERSION)"
           git push --follow-tags
