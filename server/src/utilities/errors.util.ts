@@ -45,6 +45,14 @@ export class NotFoundError extends HTTPError {
   }
 }
 
+export class NotImplemented extends HTTPError {
+  name = 'NotImplemented';
+
+  constructor(message: string) {
+    super(message, 405);
+  }
+}
+
 export class UnprocessableError extends HTTPError {
   name = 'UnprocessableError';
 

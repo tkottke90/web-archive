@@ -31,8 +31,9 @@ import { NotFoundError } from '../utilities/errors.util';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { TagDao } from '../dao/tag.dao';
 import { ROUTES } from '../config';
+import { UPLOAD_DIR } from '../constants';
 const upload = multer({
-  dest: './uploads',
+  dest: UPLOAD_DIR,
   limits: { fieldSize: 25 * 1024 * 1024 }
 });
 
@@ -112,7 +113,7 @@ export class PostController {
       }
 
       res.contentType(content.mime);
-      res.sendFile(`${process.cwd()}/${content.filename}`);
+      res.sendFile(content.filename);
     } catch (error) {
       next(error);
     }

@@ -8,8 +8,14 @@ import { Application } from 'express';
 import { ServerStatusController } from './server-status';
 import { PostController } from './post.controller';
 import { TagController } from './tag.controller';
+import { ParserController } from './parser.controller';
 
-const controllers = [PostController, ServerStatusController, TagController];
+const controllers = [
+  ParserController,
+  PostController,
+  ServerStatusController,
+  TagController
+];
 
 export default function (app: Application) {
   attachControllers(app, controllers);
