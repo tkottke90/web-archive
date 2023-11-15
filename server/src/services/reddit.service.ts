@@ -20,8 +20,6 @@ export class RedditScraper {
     @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory
   ) {}
 
-  getContent(url: string) {}
-
   getPostByUrl(url: string) {
     return fetch(`${url}.json`)
       .then((response) => response.json())
