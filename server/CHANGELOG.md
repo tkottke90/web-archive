@@ -1,3 +1,9 @@
+### 1.2.0 (2023-11-15)
+
+##### Refactors
+
+*  Add reddit parser (d8b3c219)
+
 ## 2.0.0 (2023-11-09)
 
 ##### Refactors
