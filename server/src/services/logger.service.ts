@@ -1,6 +1,6 @@
 import { Container } from '@decorators/di';
 
-type tempLevels = 'info';
+type tempLevels = 'error' | 'warn' | 'info' | 'debug';
 
 interface ILoggerService<Levels extends string> {
   log: (level: Levels, message: string, metadata?: Record<string, any>) => void;
