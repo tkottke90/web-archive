@@ -6,7 +6,7 @@ import { PostCreateDTO, PostDTO, PostQueryDTO } from '../dto/post.dto';
 import { ROUTES } from '../config';
 import { PostFileDao } from './post-file.dao';
 import { PostTagDao } from './post-tag.dao';
-import { PostMetadataDao } from './post-metadata.dto';
+import { PostMetadataDao } from './post-metadata.dao';
 import { PostWithAssociations } from '../interfaces';
 
 const POST_DETAILS = {
@@ -31,6 +31,20 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       where: { id },
       include: POST_DETAILS
     }) as unknown as PostWithAssociations;
+  }
+
+  getByMetadataValue(key: string, value: string) {
+    return this.client.post.findFirst({
+      where: {
+        metadata: {
+          some: {
+            name: key,
+            value
+          }
+        }
+      },
+      include: POST_DETAILS
+    });
   }
 
   find(query: PostQueryDTO) {
