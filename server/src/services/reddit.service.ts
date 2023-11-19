@@ -12,21 +12,25 @@ import { randomUUID } from 'crypto';
 import { JSDOM } from 'jsdom';
 import { NotFoundError } from '../utilities/errors.util';
 import { basename } from 'path';
+import { LoggerService } from './logger.service';
 
 @Injectable()
 export class RedditScraper {
   constructor(
     @Inject('PostDao') private readonly postDao: PostDao,
-    @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory
+    @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory,
+    @Inject('LoggerService') private readonly logger: LoggerService
   ) {}
 
   getPostByUrl(url: string) {
+    this.logger.log('debug', 'Fetching post from Reddit', { url });
     return fetch(`${url}.json`)
       .then((response) => response.json())
       .then((data) => this.parseResponse(data));
   }
 
   private async parseResponse(res: RedditResponse) {
+    this.logger.log('debug', 'Processing Reddit Response');
     // 2 Layer filter.  The top layer goes through all the listings and the
     // second layer finds a post with `kind = t3`.  This kind is associated with
     // the actual posts themselves
@@ -61,7 +65,24 @@ export class RedditScraper {
       media
     } = post.data;
 
+    this.logger.log('debug', 'Check for post with matching ID', { id });
+    const existingPost = await this.postDao.getByMetadataValue(
+      RedditPostMetadataKeys.SOURCE_ID,
+      id
+    );
+
+    if (existingPost) {
+      this.logger.log('debug', 'Existing Post Found in Database', {
+        id: existingPost.id,
+        source_id: id
+      });
+      return existingPost;
+    } else {
+      this.logger.log('debug', 'No match found', { id });
+    }
+
     // Create the new entry record
+    this.logger.log('debug', 'Creating new post', { id });
     const newEntry: PostCreateDTO = {
       author,
       label: title,
@@ -88,6 +109,10 @@ export class RedditScraper {
       fileDetails = [this.textToMarkdown(title, selftext)];
     } else if (is_video && media?.reddit_video) {
       // The post is a video
+      this.logger.log('debug', 'Downloading video from post', {
+        url: media.reddit_video.fallback_url,
+        id
+      });
       fileDetails = [await this.mediaDownload(media.reddit_video.fallback_url)];
     } else if (url.includes('http://redgifs.com')) {
       // The post is a redgifs post
@@ -96,6 +121,7 @@ export class RedditScraper {
 
       const contentStr = videoElem?.getAttribute('content') ?? '';
       if (videoElem && contentStr) {
+        this.logger.log('debug', 'Downloading video from redgif', { url, id });
         fileDetails = [await this.mediaDownload(contentStr)];
       } else {
         throw new NotFoundError('Could not get RedGif content: ' + url);
@@ -104,6 +130,7 @@ export class RedditScraper {
       fileDetails = await this.getRedditGallaryImg(url);
     } else {
       // Assume it is a picture for now
+      this.logger.log('debug', 'Downloading image from post', { url, id });
       fileDetails = [await this.mediaDownload(url)];
     }
 
@@ -114,6 +141,11 @@ export class RedditScraper {
             detail.contentType ?? 'application/json'
           );
           const newFilename = `${randomUUID()}.${extension}`;
+
+          this.logger.log('debug', 'Saving files locally', {
+            id,
+            filename: newFilename
+          });
           const filename = await this.fileSystem.upload(
             detail.data,
             newFilename
@@ -133,6 +165,7 @@ export class RedditScraper {
     }
 
     // return newEntry;
+    this.logger.log('debug', 'Uploading saving post data');
     return this.postDao.create(newEntry);
   }
 
