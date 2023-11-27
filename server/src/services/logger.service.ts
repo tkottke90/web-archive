@@ -8,11 +8,21 @@ interface ILoggerService<Levels extends string> {
 }
 
 export class LoggerService implements ILoggerService<tempLevels> {
+  constructor(private commonMetadata: Record<string, any> = {}) {}
+
   log(level: tempLevels, message: string, metadata?: Record<string, any>) {
-    const metadataStr = metadata ? JSON.stringify(metadata) : '';
+    const combinedMetadata = Object.assign(this.commonMetadata, metadata);
+
+    // Allow for the input of a location to add more detail to the
+    // log messages
+    const locationStr = combinedMetadata?.location ?? '';
+
+    const metadataStr = JSON.stringify(combinedMetadata);
 
     console.log(
-      `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message} ${metadataStr}`
+      `[${new Date().toISOString()}]${
+        locationStr ? ` [${locationStr}] ` : ' '
+      }[${level.toUpperCase()}] ${message} ${metadataStr}`
     );
   }
 
@@ -22,6 +32,15 @@ export class LoggerService implements ILoggerService<tempLevels> {
     if (error.stack) {
       console.log(error.stack);
     }
+  }
+
+  /**
+   * Create a logger instance which can be used to extend
+   * the logger by populating metadata into log messages
+   * without having to add it each time
+   */
+  createLogger(metadata?: Record<string, any>) {
+    return new LoggerService(metadata);
   }
 }
 
