@@ -40,7 +40,7 @@ export class LoggerService implements ILoggerService<tempLevels> {
    * without having to add it each time
    */
   createLogger(metadata?: Record<string, any>) {
-    return new LoggerService(metadata);
+    return new LoggerService({ ...this.commonMetadata, ...metadata });
   }
 }
 
