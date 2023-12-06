@@ -2,13 +2,19 @@ import { Container, Inject, Injectable } from '@decorators/di';
 import { BaseDao } from './base.dao';
 import { PostFile } from '@prisma/client';
 import { DBClient } from '../db';
-import { PostFileDTO } from '../dto/post-file.dto';
+import { PostFileCreateDTO, PostFileDTO } from '../dto/post-file.dto';
 import { ROUTES } from '../config';
 
 @Injectable()
 export class PostFileDao extends BaseDao<PostFile, any> {
   constructor(@Inject('PrismaClient') private client: DBClient) {
     super(client);
+  }
+
+  create(postId: number, dto: PostFileCreateDTO) {
+    return this.client.postFile.create({
+      data: { postId, ...dto }
+    });
   }
 
   getById(id: number) {

@@ -165,7 +165,7 @@ export class RedditScraper {
     }
 
     // return newEntry;
-    this.logger.log('debug', 'Uploading saving post data');
+    this.logger.log('debug', 'Saving post data');
     return this.postDao.create(newEntry);
   }
 
