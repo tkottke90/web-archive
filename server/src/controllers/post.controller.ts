@@ -30,8 +30,7 @@ import { PostFileDao } from '../dao/post-file.dao';
 import { NotFoundError } from '../utilities/errors.util';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { TagDao } from '../dao/tag.dao';
-import { ROUTES } from '../config';
-import { UPLOAD_DIR } from '../constants';
+import { ROUTES, UPLOAD_DIR } from '../config';
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fieldSize: 25 * 1024 * 1024 }
