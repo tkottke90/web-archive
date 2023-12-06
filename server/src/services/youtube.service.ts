@@ -13,7 +13,6 @@ import { resolve } from 'path';
 import { PostFileDao } from '../dao/post-file.dao';
 import { stat } from 'fs/promises';
 import mime from 'mime-types';
-import { TaskFactory } from '../workers/worker-factory';
 
 const exec = promisify(childProcess.exec);
 
@@ -24,8 +23,7 @@ export class YoutubeParser {
     @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
     @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory,
     @Inject('LoggerService') readonly logger: LoggerService,
-    @Inject('PostDao') private readonly postDao: PostDao,
-    @Inject('TaskFactory') private readonly taskFactory: TaskFactory
+    @Inject('PostDao') private readonly postDao: PostDao
   ) {
     this.parserLogger = logger.createLogger({ location: 'YoutubeParser' });
   }
@@ -109,10 +107,6 @@ export class YoutubeParser {
     logger.log('info', 'Added video to queue');
 
     return post;
-  }
-
-  getUploadStatus(postId: number) {
-    this.taskFactory.getJobStatus(postId);
   }
 }
 
