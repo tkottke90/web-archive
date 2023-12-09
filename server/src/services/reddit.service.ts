@@ -79,7 +79,7 @@ export class RedditScraper {
         id: existingPost.id,
         source_id: id
       });
-      return existingPost;
+      return this.postDao.toDTO(existingPost);
     } else {
       this.logger.log('debug', 'No match found', { id });
     }
@@ -176,7 +176,9 @@ export class RedditScraper {
       await this.postTagDao.addOrCreateTag(newPost.id, SYSTEM_TAGS.NSFW);
     }
 
-    return newPost;
+    const postDetails = await this.postDao.getById(newPost.id);
+
+    return this.postDao.toDTO(postDetails);
   }
 
   private textToMarkdown(title: string, text: string) {
