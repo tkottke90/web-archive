@@ -30,6 +30,10 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
     });
   }
 
+  getByLabel(label: string) {
+    return this.prisma.tag.findFirst({ where: { label } });
+  }
+
   getById(id: number) {
     return this.prisma.tag.findFirst({ where: { id } });
   }
