@@ -30,8 +30,7 @@ export type RedditListing = RedditSchema<{
 
 export enum RedditPostMetadataKeys {
   'SOURCE_ID' = 'SOURCE_ID',
-  'PERMALINK' = 'PERMALINK',
-  'OVER_18' = 'OVER_18'
+  'PERMALINK' = 'PERMALINK'
 }
 
 export type RedditResponse = RedditListing[];
