@@ -23,6 +23,16 @@ export class PostTagDao extends BaseDao<PostTag, any> {
     }) as unknown as PostTagAssociation;
   }
 
+  async addOrCreateTag(postId: number, tagLabel: string) {
+    let tag = await this.tagDao.getByLabel(tagLabel);
+
+    if (!tag) {
+      tag = await this.tagDao.addTag({ label: tagLabel });
+    }
+
+    return await this.create(postId, tag.id);
+  }
+
   async delete(postId: number, tagId: number) {
     return this.client.postTag.delete({
       where: { postId_tagId: { postId, tagId } }
