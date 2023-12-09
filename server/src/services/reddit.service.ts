@@ -13,11 +13,14 @@ import { JSDOM } from 'jsdom';
 import { NotFoundError } from '../utilities/errors.util';
 import { basename } from 'path';
 import { LoggerService } from './logger.service';
+import { PostTagDao } from '../dao/post-tag.dao';
+import { SYSTEM_TAGS } from '../constants';
 
 @Injectable()
 export class RedditScraper {
   constructor(
     @Inject('PostDao') private readonly postDao: PostDao,
+    @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
     @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory,
     @Inject('LoggerService') private readonly logger: LoggerService
   ) {}
@@ -88,8 +91,10 @@ export class RedditScraper {
       label: title,
       source: `https://reddit.com${subreddit_name_prefixed}`,
       metadata: [
-        { name: RedditPostMetadataKeys.PERMALINK, value: permalink },
-        { name: RedditPostMetadataKeys.OVER_18, value: `${over_18}` },
+        {
+          name: RedditPostMetadataKeys.PERMALINK,
+          value: `https://reddit.com/${permalink}`
+        },
         { name: RedditPostMetadataKeys.SOURCE_ID, value: id }
       ],
       files: []
@@ -164,9 +169,14 @@ export class RedditScraper {
       );
     }
 
-    // return newEntry;
     this.logger.log('debug', 'Saving post data');
-    return this.postDao.create(newEntry);
+    const newPost = await this.postDao.create(newEntry);
+
+    if (over_18) {
+      await this.postTagDao.addOrCreateTag(newPost.id, SYSTEM_TAGS.NSFW);
+    }
+
+    return newPost;
   }
 
   private textToMarkdown(title: string, text: string) {
