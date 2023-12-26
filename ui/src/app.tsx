@@ -18,8 +18,8 @@ export function App() {
           headers={[
             { key: 'label', label: 'Label', className: 'font-bold'},
             { key: 'author', label: 'Author' },
-            { key: 'tags', label: 'Tags', transform: (tags) => tags.map(tag => (<Tag>{tag.value}</Tag>)), className: 'flex flex-wrap gap-px', columnStyles: 'w-80' },
-            { key: 'createdAt', label: 'Added On', transform: (date) => new Date(date).toLocaleDateString(), className: 'text-right', columnStyles: 'w-48'}
+            { key: 'tags', label: 'Tags', transform: (tags) => tags.slice(0, 3).map(tag => (<Tag>{tag.value}</Tag>)), className: 'flex flex-wrap gap-px', columnStyles: 'w-60' },
+            { key: 'createdAt', label: 'Added On', transform: (date) => new Date(date).toLocaleDateString(), className: 'text-right', columnStyles: 'w-32'}
           ]}
         />
         <br />
@@ -39,32 +39,7 @@ export function App() {
 
 function Tag({children}: {children: ComponentChildren}) {
   return (
-    <span className="rounded-full bg-crown-300 px-2 py-1 whitespace-nowrap hover:saturate-200">{children}</span>
-  )
-}
-
-function DataTable() {
-  return (
-    <table class="w-full table-auto">
-      <thead>
-        <tr class="bg-cloud-300">
-          <th class="text-left">Label</th>
-          <th class="text-left">Author</th>
-          <th class="text-left">Tags</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="border-b-2">
-          <td>
-            <strong>Test Post</strong>
-          </td>
-          <td>N00bkeper</td>
-          <td>
-            <span>Space Engineers</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <span className="rounded-full bg-crown-300 px-2 py-1 whitespace-nowrap">{children}</span>
   )
 }
 

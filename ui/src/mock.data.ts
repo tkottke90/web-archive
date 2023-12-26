@@ -37,6 +37,34 @@ export const mockData = [
         "value": "3D Printing",
         "createdAt": "2023-11-06T02:18:54.061Z",
         "updatedAt": "2023-11-06T02:18:54.061Z"
+      },
+      {
+        "post": "/post/4",
+        "tag": "/tags/3",
+        "value": "3D Printing",
+        "createdAt": "2023-11-06T02:18:54.061Z",
+        "updatedAt": "2023-11-06T02:18:54.061Z"
+      },
+      {
+        "post": "/post/4",
+        "tag": "/tags/3",
+        "value": "3D Printing",
+        "createdAt": "2023-11-06T02:18:54.061Z",
+        "updatedAt": "2023-11-06T02:18:54.061Z"
+      },
+      {
+        "post": "/post/4",
+        "tag": "/tags/3",
+        "value": "3D Printing",
+        "createdAt": "2023-11-06T02:18:54.061Z",
+        "updatedAt": "2023-11-06T02:18:54.061Z"
+      },
+      {
+        "post": "/post/4",
+        "tag": "/tags/3",
+        "value": "3D Printing",
+        "createdAt": "2023-11-06T02:18:54.061Z",
+        "updatedAt": "2023-11-06T02:18:54.061Z"
       }
     ],
     "createdAt": "2023-11-06T02:17:19.125Z",
