@@ -1,5 +1,8 @@
 import { Signal, useComputed, useSignal } from '@preact/signals';
 import { DrawerLayout } from './components/Layouts/DrawerLayout';
+import { Table } from './components/Table/Table';
+import { mockData } from './mock.data';
+import { ComponentChildren } from 'preact';
 
 export function App() {
   const currentPage = useSignal(1);
@@ -10,7 +13,15 @@ export function App() {
       <div class="bg-cloud-100 border rounded border-cloud-400 shadow-md p-4">
         <h2 className="text-2xl" >Posts</h2>
         <br />
-        <DataTable />
+        <Table
+          entries={mockData}
+          headers={[
+            { key: 'label', label: 'Label', className: 'font-bold'},
+            { key: 'author', label: 'Author' },
+            { key: 'tags', label: 'Tags', transform: (tags) => tags.map(tag => (<Tag>{tag.value}</Tag>)), className: 'flex flex-wrap gap-px', columnStyles: 'w-80' },
+            { key: 'createdAt', label: 'Added On', transform: (date) => new Date(date).toLocaleDateString(), className: 'text-right', columnStyles: 'w-48'}
+          ]}
+        />
         <br />
         <Pagination
           currentPage={currentPage}
@@ -23,6 +34,12 @@ export function App() {
         />
       </div>
     </DrawerLayout>
+  )
+}
+
+function Tag({children}: {children: ComponentChildren}) {
+  return (
+    <span className="rounded-full bg-crown-300 px-2 py-1 whitespace-nowrap hover:saturate-200">{children}</span>
   )
 }
 
