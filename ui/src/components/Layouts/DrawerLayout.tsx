@@ -7,8 +7,6 @@ type DrawerProps = {
 }
 
 export function DrawerLayout(props: DrawerProps) {
-
-
   return (
     <main class="h-full w-full grid grid-cols-[250px_1fr]">
       <aside class="bg-burnt-500 text-cloud-200 h-full flex flex-col gap-1 shadow-sm ">
@@ -17,7 +15,7 @@ export function DrawerLayout(props: DrawerProps) {
 
         </section>
         <section>
-          <Link>
+          <Link disabled>
             <nav class="w-full p-4 uppercase text-center text-lg">Settings</nav>
           </Link>
         </section>

@@ -1,12 +1,103 @@
+import { Signal, useComputed, useSignal } from '@preact/signals';
 import { DrawerLayout } from './components/Layouts/DrawerLayout';
 
 export function App() {
+  const currentPage = useSignal(1);
+  const pageCount = useSignal(10);
 
   return (
     <DrawerLayout>
       <div class="bg-cloud-100 border rounded border-cloud-400 shadow-md p-4">
         <h2 className="text-2xl" >Posts</h2>
+        <br />
+        <DataTable />
+        <br />
+        <Pagination
+          currentPage={currentPage}
+          pageCount={pageCount}
+          onPageChange={(nextPage) => {
+            console.log('Next Page: ', nextPage);
+
+            currentPage.value = nextPage;
+          }}
+        />
       </div>
     </DrawerLayout>
+  )
+}
+
+function DataTable() {
+  return (
+    <table class="w-full table-auto">
+      <thead>
+        <tr class="bg-cloud-300">
+          <th class="text-left">Label</th>
+          <th class="text-left">Author</th>
+          <th class="text-left">Tags</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b-2">
+          <td>
+            <strong>Test Post</strong>
+          </td>
+          <td>N00bkeper</td>
+          <td>
+            <span>Space Engineers</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+interface PaginationProps {
+  pageCount: Signal<number>;
+  currentPage: Signal<number>;
+  onPageChange: (nextPage: number) => void
+}
+
+function Pagination(props: PaginationProps) {
+  const minDisabled = useComputed(() => {
+    return props.currentPage.value <= 1;
+  });
+
+  const maxDisabled = useComputed(() => {
+    return props.currentPage.value >= props.pageCount.value;
+  });
+
+  return (
+    <div class="flex gap-2 ml-auto justify-end">
+      <button disabled={minDisabled} onClick={() => {
+        if (!minDisabled.value) {
+          props.onPageChange(props.currentPage.value - 1)
+        }
+      }}>Prev</button>
+      <span>
+        <span>Page&nbsp;</span>
+        <input
+          type="number"
+          className="inline bg-transparent border-b-2 border-slate-300 w-16 text-right"
+          min={1}
+          max={props.pageCount.value}
+          value={props.currentPage.value}
+          onChange={(e) => {
+            e.preventDefault();
+
+            const target = e.target as HTMLInputElement;
+            props.onPageChange(Number(target.value))
+          }}
+        />
+        <span>&nbsp;of {props.pageCount}</span>
+      </span>
+
+      <button
+        disabled={maxDisabled} 
+        onClick={() =>{
+          if (!maxDisabled.value) {
+            props.onPageChange(props.currentPage.value + 1)
+          }
+        }}>Next</button>
+    </div>
   )
 }
