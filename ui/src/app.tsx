@@ -1,12 +1,29 @@
-import { Signal, useComputed, useSignal } from '@preact/signals';
+import { Signal, batch, useComputed, useSignal, useSignalEffect } from '@preact/signals';
 import { DrawerLayout } from './components/Layouts/DrawerLayout';
 import { Table } from './components/Table/Table';
 import { mockData } from './mock.data';
 import { ComponentChildren } from 'preact';
+import { PostDTO } from '../../server/src/dto/post.dto';
+import { getPosts } from './services/post.service';
+
+const PAGE_SIZE = 10;
 
 export function App() {
   const currentPage = useSignal(1);
   const pageCount = useSignal(10);
+  const posts = useSignal<Signal<PostDTO>[]>([]);
+
+  useSignalEffect(() => {
+    getPosts<PostDTO>({ limit: PAGE_SIZE, skip: (currentPage.value - 1) * PAGE_SIZE }).then((data) => {
+      console.log(data);
+
+      batch(() => {
+        posts.value = data.data.map(post => new Signal(post));
+        currentPage.value = data.pagination.currentPage;
+        pageCount.value = data.pagination.totalPages;
+      });
+    });
+  });
 
   return (
     <DrawerLayout>
@@ -14,7 +31,7 @@ export function App() {
         <h2 className="text-2xl" >Posts</h2>
         <br />
         <Table
-          entries={mockData}
+          entries={posts.value}
           headers={[
             { key: 'label', label: 'Label', className: 'font-bold'},
             { key: 'author', label: 'Author' },

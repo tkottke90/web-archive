@@ -48,13 +48,15 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   }
 
   find(query: PostQueryDTO) {
-    const { take, skip, orderBy, data } = this.parseQuery(query);
+    const { take, skip, orderBy, where } = this.generateFindStatement(query);
 
-    const where: Prisma.PostWhereInput = this.toPersistance(data);
+    // const { take, skip, orderBy, data } = this.parseQuery(query);
 
-    if (data.tag) {
-      where.postTags = { some: { tagId: data.tag } };
-    }
+    // const where: Prisma.PostWhereInput = this.toPersistance(data);
+
+    // if (data.tag) {
+    //   where.postTags = { some: { tagId: data.tag } };
+    // }
 
     return this.client.post.findMany({
       take,
@@ -105,6 +107,18 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     });
   }
 
+  async paginationDetails(query: PostQueryDTO) {
+    const { take, skip, where } = this.generateFindStatement(query);
+
+    const count = await this.client.post.count({ where });
+
+    return {
+      currentPage: Math.ceil(skip / take) + 1,
+      totalPages: Math.ceil(count / take),
+      totalItems: count
+    };
+  }
+
   toDTO(input: PostWithAssociations): PostDTO {
     return {
       self: `${ROUTES.POSTS}/${input.id}`,
@@ -131,6 +145,18 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       updatedAt: input.updatedAt ?? undefined,
       source: input.source ?? undefined
     };
+  }
+
+  private generateFindStatement(query: PostQueryDTO) {
+    const { take, skip, orderBy, data } = this.parseQuery(query);
+
+    const where: Prisma.PostWhereInput = this.toPersistance(data);
+
+    if (data.tag) {
+      where.postTags = { some: { tagId: data.tag } };
+    }
+
+    return { take, skip, orderBy, where };
   }
 }
 

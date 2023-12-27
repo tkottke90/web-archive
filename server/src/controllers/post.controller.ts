@@ -54,7 +54,10 @@ export class PostController {
     try {
       const posts = await this.postDao.find(query);
 
-      res.send(posts.map((p) => this.postDao.toDTO(p)));
+      res.json({
+        pagination: await this.postDao.paginationDetails(query),
+        data: posts.map((p) => this.postDao.toDTO(p))
+      });
     } catch (error) {
       next(error);
     }
