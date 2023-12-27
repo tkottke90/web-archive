@@ -55,3 +55,4 @@ export function get<T>(path: string, init?: RequestInit) {
 export function getPaged<T>(path: string, init?: RequestInit) {
   return fetch(path, init).then(parsePagedResponse<T>);
 }
+

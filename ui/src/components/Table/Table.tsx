@@ -11,10 +11,11 @@ type TableHeader<T> = { [K in keyof T]: {
 
 interface TableProps<T extends Record<string, any>> {
   headers: Array<TableHeader<T>>,
-  entries: Signal<T>[]
+  entries: Signal<T>[],
+  onRowClick?: (rowData: Signal<T>, rowIndex: number) => void
 }
 
-export function Table<T extends Record<string, any>>({ headers, entries }: TableProps<T>) {
+export function Table<T extends Record<string, any>>({ headers, entries, onRowClick }: TableProps<T>) {
   return (
     <table class="w-full table-fixed">
       <colgroup>
@@ -26,8 +27,12 @@ export function Table<T extends Record<string, any>>({ headers, entries }: Table
         </tr>
       </thead>
       <tbody>
-          {entries.map(entry => 
-            <tr class="py-4 border-b-2 hover:bg-burnt-100 hover:cursor-pointer">
+          {entries.map((entry, index) => 
+            <tr class="py-4 border-b-2 hover:bg-burnt-100 hover:cursor-pointer" onClick={(e) => {
+              e.preventDefault();
+
+              onRowClick && onRowClick(entry, index);
+            }} >
               {headers.map(col => {
                 const value = col.transform
                   ? col.transform(entry.value[col.key])
