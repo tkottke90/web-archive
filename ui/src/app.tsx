@@ -1,7 +1,6 @@
 import { Signal, batch, useComputed, useSignal, useSignalEffect } from '@preact/signals';
 import { DrawerLayout } from './components/Layouts/DrawerLayout';
 import { Table } from './components/Table/Table';
-import { mockData } from './mock.data';
 import { ComponentChildren } from 'preact';
 import { PostDTO } from '../../server/src/dto/post.dto';
 import { getPosts } from './services/post.service';
