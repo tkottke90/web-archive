@@ -32,7 +32,7 @@ export function App() {
         <Table
           entries={posts.value}
           headers={[
-            { key: 'label', label: 'Label', className: 'font-bold'},
+            { key: 'label', label: 'Label', className: 'font-bold capitalize'},
             { key: 'author', label: 'Author' },
             { key: 'tags', label: 'Tags', transform: (tags) => tags.slice(0, 3).map(tag => (<Tag>{tag.value}</Tag>)), className: 'flex flex-wrap gap-px', columnStyles: 'w-60' },
             { key: 'createdAt', label: 'Added On', transform: (date) => new Date(date).toLocaleDateString(), className: 'text-right', columnStyles: 'w-32'}
