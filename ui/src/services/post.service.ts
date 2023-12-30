@@ -17,12 +17,6 @@ effect(() => {
     ? 0
     : currentPage.value - 1
 
-  const url = new URL(location.href);
-  url.searchParams.delete('currentPage')
-  url.searchParams.append('currentPage', String(currentPage.value));
-  history.pushState({ path: url.toString() }, '', url.toString());
-
-
   getPosts<PostDTO>({ limit: PAGE_SIZE, skip: skip * PAGE_SIZE }).then((data) => {
 
     batch(() => {

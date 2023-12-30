@@ -1,4 +1,4 @@
-import { Signal, useComputed } from '@preact/signals';
+import { Signal, useComputed, useSignalEffect } from '@preact/signals';
 import { ComponentChildren } from 'preact';
 import { route } from 'preact-router';
 import { DrawerLayout } from '../../components/Layouts/DrawerLayout';
@@ -6,6 +6,13 @@ import { Table } from '../../components/Table/Table';
 import { currentPage, pageCount, posts } from '../../services/post.service';
 
 export function HomePage() {
+
+  useSignalEffect(() => {
+    const url = new URL(location.href);
+    url.searchParams.delete('currentPage')
+    url.searchParams.append('currentPage', String(currentPage.value));
+    history.pushState({ path: url.toString() }, '', url.toString());
+  })
 
   return (
     <DrawerLayout>
