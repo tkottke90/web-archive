@@ -3,7 +3,7 @@ import { ComponentChildren } from 'preact';
 import { route } from 'preact-router';
 import { DrawerLayout } from '../../components/Layouts/DrawerLayout';
 import { Table } from '../../components/Table/Table';
-import { currentPage, pageCount, posts } from '../../services/post.service';
+import { currentPage, pageCount, posts, loadPosts, skip } from '../../services/post.service';
 
 export function HomePage() {
 
@@ -12,7 +12,11 @@ export function HomePage() {
     url.searchParams.delete('currentPage')
     url.searchParams.append('currentPage', String(currentPage.value));
 
-    
+    if (url.searchParams.get('refresh')) {
+      loadPosts({ skip: skip.value });
+      url.searchParams.delete('refresh');
+    }
+
     history.pushState({ path: url.toString() }, '', url.toString());
   })
 
@@ -54,7 +58,7 @@ export function HomePage() {
 
 function Tag({children}: {children: ComponentChildren}) {
   return (
-    <span className="rounded-full bg-crown-300 px-2 py-1 whitespace-nowrap">{children}</span>
+    <span className="rounded-full bg-crown-300 px-2 py-1 whitespace-nowrap font-bold text-sm">{children}</span>
   )
 }
 

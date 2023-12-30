@@ -45,7 +45,7 @@ export function DetailsPage() {
                   if (post.value?.self) {
                     deletePost(post.value.self)
                       .then(() => {
-                        route('/');
+                        route('/?refresh=true');
                       })
                       .catch((err: Http.ErrorResponse) => {
                         showDeleteModal.value = false;

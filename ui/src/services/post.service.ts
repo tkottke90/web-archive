@@ -1,6 +1,6 @@
 import { get, getPaged, remove } from "../utilities/http.utils";
 import { PostDTO } from '../../../server/src/dto/post.dto';
-import { Signal, batch, effect } from "@preact/signals";
+import { Signal, batch, effect, computed } from "@preact/signals";
 
 const initialSearch = new URLSearchParams(window.location.search);
 
@@ -11,20 +11,14 @@ export const currentPage = new Signal(Number(initialSearch.get('currentPage')) ?
 export const pageCount = new Signal(0);
 export const loading = new Signal(true);
 export const error = new Signal<string | undefined>();
-
-effect(() => {
-  const skip = currentPage.value == 0
+export const skip = computed(() => {
+  return currentPage.value == 0
     ? 0
     : currentPage.value - 1
+});
 
-  getPosts<PostDTO>({ limit: PAGE_SIZE, skip: skip * PAGE_SIZE }).then((data) => {
-
-    batch(() => {
-      posts.value = data.data.map(post => new Signal(post));
-      currentPage.value = data.pagination.currentPage;
-      pageCount.value = data.pagination.totalPages;
-    });
-  });
+effect(() => {
+    loadPosts({ skip: skip.value });
 })
 
 interface GetPostInputs {
@@ -32,7 +26,7 @@ interface GetPostInputs {
   skip?: number;
 }
 
-export function getPosts<T>({limit, skip}: GetPostInputs) {
+function getPosts<T>({limit, skip}: GetPostInputs) {
   const queryParams = new URLSearchParams();
   queryParams.append('limit', `${limit ?? 5}`);
   queryParams.append('skip', `${skip ?? 0}`);
@@ -48,6 +42,18 @@ export function postDetails(url: string) {
   }
 
   return get<PostDTO>(`/api${url}`)
+}
+
+export function loadPosts( options: { limit?: number, skip?: number}) {
+  getPosts<PostDTO>({ limit: options.limit ?? PAGE_SIZE, skip: (options.skip ?? 0) * PAGE_SIZE })
+    .then((data) => {
+
+      batch(() => {
+        posts.value = data.data.map(post => new Signal(post));
+        currentPage.value = data.pagination.currentPage;
+        pageCount.value = data.pagination.totalPages;
+      });
+    });
 }
 
 export function deletePost(url: string) {
