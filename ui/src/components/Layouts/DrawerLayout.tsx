@@ -20,7 +20,7 @@ export function DrawerLayout(props: DrawerProps) {
           </Link>
         </section>
       </aside>
-      <section className={['h-full p-4', props.children ].join(' ')}>
+      <section className={['h-full p-4', props.className ].join(' ')}>
         {props.children}
       </section>
     </main>

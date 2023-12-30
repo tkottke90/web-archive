@@ -1,4 +1,4 @@
-import { getPaged } from "../utilities/http.utils";
+import { get, getPaged } from "../utilities/http.utils";
 import { PostDTO } from '../../../server/src/dto/post.dto';
 import { Signal, batch, effect } from "@preact/signals";
 
@@ -36,4 +36,14 @@ export function getPosts<T>({limit, skip}: GetPostInputs) {
   queryParams.append('skip', `${skip ?? 0}`);
   
   return getPaged<T>(`/api/post?${queryParams.toString()}`)
+}
+
+export function postDetails(url: string) {
+  let post = posts.value.find(post => post.value.self.endsWith(url));
+
+  if (post) {
+    return Promise.resolve(post.value);
+  }
+
+  return get<PostDTO>(`/api${url}`)
 }
