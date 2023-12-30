@@ -121,7 +121,7 @@ export class RedditScraper {
         id
       });
       fileDetails = [await this.mediaDownload(media.reddit_video.fallback_url)];
-    } else if (url.includes('https://redgifs.com')) {
+    } else if (url.match(/http[s]?:\/\/(www.)?redgifs.com/)) {
       // The post is a redgifs post
 
       const videoElem = await this.htmlParser(url, '[property="og:video"]');
