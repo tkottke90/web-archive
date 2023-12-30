@@ -17,10 +17,6 @@ effect(() => {
     ? 0
     : currentPage.value - 1
 
-  // const search = new URLSearchParams(window.location.search);
-  // search.set('currentPage', String(currentPage.value));
-  // window.location.search = search.toString();
-
   const url = new URL(location.href);
   url.searchParams.delete('currentPage')
   url.searchParams.append('currentPage', String(currentPage.value));
