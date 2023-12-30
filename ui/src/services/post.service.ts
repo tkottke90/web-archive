@@ -2,10 +2,12 @@ import { get, getPaged } from "../utilities/http.utils";
 import { PostDTO } from '../../../server/src/dto/post.dto';
 import { Signal, batch, effect } from "@preact/signals";
 
+const initialSearch = new URLSearchParams(window.location.search);
+
 const PAGE_SIZE = 10;
 
 export const posts = new Signal<Signal<PostDTO>[]>([])
-export const currentPage = new Signal(0);
+export const currentPage = new Signal(Number(initialSearch.get('currentPage')) ?? 0);
 export const pageCount = new Signal(0);
 export const loading = new Signal(true);
 export const error = new Signal<string | undefined>();
@@ -14,6 +16,16 @@ effect(() => {
   const skip = currentPage.value == 0
     ? 0
     : currentPage.value - 1
+
+  // const search = new URLSearchParams(window.location.search);
+  // search.set('currentPage', String(currentPage.value));
+  // window.location.search = search.toString();
+
+  const url = new URL(location.href);
+  url.searchParams.delete('currentPage')
+  url.searchParams.append('currentPage', String(currentPage.value));
+  history.pushState({ path: url.toString() }, '', url.toString());
+
 
   getPosts<PostDTO>({ limit: PAGE_SIZE, skip: skip * PAGE_SIZE }).then((data) => {
 

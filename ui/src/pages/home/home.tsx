@@ -23,7 +23,7 @@ export function HomePage() {
             { 
               key: 'tags', 
               label: 'Tags', 
-              transform: (tags) => tags.slice(0, 3).map(tag => (<Tag>{tag.value}</Tag>)),
+              transform: (tags) => (tags ?? []).slice(0, 3).map(tag => (<Tag>{tag.value}</Tag>)),
               className: 'flex flex-wrap gap-px',
               columnStyles: 'w-60'
             },
