@@ -4,10 +4,14 @@ import { PostFile } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostFileCreateDTO, PostFileDTO } from '../dto/post-file.dto';
 import { ROUTES } from '../config';
+import { FileSystemFactory } from '../services';
 
 @Injectable()
 export class PostFileDao extends BaseDao<PostFile, any> {
-  constructor(@Inject('PrismaClient') private client: DBClient) {
+  constructor(
+    @Inject('PrismaClient') private readonly client: DBClient,
+    @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory
+  ) {
     super(client);
   }
 
@@ -15,6 +19,14 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     return this.client.postFile.create({
       data: { postId, ...dto }
     });
+  }
+
+  async deleteFiles(postId: number) {
+    const files = await this.client.postFile.findMany({ where: { postId } });
+
+    for (const file of files) {
+      await this.fileSystem.remove(file.filename);
+    }
   }
 
   getById(id: number) {

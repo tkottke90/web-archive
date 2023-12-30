@@ -50,14 +50,6 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   find(query: PostQueryDTO) {
     const { take, skip, orderBy, where } = this.generateFindStatement(query);
 
-    // const { take, skip, orderBy, data } = this.parseQuery(query);
-
-    // const where: Prisma.PostWhereInput = this.toPersistance(data);
-
-    // if (data.tag) {
-    //   where.postTags = { some: { tagId: data.tag } };
-    // }
-
     return this.client.post.findMany({
       take,
       skip,
@@ -104,6 +96,14 @@ export class PostDao extends BaseDao<Post, PostDTO> {
         metadata,
         files
       }
+    });
+  }
+
+  async remove(postId: number) {
+    await this.postFileDao.deleteFiles(postId);
+
+    return this.client.post.delete({
+      where: { id: postId }
     });
   }
 

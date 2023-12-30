@@ -1,4 +1,4 @@
-import { get, getPaged } from "../utilities/http.utils";
+import { get, getPaged, remove } from "../utilities/http.utils";
 import { PostDTO } from '../../../server/src/dto/post.dto';
 import { Signal, batch, effect } from "@preact/signals";
 
@@ -48,4 +48,8 @@ export function postDetails(url: string) {
   }
 
   return get<PostDTO>(`/api${url}`)
+}
+
+export function deletePost(url: string) {
+  return remove(`/api${url}`);
 }

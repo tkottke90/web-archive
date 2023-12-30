@@ -3,13 +3,21 @@ import { Card } from "../../components/Layouts/Card";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { PostDTO } from "../../../../server/src/dto/post.dto";
 import { ComponentChildren, Fragment, JSX } from "preact";
-import { postDetails } from "../../services/post.service";
+import { deletePost, postDetails } from "../../services/post.service";
 import { Table } from "../../components/Table/Table";
+import { Modal } from "@tkottke90/preact-components";
+import { getPortalContainer } from "../../utilities/dom.utils";
+import { route } from "preact-router";
+import { Http } from "../../interfaces/http.interface";
+import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
+
+const portal = getPortalContainer('modals');
 
 type PostEntity = Signal<PostDTO | undefined>;
 
 export function DetailsPage() {
   const post = useSignal<PostDTO | undefined>(undefined);
+  const showDeleteModal = useSignal(false);
   const loading = useSignal(true);
 
   useSignalEffect(() => {
@@ -22,35 +30,67 @@ export function DetailsPage() {
   });
 
   return (
-    <Loading loading={loading} >
-      <DrawerLayout className="grid grid-flow-row grid-cols-4 auto-rows-min gap-2">
-        <Card className="col-span-3">
-          <h2>Post Details</h2>
-          
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2 items-center">
-              <label htmlFor="label">Label</label>
-              <input value={ post.value?.label } className="w-full"/>
-            </div>
+    <DrawerLayout className="grid grid-flow-row grid-cols-4 auto-rows-min gap-2">
+        <Loading loading={loading} >
+          <div className="col-span-4 flex justify-between">
+            <div></div>
+            <div>
+              <ConfirmButton
+                label="Delete"
+                className="text-crown-500 border border-crown-500"
+                confirmClassName="bg-crown-500 text-slate-200"
+                onConfirm={() => {
+                  showDeleteModal.value = true;
 
-            <div className="flex gap-2 items-center">
-              <label htmlFor="label">Author</label>
-              <input value={ post.value?.author } className="w-full"/>
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <label htmlFor="label">Source</label>
-              <input value={ post.value?.source } className="w-full"/>
+                  if (post.value?.self) {
+                    deletePost(post.value.self)
+                      .then(() => {
+                        route('/');
+                      })
+                      .catch((err: Http.ErrorResponse) => {
+                        showDeleteModal.value = false;
+                        console.log('Error Deleting');
+                        console.dir(err);
+                      });
+                  }
+                }}  
+              />
             </div>
           </div>
-        </Card>
-        <Card className="col-span-1">
-          <h4>Tags</h4>
-        </Card>
-        <MetadataCard post={post} />
-        <MediaCard post={post} />
+          <Card className="col-span-3">
+            <h2>Post Details</h2>
+            
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2 items-center">
+                <label htmlFor="label">Label</label>
+                <input value={ post.value?.label } className="w-full"/>
+              </div>
+
+              <div className="flex gap-2 items-center">
+                <label htmlFor="label">Author</label>
+                <input value={ post.value?.author } className="w-full"/>
+              </div>
+
+              <div className="flex gap-2 items-center">
+                <label htmlFor="label">Source</label>
+                <input value={ post.value?.source } className="w-full"/>
+              </div>
+            </div>
+          </Card>
+          <Card className="col-span-1">
+            <h4>Tags</h4>
+          </Card>
+          <MetadataCard post={post} />
+          <MediaCard post={post} />
+        </Loading>
+        <Modal
+          portal={portal}
+          show={showDeleteModal}
+          disableScrimClose={true}
+        >
+          <h3>Deleting Post</h3>
+        </Modal>
       </DrawerLayout>
-    </Loading>
   )
 }
 
@@ -93,6 +133,7 @@ function MediaCard({ post }: { post: PostEntity }) {
   return (
     <Card className="col-span-2">
       <h4>Media</h4>
+      <br />
       { !post.value?.files?.length && <p>No Media</p> }
       
       <div className="grid grid-cols-3 auto-rows-min gap-2">

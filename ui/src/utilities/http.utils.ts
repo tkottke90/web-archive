@@ -18,6 +18,21 @@ export function parseQuery<T>(q: Http.SharedQueryParams<T>) {
   return $query;
 }
 
+async function parseTextResponse(res: Response) {
+  if (!res.ok) {
+    const err: Http.ErrorResponse = {
+      code: res.status,
+      error: res.statusText,
+      url: res.url,
+      data: await res.json()
+    };
+
+    throw err;
+  }
+
+  return res.text();
+}
+
 async function parseResponse<T>(res: Response) {
   if (!res.ok) {
     const err: Http.ErrorResponse = {
@@ -56,3 +71,6 @@ export function getPaged<T>(path: string, init?: RequestInit) {
   return fetch(path, init).then(parsePagedResponse<T>);
 }
 
+export function remove(path: string, init?: RequestInit) {
+  return fetch(path, Object.assign({}, init, { method: 'DELETE' })).then(parseTextResponse);
+}

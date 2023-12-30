@@ -11,6 +11,8 @@ export function HomePage() {
     const url = new URL(location.href);
     url.searchParams.delete('currentPage')
     url.searchParams.append('currentPage', String(currentPage.value));
+
+    
     history.pushState({ path: url.toString() }, '', url.toString());
   })
 

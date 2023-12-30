@@ -82,6 +82,21 @@ export class PostController {
     }
   }
 
+  @Delete('/:postId', [ZodIdValidator('postId')])
+  async deletePost(
+    @Params('postId') postId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      await this.postDao.remove(postId);
+
+      res.status(204).json({});
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Get('/:postId/files/:fileId', [ZodIdValidator('fileId')])
   async getFile(
     @Params('fileId') fileId: number,
