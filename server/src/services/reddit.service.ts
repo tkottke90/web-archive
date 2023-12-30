@@ -196,16 +196,6 @@ ${text}`;
   }
 
   private async getRedditGalleryImg(media: Record<string, MediaMetadataValue>) {
-    // const html = await JSDOM.fromURL(url);
-
-    // The gallery puts the subreddit at the start of the `alt` attribute and
-    // we can scrape off of that which images are actually related to the post
-    // const imgNodes = html.window.document.querySelectorAll('img[alt^="r/"]');
-
-    // if (imgNodes.length <= 0) {
-    //   throw new NotFoundError('No image found in reddit gallery: ' + url);
-    // }
-
     return await Promise.all(
       Object.values(media).map((node) => {
         const url = node.s.u ?? node.p.pop()?.u ?? node.o.pop()?.u ?? '';
