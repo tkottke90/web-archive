@@ -41,7 +41,7 @@ export function postDetails(url: string) {
     return Promise.resolve(post.value);
   }
 
-  return get<PostDTO>(`/api${url}`)
+  return get<PostDTO>(`${url}`)
 }
 
 export function loadPosts( options: { limit?: number, skip?: number}) {
@@ -56,6 +56,18 @@ export function loadPosts( options: { limit?: number, skip?: number}) {
     });
 }
 
+export function updateLocalPost(post: PostDTO) {
+  const targetIndex = posts
+    .value
+    .findIndex((postSignal) => {
+      postSignal.value.self === post.self
+    })
+
+  if (targetIndex != -1) {
+    posts.value[targetIndex].value = post;
+  }
+}
+
 export function deletePost(url: string) {
-  return remove(`/api${url}`);
+  return remove(`${url}`);
 }

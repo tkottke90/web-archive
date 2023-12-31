@@ -1,46 +1,46 @@
-import { Signal, useComputed, useSignalEffect } from '@preact/signals';
-import { ComponentChildren } from 'preact';
-import { route } from 'preact-router';
-import { DrawerLayout } from '../../components/Layouts/DrawerLayout';
-import { Table } from '../../components/Table/Table';
-import { currentPage, pageCount, posts, loadPosts, skip } from '../../services/post.service';
+import { Signal, useComputed, useSignalEffect } from "@preact/signals";
+import { ComponentChildren } from "preact";
+import { route } from "preact-router";
+import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
+import { Table } from "../../components/Table/Table";
+import { currentPage, pageCount, posts, loadPosts, skip } from "../../services/post.service";
 
 export function HomePage() {
-
   useSignalEffect(() => {
     const url = new URL(location.href);
-    url.searchParams.delete('currentPage')
-    url.searchParams.append('currentPage', String(currentPage.value));
+    url.searchParams.delete("currentPage");
+    url.searchParams.append("currentPage", String(currentPage.value));
 
-    if (url.searchParams.get('refresh')) {
+    if (url.searchParams.get("refresh")) {
       loadPosts({ skip: skip.value });
-      url.searchParams.delete('refresh');
+      url.searchParams.delete("refresh");
     }
 
-    history.pushState({ path: url.toString() }, '', url.toString());
-  })
+    history.pushState({ path: url.toString() }, "", url.toString());
+  });
 
   return (
     <DrawerLayout>
       <div class="bg-cloud-100 border rounded border-cloud-400 shadow-md p-4">
-        <h2 className="text-2xl" >Posts</h2>
+        <h2 className="text-2xl">Posts</h2>
         <br />
         <Table
           onRowClick={(data) => {
-            route(`/${data.value.self.split('/').slice(1).join('/')}`);
+            console.log(`/${data.value.self.split("/").slice(2).join("/")}`)
+            route(`/${data.value.self.split("/").slice(2).join("/")}`);
           }}
           entries={posts.value}
           headers={[
-            { key: 'label', label: 'Label', className: 'font-bold capitalize'},
-            { key: 'author', label: 'Author' },
-            { 
-              key: 'tags', 
-              label: 'Tags', 
-              transform: (tags) => (tags ?? []).slice(0, 3).map(tag => (<Tag>{tag.value}</Tag>)),
-              className: 'flex flex-wrap gap-px',
-              columnStyles: 'w-60'
+            { key: "label", label: "Label", className: "font-bold capitalize" },
+            { key: "author", label: "Author" },
+            {
+              key: "tags",
+              label: "Tags",
+              transform: (tags) => (tags ?? []).slice(0, 3).map((tag) => <Tag>{tag.value}</Tag>),
+              className: "flex flex-wrap gap-px",
+              columnStyles: "w-60",
             },
-            { key: 'createdAt', label: 'Added On', transform: (date) => new Date(date).toLocaleDateString(), className: 'text-right', columnStyles: 'w-32'}
+            { key: "createdAt", label: "Added On", transform: (date) => new Date(date).toLocaleDateString(), className: "text-right", columnStyles: "w-32" },
           ]}
         />
         <br />
@@ -53,19 +53,17 @@ export function HomePage() {
         />
       </div>
     </DrawerLayout>
-  )
+  );
 }
 
-function Tag({children}: {children: ComponentChildren}) {
-  return (
-    <span className="rounded-full bg-crown-300 px-2 py-1 whitespace-nowrap font-bold text-sm">{children}</span>
-  )
+function Tag({ children }: { children: ComponentChildren }) {
+  return <span className="rounded-full bg-crown-300 px-2 py-1 whitespace-nowrap font-bold text-sm">{children}</span>;
 }
 
 interface PaginationProps {
   pageCount: Signal<number>;
   currentPage: Signal<number>;
-  onPageChange: (nextPage: number) => void
+  onPageChange: (nextPage: number) => void;
 }
 
 function Pagination(props: PaginationProps) {
@@ -79,11 +77,16 @@ function Pagination(props: PaginationProps) {
 
   return (
     <div class="flex gap-2 ml-auto justify-end">
-      <button disabled={minDisabled} onClick={() => {
-        if (!minDisabled.value) {
-          props.onPageChange(props.currentPage.value - 1)
-        }
-      }}>Prev</button>
+      <button
+        disabled={minDisabled}
+        onClick={() => {
+          if (!minDisabled.value) {
+            props.onPageChange(props.currentPage.value - 1);
+          }
+        }}
+      >
+        Prev
+      </button>
       <span>
         <span>Page&nbsp;</span>
         <input
@@ -96,19 +99,22 @@ function Pagination(props: PaginationProps) {
             e.preventDefault();
 
             const target = e.target as HTMLInputElement;
-            props.onPageChange(Number(target.value))
+            props.onPageChange(Number(target.value));
           }}
         />
         <span>&nbsp;of {props.pageCount}</span>
       </span>
 
       <button
-        disabled={maxDisabled} 
-        onClick={() =>{
+        disabled={maxDisabled}
+        onClick={() => {
           if (!maxDisabled.value) {
-            props.onPageChange(props.currentPage.value + 1)
+            props.onPageChange(props.currentPage.value + 1);
           }
-        }}>Next</button>
+        }}
+      >
+        Next
+      </button>
     </div>
-  )
+  );
 }

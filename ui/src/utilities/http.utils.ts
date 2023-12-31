@@ -71,6 +71,22 @@ export function getPaged<T>(path: string, init?: RequestInit) {
   return fetch(path, init).then(parsePagedResponse<T>);
 }
 
+export function post<T>(path: string, body?: T, init?: RequestInit) {
+  const headers = new Headers();
+
+  headers.append('Content-Type', 'application/json');
+  
+  return fetch(
+    path,
+    { 
+      ...init,
+      headers,
+      body: JSON.stringify(body),
+      method: 'POST'
+    }
+  ).then(parseResponse<T>);
+}
+
 export function remove(path: string, init?: RequestInit) {
   return fetch(path, Object.assign({}, init, { method: 'DELETE' })).then(parseTextResponse);
 }

@@ -24,6 +24,7 @@ export type TagQueryDTO = z.infer<typeof TagQuerySchema>;
 
 export const PostTag = BaseSchema(
   z.object({
+    self: z.string(),
     post: z.string(),
     tag: z.string(),
     value: z.string()

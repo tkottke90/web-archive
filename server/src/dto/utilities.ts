@@ -11,7 +11,7 @@ export const BaseSchema = <T extends ZodRawShape>(schema: ZodObject<T>) =>
       self: z.string(),
       createdAt: z.date(),
       updatedAt: z.date(),
-      links: z.record(z.record(z.string(), z.string()))
+      links: z.record(z.string(), z.string())
     })
     .merge(schema);
 

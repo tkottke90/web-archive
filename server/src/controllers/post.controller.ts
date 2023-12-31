@@ -31,6 +31,7 @@ import { NotFoundError } from '../utilities/errors.util';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { TagDao } from '../dao/tag.dao';
 import { ROUTES, UPLOAD_DIR } from '../config';
+import { z } from 'zod';
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fieldSize: 25 * 1024 * 1024 }
@@ -136,9 +137,18 @@ export class PostController {
     }
   }
 
-  @Get('/:postId/tag-search', [ZodIdValidator('postId')])
+  @Get('/:postId/tag-search', [
+    ZodIdValidator('postId'),
+    ZodQueryValidator(
+      z.object({
+        limit: z.number({ coerce: true }).optional(),
+        filter: z.string().optional()
+      })
+    )
+  ])
   async postTagSearch(
     @Params('postId') postId: number,
+    @Query('limit') limit: number,
     @Query('filter') filter: string,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
@@ -151,6 +161,7 @@ export class PostController {
       const tagIds = post.postTags.map((tag) => tag.tagId);
 
       const searchResults = await this.tagDao.find({
+        limit: limit ?? 5,
         label: filter,
         NOT: { id: { in: tagIds } }
       });
