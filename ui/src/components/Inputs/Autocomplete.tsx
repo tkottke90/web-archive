@@ -46,20 +46,24 @@ interface DataItem extends Record<string, any> {
 }
 
 interface AutoCompleteProps<T extends DataItem> {
+  allowCreate?: boolean
   id?: string;
   name: string;
   label: string;
-  filter?: string;
+  filter: Signal<string>;
   children?:  ComponentChildren;
+  onCreate?: () => void;
   onFilterChange?: (value: string) => void;
 }
 
 export function AutoComplete<T extends DataItem>({
+  allowCreate = false,
   id,
   name,
   filter: display,
   children,
-  onFilterChange = (value) => {}
+  onFilterChange = (value) => {},
+  onCreate = () => {}
 }: AutoCompleteProps<T>) {
   const show = useSignal(false);
   const [triggerElem, setTriggerElem] = useState<HTMLInputElement | null>(null);
@@ -93,11 +97,7 @@ export function AutoComplete<T extends DataItem>({
           }
         })
         
-    // Setup menu closing action
-    const leaveEvent = fromEvent<Event>(node, 'focusout')
-        .subscribe(() => {
-          // show.value = false;
-        });
+    
 
     node.addEventListener("click", openMenu);
 
@@ -105,11 +105,23 @@ export function AutoComplete<T extends DataItem>({
 
     return () => {
       node.removeEventListener("click", openMenu);
-      leaveEvent.unsubscribe();
       changeEvent.unsubscribe();
       arrowEvent.unsubscribe();
     };
   }, []);
+
+  // const wrapperRef = useCallback((node: HTMLDivElement | null) => {
+  //   if (!node) return;
+  //   // Setup menu closing action
+  //   const leaveEvent = fromEvent<Event>(node, 'focusout')
+  //     .subscribe(() => {
+  //       show.value = false;
+  //     });
+
+  //   return () => {
+  //     leaveEvent.unsubscribe();
+  //   }
+  // }, []);
 
   return (
     <div>
@@ -130,6 +142,7 @@ export function AutoComplete<T extends DataItem>({
           onClose={() => show.value = false}
         >
           {children}
+          <AutoCompleteCreateItem allowCreate={allowCreate} filter={display.value ?? ''} onCreate={onCreate} />
         </AutoCompleteMenu>,
         autoCompletePortal
       )}
@@ -193,7 +206,7 @@ function AutoCompleteMenu({children, id, onClose, show, triggerElem }: AutoCompl
 
   return (
     <div>
-      {open && <div className="overlay" /*onClick={() => open.value = false}*/></div>}
+      {open && <div className="overlay" onClick={() => open.value = false}></div>}
        <AnimatePresence>
          {open && (
           <motion.div
@@ -245,4 +258,20 @@ export function AutocompleteItem({
       {children}
     </div>
   );
+}
+
+interface AutoCompleteCreateItemProps {
+  allowCreate: boolean,
+  filter: string,
+  onCreate: () => void,
+}
+
+function AutoCompleteCreateItem({ allowCreate, filter, onCreate }: AutoCompleteCreateItemProps) {
+  if (!allowCreate || !filter) {
+    return null;
+  }
+
+  return (
+    <AutocompleteItem className="text-center" onSelect={() => { console.log('select'); onCreate() }}>{`< Create: ${filter} >`}</AutocompleteItem>
+  )
 }
