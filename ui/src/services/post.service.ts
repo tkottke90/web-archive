@@ -1,6 +1,8 @@
 import { get, getPaged, remove } from "../utilities/http.utils";
 import { PostDTO } from '../../../server/src/dto/post.dto';
 import { Signal, batch, effect, computed } from "@preact/signals";
+import { applyTagToPost } from "./tags.service";
+import { PostTagDTO } from "../../../server/src/dto/post-tag.dto";
 
 const initialSearch = new URLSearchParams(window.location.search);
 
@@ -66,6 +68,24 @@ export function updateLocalPost(post: PostDTO) {
   if (targetIndex != -1) {
     posts.value[targetIndex].value = post;
   }
+}
+
+export async function updateLocalPostTags(post: Signal<PostDTO | undefined>, tagId: number) {
+  if (!post.value) {
+    console.log('No Post');
+      return;
+  }
+  
+  const postTag = await applyTagToPost(post.value.links.addTag, tagId);
+
+  if (post.value.tags) {
+    post.value.tags.push(postTag);
+    post.value.tags.sort((tagA, tagB) => tagA.value > tagB.value ? 1 : -1);
+  } else {
+    post.value.tags = [ postTag ];
+  }
+
+  post.value = structuredClone(post.value);
 }
 
 export function deletePost(url: string) {

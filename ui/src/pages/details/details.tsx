@@ -3,7 +3,7 @@ import { Card } from "../../components/Layouts/Card";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { PostDTO } from "../../../../server/src/dto/post.dto";
 import { ComponentChildren, Fragment, JSX } from "preact";
-import { deletePost, postDetails, updateLocalPost } from "../../services/post.service";
+import { deletePost, postDetails, updateLocalPost, updateLocalPostTags } from "../../services/post.service";
 import { Table } from "../../components/Table/Table";
 import { Modal } from "@tkottke90/preact-components";
 import { getPortalContainer } from "../../utilities/dom.utils";
@@ -12,7 +12,7 @@ import { Http } from "../../interfaces/http.interface";
 import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
 import { Tag } from "../../components/Tag";
 import { AutoComplete, AutocompleteItem } from "../../components/Inputs/Autocomplete";
-import { applyTagToPost, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
+import { applyTagToPost, createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
 import { PostTagDTO } from "../../../../server/src/dto/post-tag.dto";
 
 const portal = getPortalContainer("modals");
@@ -113,6 +113,8 @@ function PropertiesCard({ post }: { post: PostEntity }) {
 }
 
 function TagCard({ post }: { post: PostEntity }) {
+  const filter = useSignal("");
+
   return (
     <Card className="col-span-1">
       <h4>Tags</h4>
@@ -120,9 +122,31 @@ function TagCard({ post }: { post: PostEntity }) {
       <AutoComplete
         name="new-tag"
         label="Select New Tag"
-        onFilterChange={(filter) => {
+        filter={filter}
+        allowCreate={true}
+        onFocus={() => {
+          if (post.value)
+            filterTagsByPost(post.value?.links.tagSearch, '');
+        }}
+        onFilterChange={(newFilter) => {
+          filter.value = newFilter;
+
           if (post.value) {
-            filterTagsByPost(post.value?.links.tagSearch, filter);
+            filterTagsByPost(post.value?.links.tagSearch, newFilter);
+          }
+        }}
+        onCreate={async () => {
+          const newTag = await createTag(filter.value);
+
+          console.log(newTag);
+
+          if (post.value) {
+            const postTag = await applyTagToPost(post.value?.links.addTag, newTag.id);
+
+            batch(() => {
+              updateLocalPostTags(post, postTag.tag_id);
+              filter.value = "";
+            });
           }
         }}
       >
@@ -130,10 +154,12 @@ function TagCard({ post }: { post: PostEntity }) {
           <AutocompleteItem
             onSelect={async () => {
               if (post.value) {
-                const newTag = await applyTagToPost(post.value?.links.addTag, tag.id)
-                
-                post.value.tags?.push(newTag as PostTagDTO);
-                post.value = structuredClone(post.value);
+                const newTag = await applyTagToPost(post.value?.links.addTag, tag.id);
+
+                batch(() => {
+                  updateLocalPostTags(post, newTag.tag_id);
+                  filter.value = "";
+                });
 
                 // updateLocalPost(post.value);
                 // TODO-Snackbar: Add snackbar message on deletion

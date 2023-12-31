@@ -53,6 +53,7 @@ export class PostTagDao extends BaseDao<PostTag, any> {
     return {
       post: `${ROUTES.POSTS}/${entity.postId}`,
       tag: `${ROUTES.TAGS}/${entity.tagId}`,
+      tag_id: entity.tagId,
       value: entity.tags.label,
 
       links: {

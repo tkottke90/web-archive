@@ -27,7 +27,8 @@ export const PostTag = BaseSchema(
     self: z.string(),
     post: z.string(),
     tag: z.string(),
-    value: z.string()
+    value: z.string(),
+    tag_id: z.number()
   })
 ).omit({ self: true });
 

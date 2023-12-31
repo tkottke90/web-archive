@@ -54,6 +54,7 @@ interface AutoCompleteProps<T extends DataItem> {
   children?:  ComponentChildren;
   onCreate?: () => void;
   onFilterChange?: (value: string) => void;
+  onFocus?: () => void;
 }
 
 export function AutoComplete<T extends DataItem>({
@@ -62,6 +63,7 @@ export function AutoComplete<T extends DataItem>({
   name,
   filter: display,
   children,
+  onFocus = () => {},
   onFilterChange = (value) => {},
   onCreate = () => {}
 }: AutoCompleteProps<T>) {
@@ -96,8 +98,6 @@ export function AutoComplete<T extends DataItem>({
             console.log(e.key)
           }
         })
-        
-    
 
     node.addEventListener("click", openMenu);
 
@@ -110,19 +110,6 @@ export function AutoComplete<T extends DataItem>({
     };
   }, []);
 
-  // const wrapperRef = useCallback((node: HTMLDivElement | null) => {
-  //   if (!node) return;
-  //   // Setup menu closing action
-  //   const leaveEvent = fromEvent<Event>(node, 'focusout')
-  //     .subscribe(() => {
-  //       show.value = false;
-  //     });
-
-  //   return () => {
-  //     leaveEvent.unsubscribe();
-  //   }
-  // }, []);
-
   return (
     <div>
       <input
@@ -131,7 +118,10 @@ export function AutoComplete<T extends DataItem>({
         id={id}
         value={display}
         onClick={(event: MouseEvent) => event.preventDefault()}
-        onFocus={() => show.value = true}
+        onFocus={() => {
+          show.value = true
+          onFocus();
+        }}
       />
 
       {createPortal(

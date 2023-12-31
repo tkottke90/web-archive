@@ -10,7 +10,6 @@ import {
   Response
 } from '@decorators/express';
 import express from 'express';
-import { ROUTES } from '../config';
 import { Inject } from '@decorators/di';
 import {
   TagCreateDTO,
@@ -25,7 +24,7 @@ import {
 } from '../middleware/zod.middleware';
 import { TagDao } from '../dao/tag.dao';
 
-@Controller(ROUTES.TAGS)
+@Controller('/tags')
 export class TagController {
   constructor(@Inject('TagDao') private readonly tagDao: TagDao) {}
 
