@@ -131,6 +131,8 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       files: input.files.map(this.postFileDao.toDTO),
       tags: input.postTags.map(this.postTagDao.toDTO),
 
+      links: {},
+
       createdAt: input.createdAt,
       updatedAt: input.updatedAt
     };

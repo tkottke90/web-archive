@@ -3,14 +3,17 @@ import { BaseSchema, QueryFields } from './utilities';
 
 export const TagSchema = BaseSchema(
   z.object({
+    id: z.number(),
     label: z.string()
   })
 );
 
 export const TagCreateSchema = TagSchema.omit({
+  id: true,
   self: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
+  links: true
 });
 
 export const TagQuerySchema = QueryFields(TagSchema);

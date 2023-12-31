@@ -136,6 +136,31 @@ export class PostController {
     }
   }
 
+  @Get('/:postId/tag-search', [ZodIdValidator('postId')])
+  async postTagSearch(
+    @Params('postId') postId: number,
+    @Query('filter') filter: string,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      // Load the post from the DB
+      const post = await this.postDao.getById(postId);
+
+      // Get a list of Ids associated with the post
+      const tagIds = post.postTags.map((tag) => tag.tagId);
+
+      const searchResults = await this.tagDao.find({
+        label: filter,
+        NOT: { id: { in: tagIds } }
+      });
+
+      res.json(searchResults.map(this.tagDao.toDTO));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Post('/:postId/tags/:tagId', [
     ZodIdValidator('postId'),
     ZodIdValidator('tagId')

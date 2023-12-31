@@ -10,7 +10,8 @@ export const BaseSchema = <T extends ZodRawShape>(schema: ZodObject<T>) =>
     .object({
       self: z.string(),
       createdAt: z.date(),
-      updatedAt: z.date()
+      updatedAt: z.date(),
+      links: z.record(z.record(z.string(), z.string()))
     })
     .merge(schema);
 
@@ -19,6 +20,7 @@ export function QueryFields<T extends ZodRawShape>(schema: ZodObject<T>) {
 
   return z
     .object({
+      NOT: z.record(z.string(), z.any()).optional(),
       limit: FuzzyNumber.optional(),
       skip: FuzzyNumber.optional(),
       sort: z

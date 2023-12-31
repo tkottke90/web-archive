@@ -5,7 +5,7 @@ import {
   Get,
   Next,
   Params,
-  Post,
+  Put,
   Query,
   Response
 } from '@decorators/express';
@@ -44,13 +44,21 @@ export class TagController {
     }
   }
 
-  @Post('/', [ZodBodyValidator(TagCreateSchema)])
+  @Put('/', [ZodBodyValidator(TagCreateSchema)])
   async createTag(
     @Body() body: TagCreateDTO,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
     try {
+      let tag = await this.tagDao.getByLabel(body.label);
+
+      if (tag) {
+        tag = await this.tagDao.updateTag(tag.id, body);
+      } else {
+        tag = await this.tagDao.addTag(body);
+      }
+
       const result = await this.tagDao.addTag(body);
 
       res.json(this.tagDao.toDTO(result));

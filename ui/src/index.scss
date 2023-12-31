@@ -11,6 +11,11 @@ table {
   td, th { padding: 0.5rem 1rem; }
 }
 
+.portals {
+  position: absolute;
+  top: 0;
+}
+
 @layer components {
 
   h1 { @apply text-5xl; }

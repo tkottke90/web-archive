@@ -54,6 +54,9 @@ export class PostTagDao extends BaseDao<PostTag, any> {
       post: `${ROUTES.POSTS}/${entity.postId}`,
       tag: `${ROUTES.TAGS}/${entity.tagId}`,
       value: entity.tags.label,
+
+      links: {},
+
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt
     };

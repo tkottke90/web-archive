@@ -10,6 +10,9 @@ import { getPortalContainer } from "../../utilities/dom.utils";
 import { route } from "preact-router";
 import { Http } from "../../interfaces/http.interface";
 import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
+import { Tag } from "../../components/Tag";
+import { AutoComplete, AutocompleteItem } from "../../components/Inputs/Autocomplete";
+import { loadedTags } from "../../services/tags.service";
 
 const portal = getPortalContainer('modals');
 
@@ -57,29 +60,8 @@ export function DetailsPage() {
               />
             </div>
           </div>
-          <Card className="col-span-3">
-            <h2>Post Details</h2>
-            
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2 items-center">
-                <label htmlFor="label">Label</label>
-                <input value={ post.value?.label } className="w-full"/>
-              </div>
-
-              <div className="flex gap-2 items-center">
-                <label htmlFor="label">Author</label>
-                <input value={ post.value?.author } className="w-full"/>
-              </div>
-
-              <div className="flex gap-2 items-center">
-                <label htmlFor="label">Source</label>
-                <input value={ post.value?.source } className="w-full"/>
-              </div>
-            </div>
-          </Card>
-          <Card className="col-span-1">
-            <h4>Tags</h4>
-          </Card>
+          <PropertiesCard post={post} />
+          <TagCard post={post}/>
           <MetadataCard post={post} />
           <MediaCard post={post} />
         </Loading>
@@ -104,6 +86,50 @@ function Loading({ children, loading, loadingView }: LoadingProps) {
 
   return (
     <Fragment>{children}</Fragment>
+  );
+}
+
+function PropertiesCard({ post }: { post: PostEntity }) {
+  return (
+    <Card className="col-span-3">
+      <h2>Post Details</h2>
+      
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2 items-center">
+          <label htmlFor="label">Label</label>
+          <input value={ post.value?.label } className="w-full"/>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <label htmlFor="label">Author</label>
+          <input value={ post.value?.author } className="w-full"/>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <label htmlFor="label">Source</label>
+          <input value={ post.value?.source } className="w-full"/>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function TagCard({ post }: { post: PostEntity }) {
+  return (
+    <Card className="col-span-1">
+      <h4>Tags</h4>
+      <br />
+      <AutoComplete
+        name="new-tag"
+        label="Select New Tag"
+      >
+        {loadedTags.value.map(tag => <AutocompleteItem>{tag.label}</AutocompleteItem>)}
+      </AutoComplete>
+      <br />
+      <div className="flex flex-wrap gap-px">
+        {post.value?.tags?.map(tag => <Tag>{tag.value}</Tag>)}
+      </div>
+    </Card>
   );
 }
 

@@ -43,6 +43,9 @@ export class PostFileDao extends BaseDao<PostFile, any> {
       original_filename: entity.original_filename,
       mime: entity.mime,
       size: entity.size,
+
+      links: {},
+
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt
     };

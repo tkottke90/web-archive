@@ -19,6 +19,9 @@ export class PostMetadataDao extends BaseDao<PostMetadata, any> {
       post: postLink,
       name: entity.name,
       value: entity.value,
+
+      links: {},
+
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt
     };

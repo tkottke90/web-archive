@@ -26,7 +26,7 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
       take,
       skip,
       orderBy: orderBy,
-      where: this.toPersistance(data)
+      where: { ...this.toPersistance(data), NOT: data.NOT }
     });
   }
 
@@ -44,10 +44,21 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
     });
   }
 
+  updateTag(id: number, tag: TagCreateDTO) {
+    return this.client.tag.update({
+      where: { id },
+      data: tag
+    });
+  }
+
   toDTO(entity: Tag): TagDTO {
     return {
+      id: entity.id,
       self: `${ROUTES.TAGS}/${entity.id}`,
       label: entity.label,
+
+      links: {},
+
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt
     };
