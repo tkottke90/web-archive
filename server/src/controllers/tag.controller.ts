@@ -58,9 +58,7 @@ export class TagController {
         tag = await this.tagDao.addTag(body);
       }
 
-      const result = await this.tagDao.addTag(body);
-
-      res.json(this.tagDao.toDTO(result));
+      res.json(this.tagDao.toDTO(tag));
     } catch (error) {
       next(error);
     }
