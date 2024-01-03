@@ -137,14 +137,10 @@ function TagCard({ post }: { post: PostEntity }) {
         }}
         onCreate={async () => {
           const newTag = await createTag(filter.value);
-
-          console.log(newTag);
-
+          
           if (post.value) {
-            const postTag = await applyTagToPost(post.value?.links.addTag, newTag.id);
-
             batch(() => {
-              updateLocalPostTags(post, postTag.tag_id);
+              updateLocalPostTags(post, newTag.id)
               filter.value = "";
             });
           }
@@ -154,10 +150,8 @@ function TagCard({ post }: { post: PostEntity }) {
           <AutocompleteItem
             onSelect={async () => {
               if (post.value) {
-                const newTag = await applyTagToPost(post.value?.links.addTag, tag.id);
-
                 batch(() => {
-                  updateLocalPostTags(post, newTag.tag_id);
+                  updateLocalPostTags(post, tag.id);
                   filter.value = "";
                 });
 

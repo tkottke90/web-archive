@@ -204,7 +204,7 @@ export class PostController {
         }
 
         result = await this.postTagDao.create(postId, tagId);
-        res.status(202);
+        res.status(202).json(this.postTagDao.toDTO(result));
       }
 
       res.send(this.postTagDao.toDTO(result));

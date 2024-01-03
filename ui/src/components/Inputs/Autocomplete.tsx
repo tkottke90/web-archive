@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, Variants } from "framer-motion";
-import { ComponentChildren } from "preact";
+import { ComponentChildren, createContext } from "preact";
 import { createPortal, useCallback, useState } from "preact/compat";
 import { debounceTime, fromEvent, map } from "rxjs";
 import { getPortalContainer } from "../../utilities/dom.utils";
@@ -44,6 +44,46 @@ const variants: Variants = {
 interface DataItem extends Record<string, any> {
   id: number;
 }
+
+
+type ContextInterface = {
+  showOverlay: Signal<boolean>;
+  showMenu: Signal<boolean>;
+  triggerOpen: () => void;
+  triggerClose: () => void;
+}
+
+const AutocompleteContext = createContext({} as ContextInterface)
+
+interface AutoCInterface {
+  onFilterChange?: (value: string) => void;
+}
+
+function AutoC({
+  onFilterChange = (value) => {}
+}: AutoCInterface) {
+  const showOverlay = useSignal(false);
+  const showMenu = useSignal(false)
+
+  return (
+    <AutocompleteContext.Provider value={{
+      showOverlay,
+      showMenu,
+      triggerOpen: () => {
+        showOverlay.value = true;
+      },
+      triggerClose: () => {
+        showOverlay.value = false;
+      }
+    }}>
+
+
+    </AutocompleteContext.Provider >
+  )
+}
+
+
+
 
 interface AutoCompleteProps<T extends DataItem> {
   allowCreate?: boolean
@@ -114,6 +154,7 @@ export function AutoComplete<T extends DataItem>({
     <div>
       <input
         autoComplete="custom-autocomplete"
+        className={show ? 'z-50' : ''}
         ref={triggerRef}
         id={id}
         value={display}
@@ -129,7 +170,10 @@ export function AutoComplete<T extends DataItem>({
           triggerElem={triggerElem}
           id={`autocomplete-${id ?? name}`}
           show={show}
-          onClose={() => show.value = false}
+          onClose={() => {
+            console.log('onClose');
+            show.value = false
+          }}
         >
           {children}
           <AutoCompleteCreateItem allowCreate={allowCreate} filter={display.value ?? ''} onCreate={onCreate} />
@@ -154,7 +198,7 @@ function AutoCompleteMenu({children, id, onClose, show, triggerElem }: AutoCompl
 
   // when show is set to true, we want open to follow
   useSignalEffect(() => {
-    if (show) {
+    if (show.value) {
       open.value = true;
     }
   });
@@ -195,10 +239,10 @@ function AutoCompleteMenu({children, id, onClose, show, triggerElem }: AutoCompl
   }
 
   return (
-    <div>
-      {open && <div className="overlay" onClick={() => open.value = false}></div>}
+    <div className="relative">
+      {open && <div className="inset-0 absolute h-screen w-screen pointer-events-auto" onClick={() => open.value = false }></div>}
        <AnimatePresence>
-         {open && (
+         {open.value && (
           <motion.div
             key={id}
             initial="initial"
