@@ -31,6 +31,7 @@ import { NotFoundError } from '../utilities/errors.util';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { TagDao } from '../dao/tag.dao';
 import { ROUTES, UPLOAD_DIR } from '../config';
+import { z } from 'zod';
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fieldSize: 25 * 1024 * 1024 }
@@ -54,7 +55,10 @@ export class PostController {
     try {
       const posts = await this.postDao.find(query);
 
-      res.send(posts.map((p) => this.postDao.toDTO(p)));
+      res.json({
+        pagination: await this.postDao.paginationDetails(query),
+        data: posts.map((p) => this.postDao.toDTO(p))
+      });
     } catch (error) {
       next(error);
     }
@@ -74,6 +78,21 @@ export class PostController {
       }
 
       res.json(this.postDao.toDTO(post));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Delete('/:postId', [ZodIdValidator('postId')])
+  async deletePost(
+    @Params('postId') postId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      await this.postDao.remove(postId);
+
+      res.status(204).json({});
     } catch (error) {
       next(error);
     }
@@ -118,6 +137,41 @@ export class PostController {
     }
   }
 
+  @Get('/:postId/tag-search', [
+    ZodIdValidator('postId'),
+    ZodQueryValidator(
+      z.object({
+        limit: z.number({ coerce: true }).optional(),
+        filter: z.string().optional()
+      })
+    )
+  ])
+  async postTagSearch(
+    @Params('postId') postId: number,
+    @Query('limit') limit: number,
+    @Query('filter') filter: string,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      // Load the post from the DB
+      const post = await this.postDao.getById(postId);
+
+      // Get a list of Ids associated with the post
+      const tagIds = post.postTags.map((tag) => tag.tagId);
+
+      const searchResults = await this.tagDao.find({
+        limit: limit ?? 5,
+        label: filter,
+        NOT: { id: { in: tagIds } }
+      });
+
+      res.json(searchResults.map(this.tagDao.toDTO));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Post('/:postId/tags/:tagId', [
     ZodIdValidator('postId'),
     ZodIdValidator('tagId')
@@ -150,7 +204,7 @@ export class PostController {
         }
 
         result = await this.postTagDao.create(postId, tagId);
-        res.status(202);
+        res.status(202).json(this.postTagDao.toDTO(result));
       }
 
       res.send(this.postTagDao.toDTO(result));

@@ -23,7 +23,8 @@ export const PostCreateSchema = PostSchema.merge(
 ).omit({
   self: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
+  links: true
 });
 
 export const PostQuerySchema = QueryFields(PostSchema).merge(

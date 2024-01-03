@@ -1,6 +1,7 @@
 import { Container, Inject, Injectable } from '@decorators/di';
 import { PostDao } from '../dao/post.dao';
 import {
+  MediaMetadataValue,
   RedditListing,
   RedditPostMetadataKeys,
   RedditResponse
@@ -65,7 +66,8 @@ export class RedditScraper {
       subreddit_name_prefixed,
       title,
       url,
-      media
+      media,
+      media_metadata
     } = post.data;
 
     this.logger.log('debug', 'Check for post with matching ID', { id });
@@ -119,7 +121,7 @@ export class RedditScraper {
         id
       });
       fileDetails = [await this.mediaDownload(media.reddit_video.fallback_url)];
-    } else if (url.includes('http://redgifs.com')) {
+    } else if (url.match(/http[s]?:\/\/(www.)?redgifs.com/)) {
       // The post is a redgifs post
 
       const videoElem = await this.htmlParser(url, '[property="og:video"]');
@@ -131,8 +133,11 @@ export class RedditScraper {
       } else {
         throw new NotFoundError('Could not get RedGif content: ' + url);
       }
-    } else if (url.startsWith('https://www.reddit.com/gallery')) {
-      fileDetails = await this.getRedditGallaryImg(url);
+    } else if (
+      url.startsWith('https://www.reddit.com/gallery') &&
+      media_metadata
+    ) {
+      fileDetails = await this.getRedditGalleryImg(media_metadata);
     } else {
       // Assume it is a picture for now
       this.logger.log('debug', 'Downloading image from post', { url, id });
@@ -157,6 +162,7 @@ export class RedditScraper {
           );
 
           newEntry.files = [
+            ...(newEntry.files ?? []),
             {
               filename,
               mime: detail.contentType ?? '',
@@ -189,21 +195,22 @@ ${text}`;
     return { data: Buffer.from(file), contentType: 'text/markdown', error: '' };
   }
 
-  private async getRedditGallaryImg(url: string) {
-    const html = await JSDOM.fromURL(url);
-
-    // The gallery puts the subreddit at the start of the `alt` attribute and
-    // we can scrape off of that which images are actually related to the post
-    const imgNodes = html.window.document.querySelectorAll('img[alt^="r/"]');
-    // const imgNodes = html.window.document.querySelectorAll('img');
-
-    if (imgNodes.length <= 0) {
-      throw new NotFoundError('No image found in reddit gallery: ' + url);
-    }
-
+  private async getRedditGalleryImg(media: Record<string, MediaMetadataValue>) {
     return await Promise.all(
-      Array.from(imgNodes).map((node) => {
-        return this.mediaDownload((node as HTMLImageElement).src);
+      Object.values(media).map((node) => {
+        const url = node.s.u ?? node.p.pop()?.u ?? node.o.pop()?.u ?? '';
+
+        const parsedUrl = JSDOM.fragment(url);
+
+        if (!parsedUrl.textContent) {
+          return {
+            contentType: '',
+            data: Buffer.from(''),
+            error: `Could Not Parse Escaped URL [url: ${url}]`
+          };
+        }
+
+        return this.mediaDownload(parsedUrl.textContent);
       })
     );
   }

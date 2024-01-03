@@ -5,12 +5,11 @@ import {
   Get,
   Next,
   Params,
-  Post,
+  Put,
   Query,
   Response
 } from '@decorators/express';
 import express from 'express';
-import { ROUTES } from '../config';
 import { Inject } from '@decorators/di';
 import {
   TagCreateDTO,
@@ -25,7 +24,7 @@ import {
 } from '../middleware/zod.middleware';
 import { TagDao } from '../dao/tag.dao';
 
-@Controller(ROUTES.TAGS)
+@Controller('/tags')
 export class TagController {
   constructor(@Inject('TagDao') private readonly tagDao: TagDao) {}
 
@@ -44,16 +43,22 @@ export class TagController {
     }
   }
 
-  @Post('/', [ZodBodyValidator(TagCreateSchema)])
+  @Put('/', [ZodBodyValidator(TagCreateSchema)])
   async createTag(
     @Body() body: TagCreateDTO,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
     try {
-      const result = await this.tagDao.addTag(body);
+      let tag = await this.tagDao.getByLabel(body.label);
 
-      res.json(this.tagDao.toDTO(result));
+      if (tag) {
+        tag = await this.tagDao.updateTag(tag.id, body);
+      } else {
+        tag = await this.tagDao.addTag(body);
+      }
+
+      res.json(this.tagDao.toDTO(tag));
     } catch (error) {
       next(error);
     }

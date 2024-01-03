@@ -48,13 +48,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   }
 
   find(query: PostQueryDTO) {
-    const { take, skip, orderBy, data } = this.parseQuery(query);
-
-    const where: Prisma.PostWhereInput = this.toPersistance(data);
-
-    if (data.tag) {
-      where.postTags = { some: { tagId: data.tag } };
-    }
+    const { take, skip, orderBy, where } = this.generateFindStatement(query);
 
     return this.client.post.findMany({
       take,
@@ -105,6 +99,26 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     });
   }
 
+  async remove(postId: number) {
+    await this.postFileDao.deleteFiles(postId);
+
+    return this.client.post.delete({
+      where: { id: postId }
+    });
+  }
+
+  async paginationDetails(query: PostQueryDTO) {
+    const { take, skip, where } = this.generateFindStatement(query);
+
+    const count = await this.client.post.count({ where });
+
+    return {
+      currentPage: Math.ceil(skip / take) + 1,
+      totalPages: Math.ceil(count / take),
+      totalItems: count
+    };
+  }
+
   toDTO(input: PostWithAssociations): PostDTO {
     return {
       self: `${ROUTES.POSTS}/${input.id}`,
@@ -116,6 +130,11 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       metadata: input.metadata.map(this.postMetadataDao.toDTO),
       files: input.files.map(this.postFileDao.toDTO),
       tags: input.postTags.map(this.postTagDao.toDTO),
+
+      links: {
+        tagSearch: `${ROUTES.POSTS}/${input.id}/tag-search`,
+        addTag: `${ROUTES.POSTS}/${input.id}/tags/`
+      },
 
       createdAt: input.createdAt,
       updatedAt: input.updatedAt
@@ -131,6 +150,18 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       updatedAt: input.updatedAt ?? undefined,
       source: input.source ?? undefined
     };
+  }
+
+  private generateFindStatement(query: PostQueryDTO) {
+    const { take, skip, orderBy, data } = this.parseQuery(query);
+
+    const where: Prisma.PostWhereInput = this.toPersistance(data);
+
+    if (data.tag) {
+      where.postTags = { some: { tagId: data.tag } };
+    }
+
+    return { take, skip, orderBy, where };
   }
 }
 

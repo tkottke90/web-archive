@@ -167,16 +167,20 @@ for await (let posts of fetchRedditData(baseUrl)) {
   console.log(`> Page: ${reqCount}`)
   await Promise.all(posts.map(async (post, index) => {
     const parsed = parsePost(post);
-    console.log(`>> Loading: ${index}`)
     
     if (SKIP_EXISTING && database.get(parsed.id)) {
+      console.log(`>> Skipped: ${parsed.permalink} [Index: ${index}]`);
       return;
     }
+
+    console.log(`>> Loading: ${parsed.permalink} [Index: ${index}]`)
 
     newCount++;
     database.set(parsed.id, parsed);
     const record = database.get(parsed.id);
     
+    
+
     const media = record.content.filter(r => r.type === 'media');
 
     for (let item of media) {

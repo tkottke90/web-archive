@@ -3,6 +3,22 @@ interface RedditSchema<T> {
   data: T;
 }
 
+interface MediaDetails {
+  y: number;
+  x: number;
+  u: string;
+}
+
+export interface MediaMetadataValue {
+  e: string;
+  id: string;
+  m: string;
+  o: MediaDetails[];
+  p: MediaDetails[];
+  s: MediaDetails;
+  status: string;
+}
+
 interface RedditPostData {
   title: string;
   subreddit_name_prefixed: string;
@@ -19,6 +35,7 @@ interface RedditPostData {
       fallback_url: string;
     };
   };
+  media_metadata?: Record<string, MediaMetadataValue>;
 }
 
 export type RedditPost = RedditSchema<RedditPostData>;

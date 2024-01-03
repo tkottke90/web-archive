@@ -1,10 +1,11 @@
 import { Container, Injectable } from '@decorators/di';
-import { writeFile } from 'fs';
+import { rm, writeFile } from 'fs';
 import { resolve } from 'path';
 import { promisify } from 'util';
 import { UPLOAD_DIR } from '../config';
 
 const writeFileAsync = promisify(writeFile);
+const rmFileAsync = promisify(rm);
 
 class LocalFileSystem {
   async upload(data: Buffer, filename: string) {
@@ -12,6 +13,10 @@ class LocalFileSystem {
     await writeFileAsync(resolve(UPLOAD_DIR, filename), data);
 
     return path;
+  }
+
+  async remove(filename: string) {
+    await rmFileAsync(filename, { force: true });
   }
 }
 
@@ -27,6 +32,12 @@ export class FileSystemFactory {
     const service = new LocalFileSystem();
 
     return service.upload(data, filename);
+  }
+
+  remove(filename: string) {
+    const service = new LocalFileSystem();
+
+    return service.remove(filename);
   }
 }
 

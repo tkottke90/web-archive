@@ -3,14 +3,17 @@ import { BaseSchema, QueryFields } from './utilities';
 
 export const TagSchema = BaseSchema(
   z.object({
+    id: z.number(),
     label: z.string()
   })
 );
 
 export const TagCreateSchema = TagSchema.omit({
+  id: true,
   self: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
+  links: true
 });
 
 export const TagQuerySchema = QueryFields(TagSchema);
@@ -21,9 +24,11 @@ export type TagQueryDTO = z.infer<typeof TagQuerySchema>;
 
 export const PostTag = BaseSchema(
   z.object({
+    self: z.string(),
     post: z.string(),
     tag: z.string(),
-    value: z.string()
+    value: z.string(),
+    tag_id: z.number()
   })
 ).omit({ self: true });
 

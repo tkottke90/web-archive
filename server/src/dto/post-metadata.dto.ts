@@ -13,7 +13,8 @@ export const PostMetadata = BaseSchema(
 export const PostMetadataCreate = PostMetadata.omit({
   self: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
+  links: true
 });
 
 export type PostMetadataDTO = z.infer<typeof PostMetadata>;

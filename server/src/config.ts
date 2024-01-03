@@ -1,6 +1,6 @@
 import path from 'path';
 
-export const API_ROOT = '';
+export const API_ROOT = '/api';
 
 export const ROUTES = {
   POSTS: `${API_ROOT}/post`,

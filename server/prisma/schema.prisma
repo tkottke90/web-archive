@@ -35,7 +35,7 @@ model PostFile {
   mime String
   encoding String
 
-  post Post @relation(fields: [postId], references: [id])
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -65,7 +65,7 @@ model Tag {
 
 model PostTag {
   postId Int
-  posts  Post @relation(fields: [postId], references: [id])
+  posts  Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   tagId  Int
   tags   Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
