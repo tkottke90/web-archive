@@ -34,7 +34,7 @@ export function ZodQueryValidator<T extends ZodRawShape>(schema: ZodObject<T>) {
       let details: any = {};
 
       if (err instanceof ZodError) {
-        message = err.message;
+        message = `Validation failed: ${err.issues.length} errors detected in query params`;
         details = err.issues;
       }
 
@@ -56,7 +56,7 @@ export function ZodParamValidator<T extends ZodRawShape>(schema: ZodObject<T>) {
       let details: any = {};
 
       if (err instanceof ZodError) {
-        message = err.message;
+        message = `Validation failed: ${err.issues.length} errors detected in url params`;
         details = err.issues;
       }
 
