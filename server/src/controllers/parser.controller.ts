@@ -7,6 +7,7 @@ import { PostTagDao } from '../dao/post-tag.dao';
 import { PostDao } from '../dao/post.dao';
 import { ZodQueryValidator } from '../middleware/zod.middleware';
 import { z } from 'zod';
+import { API_ROOT } from '../config';
 
 @Controller('/parsers')
 export class ParserController {
@@ -17,7 +18,7 @@ export class ParserController {
     @Inject('PostTagDao') private readonly postTagDao: PostTagDao
   ) {}
 
-  @Get('/reddit')
+  @Get('/reddit', [ZodQueryValidator(z.object({ target: z.string().url() }))])
   async getRedditPost(
     @Query('target') target: string,
     @Response() res: express.Response,
@@ -53,5 +54,30 @@ export class ParserController {
     } catch (error) {
       next(error);
     }
+  }
+
+  @Get('*')
+  getControllerEndpoints(@Response() res: express.Response) {
+    res.send({
+      links: {
+        reddit: {
+          url: `${API_ROOT}/parsers/reddit`,
+          params: null,
+          query: {
+            target: 'string'
+          },
+          body: null
+        },
+        youtube: {
+          url: `${API_ROOT}/parsers/youtube`,
+          params: null,
+          query: {
+            target: 'string',
+            nsfw: 'boolean'
+          },
+          body: null
+        }
+      }
+    });
   }
 }
