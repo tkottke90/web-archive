@@ -59,6 +59,16 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     }) as unknown as PostWithAssociations[];
   }
 
+  findWhereMissingSource(sourceId: string[]) {
+    return this.client.$queryRaw<{ id: string }[]>`select *
+    from unnest(STRING_TO_ARRAY(${sourceId.join(',')}, ',')) as t(id)
+    except
+    select value
+    from "PostMetadata" pm
+    WHERE name = 'SOURCE_ID'
+    `;
+  }
+
   create(input: PostCreateDTO) {
     const metadata:
       | Prisma.PostMetadataCreateNestedManyWithoutPostInput

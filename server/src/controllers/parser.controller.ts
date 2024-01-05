@@ -33,6 +33,22 @@ export class ParserController {
     }
   }
 
+  @Get('/reddit-bulk')
+  async redditBulk(
+    @Query('target') target: string,
+    @Query('auth') auth: string,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const data = await this.reddit.batchPosts(target, auth ?? '');
+
+      res.json({});
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Get('/youtube', [
     ZodQueryValidator(
       z.object({

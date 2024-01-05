@@ -3,6 +3,7 @@ import { PostDao } from '../dao/post.dao';
 import {
   MediaMetadataValue,
   RedditListing,
+  RedditPost,
   RedditPostMetadataKeys,
   RedditResponse
 } from '../interfaces/reddit.interface';
@@ -15,7 +16,7 @@ import { NotFoundError } from '../utilities/errors.util';
 import { basename } from 'path';
 import { LoggerService } from './logger.service';
 import { PostTagDao } from '../dao/post-tag.dao';
-import { SYSTEM_TAGS } from '../constants';
+import { NS_PER_SEC, NS_TO_MS, SYSTEM_TAGS } from '../constants';
 
 @Injectable()
 export class RedditScraper {
@@ -26,35 +27,109 @@ export class RedditScraper {
     @Inject('LoggerService') private readonly logger: LoggerService
   ) {}
 
-  getPostByUrl(url: string) {
-    this.logger.log('debug', 'Fetching post from Reddit', { url });
-    return fetch(`${url}.json`)
-      .then((response) => response.json())
-      .then((data) => this.parseResponse(data));
+  // TODO - This gets rate limited with a 410 after a while
+  // Need to look at doing this slightly differently, possibly with CRON
+  async batchPosts(url: string, authorization: string) {
+    const headers = new Headers();
+    headers.append('user-agent', 'insomnia/2023.1.0');
+
+    if (authorization) {
+      headers.set('cookie', authorization);
+    }
+
+    let newRecordCount = 0;
+    const start = process.hrtime();
+
+    for await (const posts of this.getAllRedditItems(url, headers)) {
+      const reqPostMap = new Map(posts.map((post) => [post.data.id, post]));
+
+      const newKeys = await this.postDao.findWhereMissingSource(
+        Array.from(reqPostMap.keys())
+      );
+
+      for (const { id } of newKeys) {
+        // The id comes from the reqPostMap so we KNOW it exists
+        await this.parsePost(reqPostMap.get(id) as RedditPost);
+      }
+
+      newRecordCount += newKeys.length;
+
+      // debugger;
+    }
+
+    const diff = process.hrtime(start);
+
+    return {
+      newRecords: newRecordCount,
+      duration: (diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS
+    };
   }
 
-  private async parseResponse(res: RedditResponse) {
-    this.logger.log('debug', 'Processing Reddit Response');
-    // 2 Layer filter.  The top layer goes through all the listings and the
-    // second layer finds a post with `kind = t3`.  This kind is associated with
-    // the actual posts themselves
-    const parsedList = res.filter(
-      (listing) =>
-        listing.data.children.filter((child) => child.kind === 't3').length
+  getPostByUrl(url: string) {
+    this.logger.log('debug', 'Fetching post from Reddit', { url });
+    return this.getRedditJSON(new URL(url)).then((listings: RedditResponse) => {
+      const parsedList = listings.filter(
+        (listing) =>
+          listing.data.children.filter((child) => child.kind === 't3').length
+      );
+
+      const postListing = parsedList.shift();
+
+      if (!postListing) {
+        return;
+      }
+
+      const post = this.getPostsFromListing(postListing).shift();
+
+      if (post) {
+        this.parsePost(post);
+      }
+    });
+  }
+
+  private async *getAllRedditItems(url: string, headers?: Headers) {
+    let done = false;
+    let nextPost = '';
+
+    while (!done) {
+      const _url = new URL(url);
+
+      if (nextPost) {
+        _url.searchParams.append('after', nextPost);
+      }
+
+      const data: RedditListing = await this.getRedditJSON(_url, headers);
+
+      if (!data || !data.data.children) {
+        done = true;
+      }
+
+      if (data) {
+        const { after, children } = data.data;
+        nextPost = after;
+        yield children;
+      }
+    }
+  }
+
+  private getRedditJSON(url: URL, headers?: Headers) {
+    const _headers = new Headers(headers);
+
+    url.pathname = url.pathname + '.json';
+
+    return fetch(url.toString(), { headers: _headers }).then((response) =>
+      response.json()
     );
+  }
 
-    // When the list returned is empty then there is no bother in proceeding further
-    if (!parsedList.length) {
-      return;
-    }
+  private getPostsFromListing(listing: RedditListing) {
+    const posts = listing.data.children.filter((child) => child.kind === 't3');
 
-    // Should only be one but with arrays you never know, so we just grab the first
-    const { data } = parsedList.shift() as RedditListing;
-    const post = data.children.find((child) => child.kind === 't3');
+    return posts;
+  }
 
-    if (!post) {
-      return;
-    }
+  private async parsePost(post: RedditPost) {
+    this.logger.log('debug', 'Processing Reddit Post');
 
     const {
       author,

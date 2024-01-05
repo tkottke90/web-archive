@@ -1,8 +1,6 @@
 import express from 'express';
 import { LoggerService } from '../services';
-
-const NS_PER_SEC = 1e9;
-const NS_TO_MS = 1e6;
+import { NS_PER_SEC, NS_TO_MS } from '../constants';
 
 export function HttpEventMiddleware(
   req: express.Request,

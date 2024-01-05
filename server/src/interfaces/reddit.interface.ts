@@ -38,10 +38,12 @@ interface RedditPostData {
   media_metadata?: Record<string, MediaMetadataValue>;
 }
 
+export type RedditItem = RedditSchema<any>;
 export type RedditPost = RedditSchema<RedditPostData>;
 
 export type RedditListing = RedditSchema<{
   geo_filter: string;
+  after: string;
   children: RedditPost[];
 }>;
 
