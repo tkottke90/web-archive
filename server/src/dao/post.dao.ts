@@ -69,6 +69,12 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     `;
   }
 
+  bulkCreate(input: PostCreateDTO[]) {
+    return this.client.post.createMany({
+      data: input
+    });
+  }
+
   create(input: PostCreateDTO) {
     const metadata:
       | Prisma.PostMetadataCreateNestedManyWithoutPostInput

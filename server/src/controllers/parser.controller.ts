@@ -1,4 +1,12 @@
-import { Controller, Get, Next, Query, Response } from '@decorators/express';
+import {
+  Controller,
+  Get,
+  Headers,
+  Next,
+  Params,
+  Query,
+  Response
+} from '@decorators/express';
 import express from 'express';
 import { Inject } from '@decorators/di';
 import { RedditScraper } from '../services';
@@ -36,13 +44,26 @@ export class ParserController {
   @Get('/reddit-bulk')
   async redditBulk(
     @Query('target') target: string,
-    @Query('auth') auth: string,
+    @Headers('redditauth') auth: string,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
     try {
       const data = await this.reddit.batchPosts(target, auth ?? '');
 
+      res.json(data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Get('/reddit-bulk/:id')
+  async redditBulkStatus(
+    @Params('id') id: string,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
       res.json({});
     } catch (error) {
       next(error);

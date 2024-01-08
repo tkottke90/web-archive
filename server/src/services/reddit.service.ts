@@ -9,17 +9,20 @@ import {
 } from '../interfaces/reddit.interface';
 import { PostCreateDTO } from '../dto/post.dto';
 import { FileSystemFactory } from './file.service';
-import mime from 'mime-types';
-import { randomUUID } from 'crypto';
 import { JSDOM } from 'jsdom';
-import { NotFoundError } from '../utilities/errors.util';
-import { basename } from 'path';
+import { HTTPError, NotFoundError } from '../utilities/errors.util';
 import { LoggerService } from './logger.service';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { NS_PER_SEC, NS_TO_MS, SYSTEM_TAGS } from '../constants';
+import { Post } from '@prisma/client';
+import mime from 'mime-types';
+import { randomUUID } from 'crypto';
+import { basename } from 'path';
 
 @Injectable()
 export class RedditScraper {
+  private bulkDownloads = new Map<string, Promise<void>>();
+
   constructor(
     @Inject('PostDao') private readonly postDao: PostDao,
     @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
@@ -37,10 +40,18 @@ export class RedditScraper {
       headers.set('cookie', authorization);
     }
 
-    let newRecordCount = 0;
     const start = process.hrtime();
 
+    const newPosts: RedditPost[] = [];
+    let postPageCount = 0;
+
     for await (const posts of this.getAllRedditItems(url, headers)) {
+      postPageCount++;
+      this.logger.log(
+        'debug',
+        `[RedditParser] Loading Posts from page: ${postPageCount}`,
+        { url, postPageCount }
+      );
       const reqPostMap = new Map(posts.map((post) => [post.data.id, post]));
 
       const newKeys = await this.postDao.findWhereMissingSource(
@@ -49,42 +60,88 @@ export class RedditScraper {
 
       for (const { id } of newKeys) {
         // The id comes from the reqPostMap so we KNOW it exists
-        await this.parsePost(reqPostMap.get(id) as RedditPost);
+        // await this.parsePost(reqPostMap.get(id) as RedditPost);
+        newPosts.push(reqPostMap.get(id) as RedditPost);
       }
-
-      newRecordCount += newKeys.length;
-
-      // debugger;
     }
 
     const diff = process.hrtime(start);
+    const duration = (diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS;
+
+    // Load new posts into the queue
+    const downloadId = randomUUID();
+    this.bulkDownloads.set(randomUUID(), this.startBatchDownload(newPosts));
 
     return {
-      newRecords: newRecordCount,
-      duration: (diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS
+      message: 'Starting Bulk Download',
+      newRecords: newPosts.length,
+      duration: `${duration.toFixed(2)} secs`
     };
   }
 
   getPostByUrl(url: string) {
     this.logger.log('debug', 'Fetching post from Reddit', { url });
-    return this.getRedditJSON(new URL(url)).then((listings: RedditResponse) => {
-      const parsedList = listings.filter(
-        (listing) =>
-          listing.data.children.filter((child) => child.kind === 't3').length
-      );
+    return this.getRedditJSON(new URL(url)).then(
+      async (listings: RedditResponse) => {
+        const parsedList = listings.filter(
+          (listing) =>
+            listing.data.children.filter((child) => child.kind === 't3').length
+        );
 
-      const postListing = parsedList.shift();
+        const postListing = parsedList.shift();
 
-      if (!postListing) {
-        return;
+        if (!postListing) {
+          return;
+        }
+
+        // Extract the post from the listing object
+        const post = this.getPostsFromListing(postListing).shift();
+
+        if (post) {
+          // Check the database for a post matching the post id
+          this.logger.log('debug', 'Check for post with matching ID', {
+            source_id: post?.data.id
+          });
+
+          const existingPost = await this.postDao.getByMetadataValue(
+            RedditPostMetadataKeys.SOURCE_ID,
+            post?.data.id
+          );
+
+          // New posts are returned by findMissingSource
+          if (!existingPost) {
+            this.logger.log('debug', 'Creating new post', {
+              source_id: post?.data.id
+            });
+
+            // Create new post entry
+            const postCreateDTO = await this.parsePost(post);
+            // Save to database
+            const newPost = await this.postDao.create(postCreateDTO);
+            // Add default tags
+            await this.addDefaultTags(newPost, post);
+            // Return
+            const postDetails = await this.postDao.getById(newPost.id);
+
+            return this.postDao.toDTO(postDetails);
+          } else {
+            this.logger.log('debug', 'Existing Post Found in Database', {
+              source_id: post?.data.id
+            });
+
+            return this.postDao.toDTO(existingPost);
+          }
+        }
       }
+    );
+  }
 
-      const post = this.getPostsFromListing(postListing).shift();
+  private async addDefaultTags(newPost: Post, redditData: RedditPost) {
+    this.logger.log('debug', 'Updating Tags');
 
-      if (post) {
-        this.parsePost(post);
-      }
-    });
+    if (redditData.data.over_18) {
+      await this.postTagDao.addOrCreateTag(newPost.id, SYSTEM_TAGS.NSFW);
+    }
   }
 
   private async *getAllRedditItems(url: string, headers?: Headers) {
@@ -100,7 +157,15 @@ export class RedditScraper {
 
       const data: RedditListing = await this.getRedditJSON(_url, headers);
 
-      if (!data || !data.data.children) {
+      // Not part of the RedditListing structure
+      // but when an error is returned then we see this property
+      if ('error' in data) {
+        const { error, message } = data as any;
+
+        throw new HTTPError(message, error);
+      }
+
+      if (!data?.data?.children || !data?.data?.after) {
         done = true;
       }
 
@@ -108,8 +173,31 @@ export class RedditScraper {
         const { after, children } = data.data;
         nextPost = after;
         yield children;
+      } else {
+        done = true;
+        yield [];
       }
     }
+  }
+
+  private async getRedditGalleryImg(media: Record<string, MediaMetadataValue>) {
+    return await Promise.all(
+      Object.values(media).map((node) => {
+        const url = node.s.u ?? node.p.pop()?.u ?? node.o.pop()?.u ?? '';
+
+        const parsedUrl = JSDOM.fragment(url);
+
+        if (!parsedUrl.textContent) {
+          return {
+            contentType: '',
+            data: Buffer.from(''),
+            error: `Could Not Parse Escaped URL [url: ${url}]`
+          };
+        }
+
+        return this.mediaDownload(parsedUrl.textContent);
+      })
+    );
   }
 
   private getRedditJSON(url: URL, headers?: Headers) {
@@ -117,65 +205,20 @@ export class RedditScraper {
 
     url.pathname = url.pathname + '.json';
 
-    return fetch(url.toString(), { headers: _headers }).then((response) =>
-      response.json()
-    );
-  }
+    return fetch(url.toString(), { headers: _headers })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          throw new HTTPError(data.message, data.error);
+        }
 
-  private getPostsFromListing(listing: RedditListing) {
-    const posts = listing.data.children.filter((child) => child.kind === 't3');
-
-    return posts;
-  }
-
-  private async parsePost(post: RedditPost) {
-    this.logger.log('debug', 'Processing Reddit Post');
-
-    const {
-      author,
-      id,
-      is_video,
-      over_18,
-      permalink,
-      selftext,
-      subreddit_name_prefixed,
-      title,
-      url,
-      media,
-      media_metadata
-    } = post.data;
-
-    this.logger.log('debug', 'Check for post with matching ID', { id });
-    const existingPost = await this.postDao.getByMetadataValue(
-      RedditPostMetadataKeys.SOURCE_ID,
-      id
-    );
-
-    if (existingPost) {
-      this.logger.log('debug', 'Existing Post Found in Database', {
-        id: existingPost.id,
-        source_id: id
+        return data;
       });
-      return this.postDao.toDTO(existingPost);
-    } else {
-      this.logger.log('debug', 'No match found', { id });
-    }
+  }
 
-    // Create the new entry record
-    this.logger.log('debug', 'Creating new post', { id });
-    const newEntry: PostCreateDTO = {
-      author,
-      label: title,
-      source: `https://reddit.com${subreddit_name_prefixed}`,
-      metadata: [
-        {
-          name: RedditPostMetadataKeys.PERMALINK,
-          value: `https://reddit.com/${permalink}`
-        },
-        { name: RedditPostMetadataKeys.SOURCE_ID, value: id }
-      ],
-      files: []
-    };
+  private async getRedditPostContents(post: RedditPost) {
+    const { id, is_video, selftext, title, url, media, media_metadata } =
+      post.data;
 
     let fileDetails: {
       contentType: string | null;
@@ -183,9 +226,6 @@ export class RedditScraper {
       error: string;
     }[];
 
-    // We need to check for the different types of posts
-    //
-    // Text apps will have a selftext property
     if (selftext) {
       // The post is a text post
       fileDetails = [this.textToMarkdown(title, selftext)];
@@ -219,6 +259,67 @@ export class RedditScraper {
       fileDetails = [await this.mediaDownload(url)];
     }
 
+    return fileDetails;
+  }
+
+  private getPostsFromListing(listing: RedditListing) {
+    const posts = listing.data.children.filter((child) => child.kind === 't3');
+
+    return posts;
+  }
+
+  private async htmlParser(html_url: string, targetElement: string) {
+    const html = await JSDOM.fromURL(html_url);
+
+    return html.window.document.querySelector(targetElement);
+  }
+
+  private mediaDownload(img_url: string) {
+    return fetch(img_url)
+      .then(async (response) => {
+        const contentType = response.headers.get('Content-Type');
+        const data = await response.arrayBuffer();
+
+        if (data.byteLength === 0) {
+          throw new Error(`Zero Byte File returned for: ${img_url}`);
+        }
+
+        return { contentType, data: Buffer.from(data), error: '' };
+      })
+      .catch((error) => ({
+        contentType: '',
+        data: Buffer.from(''),
+        error: error.message
+      }));
+  }
+
+  private async parsePost(post: RedditPost) {
+    this.logger.log('debug', 'Processing Reddit Post');
+
+    const { author, id, permalink, subreddit_name_prefixed, title, url } =
+      post.data;
+
+    // Create the new entry record
+    const newEntry: PostCreateDTO = {
+      author,
+      label: title,
+      source: `https://reddit.com${subreddit_name_prefixed}`,
+      metadata: [
+        {
+          name: RedditPostMetadataKeys.PERMALINK,
+          value: `https://reddit.com/${permalink}`
+        },
+        { name: RedditPostMetadataKeys.SOURCE_ID, value: id }
+      ],
+      files: []
+    };
+
+    const fileDetails: {
+      contentType: string | null;
+      data: Buffer;
+      error: string;
+    }[] = await this.getRedditPostContents(post);
+
     if (fileDetails.length > 0) {
       await Promise.all(
         fileDetails.map(async (detail) => {
@@ -250,16 +351,23 @@ export class RedditScraper {
       );
     }
 
-    this.logger.log('debug', 'Saving post data');
-    const newPost = await this.postDao.create(newEntry);
+    return newEntry;
+  }
 
-    if (over_18) {
-      await this.postTagDao.addOrCreateTag(newPost.id, SYSTEM_TAGS.NSFW);
+  private async startBatchDownload(snapshot: RedditPost[]) {
+    const newPosts: PostCreateDTO[] = [];
+    this.logger.log('info', 'Starting Batch Download');
+
+    // Start downloading
+    for (const post of snapshot) {
+      newPosts.push(await this.parsePost(post));
+
+      // Adding a delay to avoid getting rate limited;
+      await delay(10000);
     }
 
-    const postDetails = await this.postDao.getById(newPost.id);
-
-    return this.postDao.toDTO(postDetails);
+    this.logger.log('info', 'Bulk adding records', { count: newPosts.length });
+    await this.postDao.bulkCreate(newPosts);
   }
 
   private textToMarkdown(title: string, text: string) {
@@ -269,51 +377,14 @@ ${text}`;
 
     return { data: Buffer.from(file), contentType: 'text/markdown', error: '' };
   }
+}
 
-  private async getRedditGalleryImg(media: Record<string, MediaMetadataValue>) {
-    return await Promise.all(
-      Object.values(media).map((node) => {
-        const url = node.s.u ?? node.p.pop()?.u ?? node.o.pop()?.u ?? '';
-
-        const parsedUrl = JSDOM.fragment(url);
-
-        if (!parsedUrl.textContent) {
-          return {
-            contentType: '',
-            data: Buffer.from(''),
-            error: `Could Not Parse Escaped URL [url: ${url}]`
-          };
-        }
-
-        return this.mediaDownload(parsedUrl.textContent);
-      })
-    );
-  }
-
-  private mediaDownload(img_url: string) {
-    return fetch(img_url)
-      .then(async (response) => {
-        const contentType = response.headers.get('Content-Type');
-        const data = await response.arrayBuffer();
-
-        if (data.byteLength === 0) {
-          throw new Error(`Zero Byte File returned for: ${img_url}`);
-        }
-
-        return { contentType, data: Buffer.from(data), error: '' };
-      })
-      .catch((error) => ({
-        contentType: '',
-        data: Buffer.from(''),
-        error: error.message
-      }));
-  }
-
-  private async htmlParser(html_url: string, targetElement: string) {
-    const html = await JSDOM.fromURL(html_url);
-
-    return html.window.document.querySelector(targetElement);
-  }
+function delay<V, T extends (...args: any) => V>(timeout: number) {
+  return new Promise((res) => {
+    setTimeout(() => {
+      res(true);
+    }, timeout);
+  });
 }
 
 Container.provide([{ provide: 'RedditScraper', useClass: RedditScraper }]);
