@@ -379,7 +379,7 @@ ${text}`;
   }
 }
 
-function delay<V, T extends (...args: any) => V>(timeout: number) {
+function delay(timeout: number) {
   return new Promise((res) => {
     setTimeout(() => {
       res(true);
