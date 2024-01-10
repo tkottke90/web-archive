@@ -3,7 +3,6 @@ import {
   Get,
   Headers,
   Next,
-  Params,
   Query,
   Response
 } from '@decorators/express';
@@ -16,6 +15,7 @@ import { PostDao } from '../dao/post.dao';
 import { ZodQueryValidator } from '../middleware/zod.middleware';
 import { z } from 'zod';
 import { API_ROOT } from '../config';
+import { JobScheduler } from '../jobs';
 
 @Controller('/parsers')
 export class ParserController {
@@ -23,7 +23,8 @@ export class ParserController {
     @Inject('RedditScraper') private readonly reddit: RedditScraper,
     @Inject('YoutubeParser') private readonly youtube: YoutubeParser,
     @Inject('PostDao') private readonly postDao: PostDao,
-    @Inject('PostTagDao') private readonly postTagDao: PostTagDao
+    @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
+    @Inject('JobScheduler') private readonly jobs: JobScheduler
   ) {}
 
   @Get('/reddit', [ZodQueryValidator(z.object({ target: z.string().url() }))])
@@ -57,9 +58,8 @@ export class ParserController {
     }
   }
 
-  @Get('/reddit-bulk/:id')
-  async redditBulkStatus(
-    @Params('id') id: string,
+  @Get('/reddit-bulk/start')
+  async redditBulkStart(
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {

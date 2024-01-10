@@ -74,3 +74,17 @@ model PostTag {
 
   @@id([postId, tagId])
 }
+
+model DownloadJob {
+  id    Int    @id @default(autoincrement())
+
+  parser String
+  data Json
+  status String
+  done Boolean @default(false)
+
+  jobNotes String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}

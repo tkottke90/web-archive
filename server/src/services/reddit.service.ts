@@ -18,19 +18,24 @@ import { Post } from '@prisma/client';
 import mime from 'mime-types';
 import { randomUUID } from 'crypto';
 import { basename } from 'path';
+import { JobScheduler } from '../jobs';
+import { DownloadJobDao } from '../dao/download-job.dao';
+
+const REDDIT_JOB = 'Reddit';
 
 @Injectable()
 export class RedditScraper {
-  private bulkDownloads = new Map<string, Promise<void>>();
-
   constructor(
-    @Inject('PostDao') private readonly postDao: PostDao,
-    @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
+    @Inject('DownloadJobDao') private readonly downloadJobsDao: DownloadJobDao,
     @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory,
-    @Inject('LoggerService') private readonly logger: LoggerService
-  ) {}
+    @Inject('JobScheduler') private readonly jobs: JobScheduler,
+    @Inject('LoggerService') private readonly logger: LoggerService,
+    @Inject('PostDao') private readonly postDao: PostDao,
+    @Inject('PostTagDao') private readonly postTagDao: PostTagDao
+  ) {
+    this.registerDownloadCronJob();
+  }
 
-  // TODO - This gets rate limited with a 410 after a while
   // Need to look at doing this slightly differently, possibly with CRON
   async batchPosts(url: string, authorization: string) {
     const headers = new Headers();
@@ -47,11 +52,11 @@ export class RedditScraper {
 
     for await (const posts of this.getAllRedditItems(url, headers)) {
       postPageCount++;
-      this.logger.log(
-        'debug',
-        `[RedditParser] Loading Posts from page: ${postPageCount}`,
-        { url, postPageCount }
-      );
+      // this.logger.log(
+      //   'debug',
+      //   `[RedditParser] Loading Posts from page: ${postPageCount}`,
+      //   { url, postPageCount }
+      // );
       const reqPostMap = new Map(posts.map((post) => [post.data.id, post]));
 
       const newKeys = await this.postDao.findWhereMissingSource(
@@ -69,8 +74,7 @@ export class RedditScraper {
     const duration = (diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS;
 
     // Load new posts into the queue
-    const downloadId = randomUUID();
-    this.bulkDownloads.set(randomUUID(), this.startBatchDownload(newPosts));
+    this.registerDownloadJobs(newPosts);
 
     return {
       message: 'Starting Bulk Download',
@@ -354,20 +358,56 @@ export class RedditScraper {
     return newEntry;
   }
 
-  private async startBatchDownload(snapshot: RedditPost[]) {
-    const newPosts: PostCreateDTO[] = [];
-    this.logger.log('info', 'Starting Batch Download');
+  private async registerDownloadCronJob(timing = '* * * * *') {
+    this.jobs.register(
+      REDDIT_JOB,
+      async () => {
+        const jobs = await this.downloadJobsDao.getNextJobs();
 
-    // Start downloading
-    for (const post of snapshot) {
-      newPosts.push(await this.parsePost(post));
+        if (jobs.length === 0) {
+          this.logger.log('debug', 'No Reddit Jobs Found, Stopping Job');
+          return this.jobs.stopJob(REDDIT_JOB);
+        }
 
-      // Adding a delay to avoid getting rate limited;
-      await delay(10000);
-    }
+        this.logger.log('debug', 'Reddit Job Executed', {
+          jobCount: jobs.length
+        });
 
-    this.logger.log('info', 'Bulk adding records', { count: newPosts.length });
-    await this.postDao.bulkCreate(newPosts);
+        for (const job of jobs) {
+          const post = job.data as unknown as RedditPost;
+
+          this.parsePost(post)
+            .then(async (postCreateDTO) => {
+              // Save to database
+              const newPost = await this.postDao.create(postCreateDTO);
+              // Add default tags
+              await this.addDefaultTags(newPost, post);
+
+              await this.downloadJobsDao.completeJobs([job.id]);
+            })
+            .catch(async (err) => {
+              await this.downloadJobsDao.jobError(job.id, err.message);
+            });
+        }
+      },
+      {
+        timing,
+        start: true
+      }
+    );
+  }
+
+  private async registerDownloadJobs(data: RedditPost[]) {
+    this.logger.log('info', 'Creating upload jobs', { count: data.length });
+
+    await this.downloadJobsDao.create(
+      data.map((post) => ({
+        data: post,
+        parser: REDDIT_JOB
+      }))
+    );
+
+    this.jobs.startJob(REDDIT_JOB);
   }
 
   private textToMarkdown(title: string, text: string) {
@@ -377,14 +417,6 @@ ${text}`;
 
     return { data: Buffer.from(file), contentType: 'text/markdown', error: '' };
   }
-}
-
-function delay(timeout: number) {
-  return new Promise((res) => {
-    setTimeout(() => {
-      res(true);
-    }, timeout);
-  });
 }
 
 Container.provide([{ provide: 'RedditScraper', useClass: RedditScraper }]);
