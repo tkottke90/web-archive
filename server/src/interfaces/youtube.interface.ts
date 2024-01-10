@@ -73,6 +73,5 @@ export interface YoutubeDetails {
 }
 
 export enum YoutubePostMetadataKeys {
-  'SOURCE_ID' = 'SOURCE_ID',
-  'OVER_18' = 'OVER_18'
+  'SOURCE_ID' = 'SOURCE_ID'
 }

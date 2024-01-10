@@ -36,13 +36,12 @@ export class YoutubeParser {
 
   async queueVideoDownload(
     url: string,
+    path: string,
     ogFilename: string,
     postId: number,
     logger: LoggerService
   ) {
-    const path = resolve(this.fileSystem.UPLOAD_DIR, `${randomUUID()}.mp4`);
-
-    logger.log('info', 'Starting download');
+    logger.log('info', 'Starting download', { downloadPath: path });
     await exec(
       `youtube-dl -o '${path}' -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4' '${url}'`
     );
@@ -52,6 +51,10 @@ export class YoutubeParser {
     const fileDetails = await stat(path);
     const mimeType = mime.contentType(path);
 
+    // TODO - Get file by existing ID
+
+    // TODO - Change to an update instead of create(?)
+    // TODO -   [Alt] Could also have a placeholder for downloading and then replace it once the download is complete
     await this.postFileDao.create(postId, {
       encoding: '',
       filename: path,
@@ -92,6 +95,8 @@ export class YoutubeParser {
     }
 
     logger.log('info', 'Creating new post');
+
+    const path = resolve(this.fileSystem.UPLOAD_DIR, `${randomUUID()}.mp4`);
     const post = await this.postDao.create({
       author: metadata.channel ?? metadata.uploader,
       label: metadata.title,
@@ -99,10 +104,18 @@ export class YoutubeParser {
       metadata: [
         { name: YoutubePostMetadataKeys.SOURCE_ID, value: metadata.id }
       ],
-      files: []
+      files: [
+        {
+          encoding: '',
+          filename: path, // TODO - Replace with placeholder image
+          mime: 'video/mp4',
+          original_filename: '',
+          size: 0
+        }
+      ]
     });
 
-    this.queueVideoDownload(url, metadata._filename, post.id, logger);
+    this.queueVideoDownload(url, path, metadata._filename, post.id, logger);
 
     logger.log('info', 'Added video to queue');
 
