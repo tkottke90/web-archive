@@ -14,6 +14,7 @@ import { Tag } from "../../components/Tag";
 import { AutoComplete, AutocompleteItem } from "../../components/Inputs/Autocomplete";
 import { applyTagToPost, createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
 import { PostTagDTO } from "../../../../server/src/dto/post-tag.dto";
+import { EmptyVideo } from "../../components/EmptyAsset";
 
 const portal = getPortalContainer("modals");
 
@@ -226,7 +227,9 @@ function MediaCard({ post }: { post: PostEntity }) {
           }
 
           if (file.mime.startsWith("video")) {
-            return <video src={file.media} loop controls className={commonClasses} />;
+            return file.size > 0
+              ? <video src={file.media} loop controls className={commonClasses} />
+              : <EmptyVideo className={commonClasses} />
           }
         })}
       </div>
