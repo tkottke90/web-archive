@@ -10,8 +10,8 @@ RUN echo "Image Details: $BRANCH | $COMMIT"
 
 WORKDIR /usr/app/
 
-RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
-RUN chmod a+rx /usr/local/bin/youtube-dl
+# Lawsuit prevents the download of this tool
+# RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
 
 COPY ./dist .
 COPY ./prisma ./prisma
@@ -19,6 +19,9 @@ COPY README.md .
 COPY package.json .
 COPY package-lock.json .
 COPY bin/entrypoint.sh .
+COPY bin/youtube-dl /usr/local/bin/youtube-dl
+
+RUN chmod a+rx /usr/local/bin/youtube-dl
 
 RUN npm install --production
 RUN npx prisma generate
