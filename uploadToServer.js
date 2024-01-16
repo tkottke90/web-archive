@@ -1,35 +1,9 @@
-import { readFileSync, existsSync, writeFileSync, createReadStream } from 'fs'
-import { database } from './lib/database.js';
-import { Blob, Buffer } from 'node:buffer';
+import { readFileSync } from 'fs';
 import mime from 'mime-types';
-import { up } from 'inquirer/lib/utils/readline.js';
-import { parseResponse } from './lib/http.js';
+import { Blob } from 'node:buffer';
 import { resolve } from 'path';
-
-// const form = new FormData();
-// form.append("author", "Overall-Donut-7393");
-// form.append("label", "Enemy (jay nayler) pt. 2");
-// form.append("source", "https://reddit.comr/FurryOnHuman");
-// form.append("metadata[0]", "{\n\t\"name\": \"PERMALINK\",\n\t\"value\": \"https://reddit.com//r/FurryOnHuman/comments/zaemxm/enemy_jay_nayler_pt_2/\"\n}");
-// form.append("file", "/Users/thomaskottke/Downloads/Temp/enemy-jay-nayler-pt-2-v0-34c3rmlrpf3a1.webp");
-// form.append("file", "/Users/thomaskottke/Downloads/Temp/enemy-jay-nayler-pt-2-v0-uyl0g9jrpf3a1.webp");
-// form.append("file", "/Users/thomaskottke/Downloads/Temp/enemy-jay-nayler-pt-2-v0-pwqm8rfrpf3a1.webp");
-// form.append("file", "/Users/thomaskottke/Downloads/Temp/enemy-jay-nayler-pt-2-v0-fqkwi6drpf3a1.webp");
-// form.append("file", "/Users/thomaskottke/Downloads/Temp/enemy-jay-nayler-pt-2-v0-7tp1g09rpf3a1.webp");
-// form.append("metadata[1]", "{\n\t\"name\": \"SOURCE_ID\",\n\t\"value\": \"zaemxm\"\n}");
-
-// const options = {
-//   method: 'POST',
-//   headers: {'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001'}
-// };
-
-// options.body = form;
-
-// fetch('http://10.0.0.7:15100/post/', options)
-//   .then(response => response.json())
-//   .then(response => console.log(response))
-//   .catch(err => console.error(err));
-
+import { database } from './lib/database.js';
+import { parseResponse } from './lib/http.js';
 
 // const API_ROOT = 'http://10.0.0.7:15100'
 const API_ROOT = 'http://0.0.0.0:5000'
