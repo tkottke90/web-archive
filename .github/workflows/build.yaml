@@ -66,7 +66,7 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           if [[ $REF_TYPE == "tag" ]]; then
-            VERSION=$REF
+            VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)
           else
             if [[ $REF == *release/* ]]; then
               VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)-RC
