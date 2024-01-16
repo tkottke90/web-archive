@@ -13,6 +13,11 @@ WORKDIR /usr/app/
 # Lawsuit prevents the download of this tool
 # RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
 
+# Install Python
+RUN apt-get update && apt-get upgrade
+RUN apt-get install python2
+
+# Install Files
 COPY ./dist .
 COPY ./prisma ./prisma
 COPY README.md .
