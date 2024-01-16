@@ -27,7 +27,7 @@ import { PostDao } from '../dao/post.dao';
 import multer from 'multer';
 import { MultipartJson } from '../middleware';
 import { PostFileDao } from '../dao/post-file.dao';
-import { NotFoundError } from '../utilities/errors.util';
+import { BadRequestError, NotFoundError } from '../utilities/errors.util';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { TagDao } from '../dao/tag.dao';
 import { ROUTES, UPLOAD_DIR } from '../config';
@@ -251,6 +251,10 @@ export class PostController {
   ) {
     try {
       const { file } = files;
+
+      if (!file) {
+        throw new BadRequestError('No Files Provided');
+      }
 
       const result = await this.postDao.create({
         ...body,
