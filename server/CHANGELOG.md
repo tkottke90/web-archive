@@ -1,3 +1,9 @@
+### 1.3.0 (2024-01-16)
+
+##### New Features
+
+*  add empty video component (19b420f5)
+
 ### 1.2.0 (2023-11-15)
 
 ##### Refactors
