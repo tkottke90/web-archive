@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import { readFileSync } from 'fs';
 import mime from 'mime-types';
 import { Blob } from 'node:buffer';
@@ -5,8 +7,9 @@ import { resolve } from 'path';
 import { database } from './lib/database.js';
 import { parseResponse } from './lib/http.js';
 
-// const API_ROOT = 'http://10.0.0.7:15100'
-const API_ROOT = 'http://0.0.0.0:5000'
+const [,,host] = process.argv;
+
+const API_ROOT = host ?? 'http://0.0.0.0:5000'
 const keys = Array.from(database.keys());
 
 function createMetadataEntries(form, post) {
