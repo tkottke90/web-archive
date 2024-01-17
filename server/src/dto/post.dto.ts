@@ -6,6 +6,7 @@ import { PostTag } from './post-tag.dto';
 
 export const PostSchema = BaseSchema(
   z.object({
+    id: FuzzyNumber,
     label: z.string(),
     author: z.string(),
     source: z.string().url(),
@@ -21,7 +22,7 @@ export const PostCreateSchema = PostSchema.merge(
     files: z.array(PostFileCreateSchema).optional()
   })
 ).omit({
-  self: true,
+  id: true,
   createdAt: true,
   updatedAt: true,
   links: true

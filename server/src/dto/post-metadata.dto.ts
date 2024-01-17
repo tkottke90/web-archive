@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import { BaseSchema } from './utilities';
+import { BaseSchema, FuzzyNumber } from './utilities';
 
 export const PostMetadata = BaseSchema(
   z.object({
+    id: FuzzyNumber,
     post: z.string(),
 
     name: z.string(),
@@ -11,7 +12,7 @@ export const PostMetadata = BaseSchema(
 );
 
 export const PostMetadataCreate = PostMetadata.omit({
-  self: true,
+  id: true,
   createdAt: true,
   updatedAt: true,
   links: true

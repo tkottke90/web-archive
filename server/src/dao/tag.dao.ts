@@ -56,13 +56,15 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
   toDTO(entity: Tag): TagDTO {
     return {
       id: entity.id,
-      self: `${ROUTES.TAGS}/${entity.id}`,
+
       label: entity.label,
 
       color: entity.color,
       textColor: entity.textColor,
 
-      links: {},
+      links: {
+        self: `${ROUTES.TAGS}/${entity.id}`
+      },
 
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt
@@ -70,7 +72,7 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
   }
   toPersistance(entity: Partial<TagDTO>): Partial<Tag> {
     return {
-      id: entity.self ? this.getResourceIdFromPath(entity.self) : undefined,
+      id: entity.id,
       label: entity.label,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt

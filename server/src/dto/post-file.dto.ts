@@ -1,10 +1,9 @@
 import { z } from 'zod';
-import { BaseSchema } from './utilities';
+import { BaseSchema, FuzzyNumber } from './utilities';
 
 export const PostFileSchema = BaseSchema(
   z.object({
-    post: z.string(),
-    media: z.string(),
+    id: FuzzyNumber,
     original_filename: z.string(),
     filename: z.string(),
     size: z.number(),
@@ -14,7 +13,7 @@ export const PostFileSchema = BaseSchema(
 );
 
 export const PostFileCreateSchema = PostFileSchema.omit({
-  self: true,
+  id: true,
   post: true,
   media: true,
   createdAt: true,

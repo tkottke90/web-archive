@@ -15,12 +15,14 @@ export class PostMetadataDao extends BaseDao<PostMetadata, any> {
     const postLink = `${ROUTES.POSTS}/${entity.postId}`;
 
     return {
-      self: `${postLink}/metadata/${entity.id}`,
+      id: entity.id,
       post: postLink,
       name: entity.name,
       value: entity.value,
 
-      links: {},
+      links: {
+        self: `${postLink}/metadata/${entity.id}`
+      },
 
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt

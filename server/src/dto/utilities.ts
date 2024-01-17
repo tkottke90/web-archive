@@ -8,7 +8,6 @@ export const NumberLike = FuzzyNumber;
 export const BaseSchema = <T extends ZodRawShape>(schema: ZodObject<T>) =>
   z
     .object({
-      self: z.string(),
       createdAt: z.date(),
       updatedAt: z.date(),
       links: z.record(z.string(), z.string())

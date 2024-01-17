@@ -137,7 +137,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
 
   toDTO(input: PostWithAssociations): PostDTO {
     return {
-      self: `${ROUTES.POSTS}/${input.id}`,
+      id: input.id,
 
       author: input.author,
       label: input.label,
@@ -148,6 +148,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       tags: input.postTags.map(this.postTagDao.toDTO),
 
       links: {
+        self: `${ROUTES.POSTS}/${input.id}`,
         tagSearch: `${ROUTES.POSTS}/${input.id}/tag-search`,
         addTag: `${ROUTES.POSTS}/${input.id}/tags/`
       },
@@ -159,7 +160,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
 
   toPersistance(input: Partial<PostDTO>): Partial<Post> {
     return {
-      id: input.self ? this.getResourceIdFromPath(input.self) : undefined,
+      id: input.id,
       author: input.author ?? undefined,
       label: input.label ?? undefined,
       createdAt: input.createdAt ?? undefined,
