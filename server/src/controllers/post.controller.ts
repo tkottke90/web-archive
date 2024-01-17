@@ -238,6 +238,47 @@ export class PostController {
     }
   }
 
+  @Post('/:postId/files', [
+    upload.fields([{ name: 'file' }]),
+    ZodIdValidator('postId')
+  ])
+  async addFileToPost(
+    @Params('postId') postId: number,
+    @Request('files') files: Record<string, Express.Multer.File[]>,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const post = await this.postDao.getById(postId);
+
+      if (!post) {
+        throw new NotFoundError(`Post with id [${postId}] not found`);
+      }
+
+      const { file: fileList } = files;
+
+      // Create new files
+      await Promise.all(
+        fileList.map((file) =>
+          this.postFileDao.create(postId, {
+            encoding: file.encoding,
+            filename: file.path,
+            mime: file.mimetype,
+            original_filename: file.originalname,
+            size: file.size
+          })
+        )
+      );
+
+      // Refresh post
+      const updatedPost = await this.postDao.getById(postId);
+
+      res.json(this.postDao.toDTO(updatedPost));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Post('/', [
     upload.fields([{ name: 'file' }]),
     MultipartJson('metadata'),
