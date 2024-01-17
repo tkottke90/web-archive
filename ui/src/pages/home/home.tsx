@@ -26,8 +26,8 @@ export function HomePage() {
         <br />
         <Table
           onRowClick={(data) => {
-            console.log(`/${data.value.self.split("/").slice(2).join("/")}`)
-            route(`/${data.value.self.split("/").slice(2).join("/")}`);
+            console.log(`/${data.value.links.self.split("/").slice(2).join("/")}`)
+            route(`/${data.value.links.self.split("/").slice(2).join("/")}`);
           }}
           entries={posts.value}
           headers={[

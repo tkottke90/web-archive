@@ -1,8 +1,7 @@
-import { get, getPaged, remove } from "../utilities/http.utils";
+import { Signal, batch, computed, effect } from "@preact/signals";
 import { PostDTO } from '../../../server/src/dto/post.dto';
-import { Signal, batch, effect, computed } from "@preact/signals";
+import { get, getPaged, remove } from "../utilities/http.utils";
 import { applyTagToPost } from "./tags.service";
-import { PostTagDTO } from "../../../server/src/dto/post-tag.dto";
 
 const initialSearch = new URLSearchParams(window.location.search);
 
@@ -37,13 +36,13 @@ function getPosts<T>({limit, skip}: GetPostInputs) {
 }
 
 export function postDetails(url: string) {
-  let post = posts.value.find(post => post.value.self.endsWith(url));
+  let post = posts.value.find(post => post.value.links.self.endsWith(url));
 
   if (post) {
     return Promise.resolve(post.value);
   }
 
-  return get<PostDTO>(`${url}`)
+  return get<PostDTO>(`/api${url}`);
 }
 
 export function loadPosts( options: { limit?: number, skip?: number}) {
@@ -62,7 +61,7 @@ export function updateLocalPost(post: PostDTO) {
   const targetIndex = posts
     .value
     .findIndex((postSignal) => {
-      postSignal.value.self === post.self
+      postSignal.value.links.self === post.links.self
     })
 
   if (targetIndex != -1) {

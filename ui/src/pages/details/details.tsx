@@ -1,20 +1,19 @@
-import { Signal, batch, computed, useSignal, useSignalEffect } from "@preact/signals";
+import { Signal, batch, useSignal, useSignalEffect } from "@preact/signals";
+import { Modal } from "@tkottke90/preact-components";
+import { ComponentChildren, Fragment, JSX } from "preact";
+import { route } from "preact-router";
+import { PostDTO } from "../../../../server/src/dto/post.dto";
+import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
+import { EmptyVideo } from "../../components/EmptyAsset";
+import { AutoComplete, AutocompleteItem } from "../../components/Inputs/Autocomplete";
 import { Card } from "../../components/Layouts/Card";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
-import { PostDTO } from "../../../../server/src/dto/post.dto";
-import { ComponentChildren, Fragment, JSX } from "preact";
-import { deletePost, postDetails, updateLocalPost, updateLocalPostTags } from "../../services/post.service";
 import { Table } from "../../components/Table/Table";
-import { Modal } from "@tkottke90/preact-components";
-import { getPortalContainer } from "../../utilities/dom.utils";
-import { route } from "preact-router";
-import { Http } from "../../interfaces/http.interface";
-import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
 import { Tag } from "../../components/Tag";
-import { AutoComplete, AutocompleteItem } from "../../components/Inputs/Autocomplete";
-import { applyTagToPost, createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
-import { PostTagDTO } from "../../../../server/src/dto/post-tag.dto";
-import { EmptyVideo } from "../../components/EmptyAsset";
+import { Http } from "../../interfaces/http.interface";
+import { deletePost, postDetails, updateLocalPostTags } from "../../services/post.service";
+import { createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
+import { getPortalContainer } from "../../utilities/dom.utils";
 
 const portal = getPortalContainer("modals");
 
@@ -47,8 +46,8 @@ export function DetailsPage() {
               onConfirm={() => {
                 showDeleteModal.value = true;
 
-                if (post.value?.self) {
-                  deletePost(post.value.self)
+                if (post.value?.links.self) {
+                  deletePost(post.value.links.self)
                     .then(() => {
                       route("/?refresh=true");
                     })
@@ -223,12 +222,12 @@ function MediaCard({ post }: { post: PostEntity }) {
           }
 
           if (file.mime.startsWith("image")) {
-            return <img src={file.media} className={commonClasses} />;
+            return <img src={file.links.media} className={commonClasses} />;
           }
 
           if (file.mime.startsWith("video")) {
             return file.size > 0
-              ? <video src={file.media} loop controls className={commonClasses} />
+              ? <video src={file.links.media} loop controls className={commonClasses} />
               : <EmptyVideo className={commonClasses} />
           }
         })}
