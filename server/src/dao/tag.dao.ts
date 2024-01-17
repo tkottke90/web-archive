@@ -14,7 +14,9 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
   addTag(input: TagCreateDTO) {
     return this.client.tag.create({
       data: {
-        label: input.label
+        label: input.label,
+        color: input.color,
+        textColor: input.textColor
       }
     });
   }
@@ -56,6 +58,9 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
       id: entity.id,
       self: `${ROUTES.TAGS}/${entity.id}`,
       label: entity.label,
+
+      color: entity.color,
+      textColor: entity.textColor,
 
       links: {},
 

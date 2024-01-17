@@ -177,6 +177,12 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       where.postTags = { some: { tagId: data.tag } };
     }
 
+    if (data.sourceId) {
+      where.metadata = {
+        some: { value: { in: data.sourceId } }
+      };
+    }
+
     return { take, skip, orderBy, where };
   }
 }
