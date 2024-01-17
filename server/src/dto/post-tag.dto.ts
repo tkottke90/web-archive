@@ -4,7 +4,9 @@ import { BaseSchema, QueryFields } from './utilities';
 export const TagSchema = BaseSchema(
   z.object({
     id: z.number(),
-    label: z.string()
+    label: z.string(),
+    color: z.string(),
+    textColor: z.string()
   })
 );
 

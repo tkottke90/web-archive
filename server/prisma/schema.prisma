@@ -59,6 +59,9 @@ model Tag {
 
   postTags PostTag[]
 
+  color String
+  textColor String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }

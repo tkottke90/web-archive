@@ -23,11 +23,16 @@ export class PostTagDao extends BaseDao<PostTag, any> {
     }) as unknown as PostTagAssociation;
   }
 
-  async addOrCreateTag(postId: number, tagLabel: string) {
+  async addOrCreateTag(
+    postId: number,
+    tagLabel: string,
+    color = 'ccffff',
+    textColor = '222'
+  ) {
     let tag = await this.tagDao.getByLabel(tagLabel);
 
     if (!tag) {
-      tag = await this.tagDao.addTag({ label: tagLabel });
+      tag = await this.tagDao.addTag({ label: tagLabel, color, textColor });
     }
 
     return await this.create(postId, tag.id);
