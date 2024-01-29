@@ -18,6 +18,10 @@ table {
 
 @layer components {
 
+  .actions {
+    @apply flex justify-end gap-2;
+  }
+
   h1 { @apply text-5xl; }
   h2 { @apply text-4xl; }
   h3 { @apply text-3xl; }
@@ -30,5 +34,9 @@ table {
 
   button {
     @apply py-2 px-4 uppercase rounded hover:brightness-125;
+
+    &.primary {
+      @apply bg-burnt-500 text-slate-200;
+    }
   }
 }
