@@ -8,9 +8,9 @@ import {
 
 @Injectable()
 export class JobScheduler {
-  constructor(@Inject('LoggerService') private readonly logger: LoggerService) {
-    this.createRedditScheduler();
-  }
+  constructor(
+    @Inject('LoggerService') private readonly logger: LoggerService
+  ) {}
 
   register(
     name: string,
@@ -49,19 +49,6 @@ export class JobScheduler {
     }
 
     task.stop();
-  }
-
-  private createRedditScheduler() {
-    return cron.schedule(
-      this.validateSchedule('*/1 * * * *'),
-      (now) => {
-        this.logger.log('debug', 'Reddit Scheduler Run', { timestamp: now });
-      },
-      {
-        name: 'Reddit',
-        scheduled: false
-      }
-    );
   }
 
   private validateSchedule(input: string) {
