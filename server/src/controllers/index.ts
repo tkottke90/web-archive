@@ -4,11 +4,12 @@
 // controllers method
 
 import { attachControllers } from '@decorators/express';
-import { Application } from 'express';
+import { Application, Router } from 'express';
 import { ServerStatusController } from './server-status';
 import { PostController } from './post.controller';
 import { TagController } from './tag.controller';
 import { ParserController } from './parser.controller';
+import { API_ROOT } from '../config';
 
 const controllers = [
   ParserController,
@@ -18,5 +19,8 @@ const controllers = [
 ];
 
 export default function (app: Application) {
-  attachControllers(app, controllers);
+  const API_Route = Router();
+  attachControllers(API_Route, controllers);
+
+  app.use(API_ROOT, API_Route);
 }
