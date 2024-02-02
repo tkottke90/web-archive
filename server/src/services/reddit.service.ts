@@ -362,7 +362,7 @@ export class RedditScraper {
     this.jobs.register(
       REDDIT_JOB,
       async () => {
-        const jobs = await this.downloadJobsDao.getNextJobs();
+        const jobs = await this.downloadJobsDao.getNextJobs(REDDIT_JOB);
 
         if (jobs.length === 0) {
           this.logger.log('debug', 'No Reddit Jobs Found, Stopping Job');

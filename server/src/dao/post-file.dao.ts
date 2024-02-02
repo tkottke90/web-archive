@@ -21,6 +21,18 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     });
   }
 
+  async delete(postFileId: number) {
+    const file = await this.client.postFile.findFirst();
+
+    if (!file) {
+      throw new Error(`PostFile with ID [${postFileId}] not found`);
+    }
+
+    await this.client.postFile.delete({ where: { id: postFileId } });
+
+    await this.fileSystem.remove(file.filename);
+  }
+
   async deleteFiles(postId: number) {
     const files = await this.client.postFile.findMany({ where: { postId } });
 

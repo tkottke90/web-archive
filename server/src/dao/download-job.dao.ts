@@ -47,10 +47,10 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
     });
   }
 
-  getNextJobs(size = 10) {
+  getNextJobs(parser: string, size = 10) {
     return this.client.downloadJob.findMany({
       take: size,
-      where: { done: false }
+      where: { done: false, parser, status: JOB_STATUS.QUEUED }
     });
   }
 

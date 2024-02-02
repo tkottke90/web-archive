@@ -75,3 +75,10 @@ export interface YoutubeDetails {
 export enum YoutubePostMetadataKeys {
   'SOURCE_ID' = 'SOURCE_ID'
 }
+
+export type YoutubeJob = {
+  url: string;
+  path: string;
+  ogFilename: string;
+  postId: number;
+};

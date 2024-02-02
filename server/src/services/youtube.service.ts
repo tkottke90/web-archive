@@ -4,6 +4,7 @@ import childProcess from 'child_process';
 import { FileSystemFactory } from './file.service';
 import {
   YoutubeDetails,
+  YoutubeJob,
   YoutubePostMetadataKeys
 } from '../interfaces/youtube.interface';
 import { randomUUID } from 'crypto';
@@ -13,57 +14,33 @@ import { resolve } from 'path';
 import { PostFileDao } from '../dao/post-file.dao';
 import { stat } from 'fs/promises';
 import mime from 'mime-types';
+import { DownloadJobDao } from '../dao/download-job.dao';
+import { JobScheduler } from '../jobs';
 
 const exec = promisify(childProcess.exec);
+
+const YOUTUBE_JOB = 'Youtube';
 
 export class YoutubeParser {
   private parserLogger: LoggerService;
 
   constructor(
-    @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
+    @Inject('DownloadJobDao') private readonly downloadJobsDao: DownloadJobDao,
     @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory,
+    @Inject('JobScheduler') private readonly jobs: JobScheduler,
     @Inject('LoggerService') readonly logger: LoggerService,
-    @Inject('PostDao') private readonly postDao: PostDao
+    @Inject('PostDao') private readonly postDao: PostDao,
+    @Inject('PostFileDao') private readonly postFileDao: PostFileDao
   ) {
     this.parserLogger = logger.createLogger({ location: 'YoutubeParser' });
+
+    this.registerDownloadCronJob();
   }
 
   async getVideoMetadata(url: string) {
     const result = await exec(`youtube-dl --dump-json '${url}'`);
 
     return JSON.parse(result.stdout) as YoutubeDetails;
-  }
-
-  async queueVideoDownload(
-    url: string,
-    path: string,
-    ogFilename: string,
-    postId: number,
-    logger: LoggerService
-  ) {
-    logger.log('info', 'Starting download', { downloadPath: path });
-    await exec(
-      `youtube-dl -o '${path}' -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4' '${url}'`
-    );
-
-    logger.log('info', 'Download Complete');
-
-    const fileDetails = await stat(path);
-    const mimeType = mime.contentType(path);
-
-    // TODO - Get file by existing ID
-
-    // TODO - Change to an update instead of create(?)
-    // TODO -   [Alt] Could also have a placeholder for downloading and then replace it once the download is complete
-    await this.postFileDao.create(postId, {
-      encoding: '',
-      filename: path,
-      original_filename: ogFilename,
-      mime: mimeType ? mimeType : 'octet/stream',
-      size: fileDetails.size
-    });
-
-    logger.log('info', 'Youtube Video Registered in Database');
   }
 
   async getVideo(url: string) {
@@ -107,19 +84,134 @@ export class YoutubeParser {
       files: [
         {
           encoding: '',
-          filename: path, // TODO - Replace with placeholder image
-          mime: 'video/mp4',
+          filename: 'placeholder.png',
+          mime: 'image/png',
           original_filename: '',
           size: 0
         }
       ]
     });
 
-    this.queueVideoDownload(url, path, metadata._filename, post.id, logger);
+    this.queueDownloadJob(url, path, metadata._filename, post.id);
 
     logger.log('info', 'Added video to queue');
 
     return post;
+  }
+
+  private async queueDownloadJob(
+    url: string,
+    path: string,
+    ogFilename: string,
+    postId: number
+  ) {
+    this.logger.log('info', 'Creating upload jobs', { postId, url });
+
+    await this.downloadJobsDao.create([
+      { parser: YOUTUBE_JOB, data: { url, path, ogFilename, postId } }
+    ]);
+
+    this.jobs.startJob(YOUTUBE_JOB);
+  }
+
+  private registerDownloadCronJob() {
+    this.jobs.register(
+      YOUTUBE_JOB,
+      async () => {
+        const jobs = await this.downloadJobsDao.getNextJobs(YOUTUBE_JOB);
+
+        if (jobs.length === 0) {
+          this.logger.log('debug', 'No Youtube Jobs Found, Stopping Job');
+          return this.jobs.stopJob(YOUTUBE_JOB);
+        }
+
+        await this.downloadJobsDao.startJobs(jobs.map((job) => job.id));
+
+        for (const job of jobs) {
+          const { postId, path, ogFilename, url } = job.data as YoutubeJob;
+          this.logger.log('info', `Downloading video: ${url}`, {
+            targetPath: path
+          });
+
+          await new Promise<void>((resolve, reject) => {
+            const dlInstance = childProcess.spawn(
+              'youtube-dl',
+              [
+                '-k',
+                '-o',
+                `${path}`,
+                '-f',
+                'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
+                url
+              ],
+              { env: process.env }
+            );
+
+            dlInstance.stdin.on('data', (data: Buffer) =>
+              this.logger.log('debug', data.toString())
+            );
+
+            dlInstance.stdout.on('data', (data: Buffer) =>
+              this.logger.log('debug', data.toString())
+            );
+
+            dlInstance.stderr.on('data', (data: Buffer) =>
+              this.logger.log('warn', data.toString())
+            );
+
+            dlInstance.on('error', (err: Error) => {
+              reject(`Error: ${err.message}`);
+              this.downloadJobsDao.jobError(job.id, err.message);
+            });
+
+            dlInstance.on('close', (code: number) => {
+              this.logger.log('info', 'Download Complete ', {
+                jobId: job.id,
+                post: postId,
+                code
+              });
+
+              code !== 0
+                ? reject(`Error Downloading Video [code: ${code}]`)
+                : resolve();
+            });
+          });
+
+          const fileDetails = await stat(path);
+          const mimeType = mime.lookup(path);
+
+          // Delete Existing Files
+          const post = await this.postDao.getById(postId);
+          const placeholder = post.files.find(
+            (file) => (file.filename = 'placeholder.png')
+          );
+
+          if (placeholder) {
+            await this.postFileDao.delete(placeholder.id);
+          }
+
+          // Upload newly created files
+          await this.postFileDao.create(postId, {
+            encoding: '',
+            filename: path,
+            original_filename: ogFilename,
+            mime: mimeType ? mimeType : 'octet/stream',
+            size: fileDetails.size
+          });
+
+          // Update job as complete
+          await this.downloadJobsDao.completeJobs([job.id]);
+        }
+
+        this.logger.log('debug', 'Youtube Job Executed', {
+          jobCount: jobs.length
+        });
+      },
+      {
+        timing: '* * * * *',
+        start: true
+      }
+    );
   }
 }
 
