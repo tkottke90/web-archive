@@ -35,6 +35,19 @@ function getPosts<T>({limit, skip}: GetPostInputs) {
   return getPaged<T>(`/api/post?${queryParams.toString()}`)
 }
 
+export async function getSiblingPosts(id: number) {
+  const queryParams = new URLSearchParams();
+  queryParams.append('limit', '3');
+  queryParams.append('skip', `${id === 1 ? 0 : id - 2}`);
+
+  const response = await getPaged<PostDTO>(`/api/post?${queryParams.toString()}`)
+
+  return ({
+    previous: `/post/${response.data[0].id}`,
+    next: response.data.length === 3 ? `/post/${response.data[2].id}`: ''
+  })
+}
+
 export function postDetails(url: string) {
   let post = posts.value.find(post => post.value.links.self.endsWith(url));
 

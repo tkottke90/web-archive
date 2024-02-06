@@ -11,26 +11,35 @@ import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Table } from "../../components/Table/Table";
 import { Tag } from "../../components/Tag";
 import { Http } from "../../interfaces/http.interface";
-import { deletePost, postDetails, updateLocalPostTags } from "../../services/post.service";
+import { deletePost, getSiblingPosts, postDetails, updateLocalPostTags } from "../../services/post.service";
 import { createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
 import { getPortalContainer } from "../../utilities/dom.utils";
 import { useCallback } from "preact/hooks";
 import { returnFileSize } from "../../utilities/number.utils";
+import { navigateOnClick } from "../../utilities/router-helpers.util";
 
 const portal = getPortalContainer("modals");
 
 type PostEntity = Signal<PostDTO | undefined>;
 
 export function DetailsPage() {
+  const path = useSignal(window.location.pathname);
   const post = useSignal<PostDTO | undefined>(undefined);
   const showDeleteModal = useSignal(false);
   const loading = useSignal(true);
+  const siblings = useSignal({ next: '', previous: '' })
 
   useSignalEffect(() => {
-    postDetails(window.location.pathname).then((result) => {
+    loading.value = true;
+    postDetails(path.value).then(async (result) => {
+      const newSiblings = await getSiblingPosts(result.id)
+      
+      console.dir(newSiblings);
+
       batch(() => {
         post.value = result;
         loading.value = false;
+        siblings.value = newSiblings;
       });
     });
   });
@@ -41,6 +50,14 @@ export function DetailsPage() {
         <div className="col-span-4 flex justify-between">
           <div></div>
           <div>
+              <button onClick={() => {
+                route(siblings.value.previous);
+                path.value = siblings.value.previous;
+              }}>Prev</button>
+              <button onClick={() => {
+                route(siblings.value.next);
+                path.value = siblings.value.next;
+              }}>Next</button>
             <ConfirmButton
               label="Delete"
               className="text-crown-500 border border-crown-500"
