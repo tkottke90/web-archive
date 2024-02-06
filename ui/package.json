@@ -11,6 +11,7 @@
   "dependencies": {
     "@popperjs/core": "^2.11.8",
     "@preact/signals": "^1.2.2",
+    "@tkottke/javscript-hateos-routes": "file:../../../Repos/javscript-hateos-router",
     "@tkottke90/preact-components": "^1.1.2",
     "framer-motion": "^10.16.16",
     "preact": "^10.19.3",
