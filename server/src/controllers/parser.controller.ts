@@ -58,18 +58,6 @@ export class ParserController {
     }
   }
 
-  @Get('/reddit-bulk/start')
-  async redditBulkStart(
-    @Response() res: express.Response,
-    @Next() next: express.NextFunction
-  ) {
-    try {
-      res.json({});
-    } catch (error) {
-      next(error);
-    }
-  }
-
   @Get('/youtube', [
     ZodQueryValidator(
       z.object({
