@@ -14,8 +14,8 @@ import { PostTagDao } from '../dao/post-tag.dao';
 import { PostDao } from '../dao/post.dao';
 import { ZodQueryValidator } from '../middleware/zod.middleware';
 import { z } from 'zod';
-import { API_ROOT } from '../config';
 import { JobScheduler } from '../jobs';
+import { PARSERS } from '../routes';
 
 @Controller('/parsers')
 export class ParserController {
@@ -86,7 +86,8 @@ export class ParserController {
     res.send({
       links: {
         reddit: {
-          url: `${API_ROOT}/parsers/reddit`,
+          url: PARSERS.REDDIT.path,
+          method: 'GET',
           params: null,
           query: {
             target: 'string'
@@ -94,7 +95,8 @@ export class ParserController {
           body: null
         },
         youtube: {
-          url: `${API_ROOT}/parsers/youtube`,
+          url: PARSERS.YOUTUBE.path,
+          method: 'GET',
           params: null,
           query: {
             target: 'string',

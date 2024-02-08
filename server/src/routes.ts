@@ -21,3 +21,12 @@ export const POSTS = {
   TAG: POST_TAG,
   TAG_SEARCH: POST_TAG_SEARCH
 };
+
+const PARSERS_ROOT = API_ROOT.createNested('parsers');
+
+export const PARSERS = {
+  ROOT: PARSERS_ROOT,
+  REDDIT: PARSERS_ROOT.createNested('reddit'),
+  REDDIT_BULK: PARSERS_ROOT.createNested('reddit-bulk'),
+  YOUTUBE: PARSERS_ROOT.createNested('youtube')
+};
