@@ -3,8 +3,8 @@ import { BaseDao } from './base.dao';
 import { PostFile } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostFileCreateDTO, PostFileDTO } from '../dto/post-file.dto';
-import { ROUTES } from '../config';
 import { FileSystemFactory } from '../services';
+import { POSTS } from '../routes';
 
 @Injectable()
 export class PostFileDao extends BaseDao<PostFile, any> {
@@ -55,9 +55,15 @@ export class PostFileDao extends BaseDao<PostFile, any> {
       size: entity.size,
 
       links: {
-        self: `${ROUTES.POSTS}/${entity.postId}/files/${entity.id}`,
-        post: `${ROUTES.POSTS}/${entity.postId}`,
-        media: `${ROUTES.POSTS}/${entity.postId}/files/${entity.id}/content`
+        self: POSTS.FILES_WITH_ID.url({
+          postId: entity.postId,
+          fileId: entity.id
+        }),
+        post: POSTS.WITH_ID.url({ postId: entity.postId }),
+        media: POSTS.FILES_CONTENT.url({
+          postId: entity.postId,
+          fileId: entity.id
+        })
       },
 
       createdAt: entity.createdAt,

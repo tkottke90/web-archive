@@ -4,7 +4,7 @@ import { BaseSchema, FuzzyNumber } from './utilities';
 export const PostMetadata = BaseSchema(
   z.object({
     id: FuzzyNumber,
-    post: z.string(),
+    post: z.number(),
 
     name: z.string(),
     value: z.string()

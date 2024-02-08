@@ -3,7 +3,6 @@ import { BaseDao } from './base.dao';
 import { Tag } from '@prisma/client';
 import { DBClient } from '../db';
 import { TagCreateDTO, TagDTO, TagQueryDTO } from '../dto/post-tag.dto';
-import { ROUTES } from '../config';
 
 @Injectable()
 export class TagDao extends BaseDao<Tag, TagDTO> {
@@ -63,7 +62,7 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
       textColor: entity.textColor,
 
       links: {
-        self: `${ROUTES.TAGS}/${entity.id}`
+        self: ''
       },
 
       createdAt: entity.createdAt,

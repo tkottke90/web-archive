@@ -3,7 +3,7 @@ import { BaseDao } from './base.dao';
 import { PostMetadata } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostMetadataDTO } from '../dto/post-metadata.dto';
-import { ROUTES } from '../config';
+import { POSTS } from '../routes';
 
 @Injectable()
 export class PostMetadataDao extends BaseDao<PostMetadata, any> {
@@ -12,16 +12,15 @@ export class PostMetadataDao extends BaseDao<PostMetadata, any> {
   }
 
   toDTO(entity: PostMetadata): PostMetadataDTO {
-    const postLink = `${ROUTES.POSTS}/${entity.postId}`;
-
     return {
       id: entity.id,
-      post: postLink,
+      post: entity.postId,
       name: entity.name,
       value: entity.value,
 
       links: {
-        self: `${postLink}/metadata/${entity.id}`
+        post: POSTS.WITH_ID.url({ postId: entity.postId }),
+        self: ''
       },
 
       createdAt: entity.createdAt,
