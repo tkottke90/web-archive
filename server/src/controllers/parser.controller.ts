@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { JobScheduler } from '../jobs';
 import { PARSERS } from '../routes';
 
-@Controller('/parsers')
+@Controller(PARSERS.ROOT.relativePath)
 export class ParserController {
   constructor(
     @Inject('RedditScraper') private readonly reddit: RedditScraper,
@@ -27,7 +27,9 @@ export class ParserController {
     @Inject('JobScheduler') private readonly jobs: JobScheduler
   ) {}
 
-  @Get('/reddit', [ZodQueryValidator(z.object({ target: z.string().url() }))])
+  @Get(PARSERS.REDDIT.relativePath, [
+    ZodQueryValidator(z.object({ target: z.string().url() }))
+  ])
   async getRedditPost(
     @Query('target') target: string,
     @Response() res: express.Response,
@@ -42,7 +44,7 @@ export class ParserController {
     }
   }
 
-  @Get('/reddit-bulk')
+  @Get(PARSERS.REDDIT_BULK.relativePath)
   async redditBulk(
     @Query('target') target: string,
     @Headers('redditauth') auth: string,
@@ -58,7 +60,7 @@ export class ParserController {
     }
   }
 
-  @Get('/youtube', [
+  @Get(PARSERS.YOUTUBE.relativePath, [
     ZodQueryValidator(
       z.object({
         target: z.string(),
