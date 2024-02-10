@@ -10,7 +10,7 @@ export class ServerStatusController {
     res.json({ name: 'Web Storage', version: pgk.version });
   }
 
-  @Get(SERVER.HEALTHCHECK.relativePath)
+  @Get(SERVER.HEALTHCHECK.path)
   getHealthcheck(@Response() res: express.Response) {
     res.json({ status: 'OKAY' });
   }

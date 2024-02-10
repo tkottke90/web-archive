@@ -25,7 +25,7 @@ import {
 import { TagDao } from '../dao/tag.dao';
 import { TAGS } from '../routes';
 
-@Controller(TAGS.ROOT.relativePath)
+@Controller(TAGS.ROOT.path)
 export class TagController {
   constructor(@Inject('TagDao') private readonly tagDao: TagDao) {}
 
@@ -65,7 +65,7 @@ export class TagController {
     }
   }
 
-  @Delete(TAGS.WITH_ID.relativePath, [ZodIdValidator('tag')])
+  @Delete(TAGS.WITH_ID.path, [ZodIdValidator('tag')])
   async deleteTag(
     @Params('tag') tagId: number,
     @Response() res: express.Response,

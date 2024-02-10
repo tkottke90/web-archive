@@ -38,7 +38,7 @@ const upload = multer({
 });
 import { POSTS } from '../routes';
 
-@Controller(POSTS.ROOT.relativePath)
+@Controller(POSTS.ROOT.path)
 export class PostController {
   constructor(
     @Inject('PostDao') private readonly postDao: PostDao,
@@ -65,7 +65,7 @@ export class PostController {
     }
   }
 
-  @Get(POSTS.WITH_ID.relativePath, [ZodIdValidator('postId')])
+  @Get(POSTS.WITH_ID.path, [ZodIdValidator('postId')])
   async getPost(
     @Params('postId') postId: number,
     @Response() res: express.Response,
@@ -84,7 +84,7 @@ export class PostController {
     }
   }
 
-  @Delete(POSTS.WITH_ID.relativePath, [ZodIdValidator('postId')])
+  @Delete(POSTS.WITH_ID.path, [ZodIdValidator('postId')])
   async deletePost(
     @Params('postId') postId: number,
     @Response() res: express.Response,
@@ -99,7 +99,7 @@ export class PostController {
     }
   }
 
-  @Get(POSTS.FILES_WITH_ID.relativePath, [ZodIdValidator('fileId')])
+  @Get(POSTS.FILES_WITH_ID.path, [ZodIdValidator('fileId')])
   async getFile(
     @Params('fileId') fileId: number,
     @Response() res: express.Response,
@@ -118,7 +118,7 @@ export class PostController {
     }
   }
 
-  @Get(POSTS.FILES_CONTENT.relativePath, [ZodIdValidator('fileId')])
+  @Get(POSTS.FILES_CONTENT.path, [ZodIdValidator('fileId')])
   async getPostContent(
     @Params('fileId') fileId: number,
     @Response() res: express.Response,
@@ -138,7 +138,7 @@ export class PostController {
     }
   }
 
-  @Get(POSTS.TAG_SEARCH.relativePath, [
+  @Get(POSTS.TAG_SEARCH.path, [
     ZodIdValidator('postId'),
     ZodQueryValidator(
       z.object({
@@ -173,10 +173,7 @@ export class PostController {
     }
   }
 
-  @Post(POSTS.TAG.relativePath, [
-    ZodIdValidator('postId'),
-    ZodIdValidator('tagId')
-  ])
+  @Post(POSTS.TAG.path, [ZodIdValidator('postId'), ZodIdValidator('tagId')])
   async addTag(
     @Params('postId') postId: number,
     @Params('tagId') tagId: number,
@@ -214,10 +211,7 @@ export class PostController {
     }
   }
 
-  @Delete(POSTS.TAG.relativePath, [
-    ZodIdValidator('postId'),
-    ZodIdValidator('tagId')
-  ])
+  @Delete(POSTS.TAG.path, [ZodIdValidator('postId'), ZodIdValidator('tagId')])
   async removeTag(
     @Params('postId') postId: number,
     @Params('tagId') tagId: number,
@@ -239,7 +233,7 @@ export class PostController {
     }
   }
 
-  @Post(POSTS.FILES.relativePath, [
+  @Post(POSTS.FILES.path, [
     upload.fields([{ name: 'file' }]),
     ZodIdValidator('postId')
   ])
@@ -280,7 +274,7 @@ export class PostController {
     }
   }
 
-  @Post(POSTS.ROOT.relativePath, [
+  @Post('/', [
     upload.fields([{ name: 'file' }]),
     MultipartJson('metadata'),
     ZodBodyValidator(PostCreateSchema)
