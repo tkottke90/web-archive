@@ -3,11 +3,11 @@ import { BaseDao } from './base.dao';
 import { Post, Prisma } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostCreateDTO, PostDTO, PostQueryDTO } from '../dto/post.dto';
-import { ROUTES } from '../config';
 import { PostFileDao } from './post-file.dao';
 import { PostTagDao } from './post-tag.dao';
 import { PostMetadataDao } from './post-metadata.dao';
 import { PostWithAssociations } from '../interfaces';
+import { POSTS } from '../routes';
 
 const POST_DETAILS = {
   postTags: { include: { tags: true } },
@@ -148,9 +148,10 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       tags: input.postTags.map(this.postTagDao.toDTO),
 
       links: {
-        self: `${ROUTES.POSTS}/${input.id}`,
-        tagSearch: `${ROUTES.POSTS}/${input.id}/tag-search`,
-        addTag: `${ROUTES.POSTS}/${input.id}/tags/`
+        self: POSTS.WITH_ID.url({ postId: input.id }),
+        tags: POSTS.TAG_SEARCH.url({ postId: input.id }),
+        files: POSTS.FILES.url({ postId: input.id }),
+        addTag: POSTS.TAG.url({ postId: input.id, tagId: ':tagId' })
       },
 
       createdAt: input.createdAt,

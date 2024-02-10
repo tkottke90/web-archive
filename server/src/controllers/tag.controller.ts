@@ -23,8 +23,9 @@ import {
   ZodQueryValidator
 } from '../middleware/zod.middleware';
 import { TagDao } from '../dao/tag.dao';
+import { TAGS } from '../routes';
 
-@Controller('/tags')
+@Controller(TAGS.ROOT.path)
 export class TagController {
   constructor(@Inject('TagDao') private readonly tagDao: TagDao) {}
 
@@ -64,7 +65,7 @@ export class TagController {
     }
   }
 
-  @Delete('/:tag', [ZodIdValidator('tag')])
+  @Delete(TAGS.WITH_ID.path, [ZodIdValidator('tag')])
   async deleteTag(
     @Params('tag') tagId: number,
     @Response() res: express.Response,

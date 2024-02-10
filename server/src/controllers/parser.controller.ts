@@ -14,10 +14,10 @@ import { PostTagDao } from '../dao/post-tag.dao';
 import { PostDao } from '../dao/post.dao';
 import { ZodQueryValidator } from '../middleware/zod.middleware';
 import { z } from 'zod';
-import { API_ROOT } from '../config';
 import { JobScheduler } from '../jobs';
+import { PARSERS } from '../routes';
 
-@Controller('/parsers')
+@Controller(PARSERS.ROOT.path)
 export class ParserController {
   constructor(
     @Inject('RedditScraper') private readonly reddit: RedditScraper,
@@ -27,7 +27,9 @@ export class ParserController {
     @Inject('JobScheduler') private readonly jobs: JobScheduler
   ) {}
 
-  @Get('/reddit', [ZodQueryValidator(z.object({ target: z.string().url() }))])
+  @Get(PARSERS.REDDIT.path, [
+    ZodQueryValidator(z.object({ target: z.string().url() }))
+  ])
   async getRedditPost(
     @Query('target') target: string,
     @Response() res: express.Response,
@@ -42,7 +44,7 @@ export class ParserController {
     }
   }
 
-  @Get('/reddit-bulk')
+  @Get(PARSERS.REDDIT_BULK.path)
   async redditBulk(
     @Query('target') target: string,
     @Headers('redditauth') auth: string,
@@ -58,19 +60,7 @@ export class ParserController {
     }
   }
 
-  @Get('/reddit-bulk/start')
-  async redditBulkStart(
-    @Response() res: express.Response,
-    @Next() next: express.NextFunction
-  ) {
-    try {
-      res.json({});
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  @Get('/youtube', [
+  @Get(PARSERS.YOUTUBE.path, [
     ZodQueryValidator(
       z.object({
         target: z.string(),
@@ -98,7 +88,8 @@ export class ParserController {
     res.send({
       links: {
         reddit: {
-          url: `${API_ROOT}/parsers/reddit`,
+          url: PARSERS.REDDIT.path,
+          method: 'GET',
           params: null,
           query: {
             target: 'string'
@@ -106,7 +97,8 @@ export class ParserController {
           body: null
         },
         youtube: {
-          url: `${API_ROOT}/parsers/youtube`,
+          url: PARSERS.YOUTUBE.path,
+          method: 'GET',
           params: null,
           query: {
             target: 'string',

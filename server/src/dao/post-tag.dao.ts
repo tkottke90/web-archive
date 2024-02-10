@@ -4,8 +4,8 @@ import { PostTag } from '@prisma/client';
 import { DBClient } from '../db';
 import { PostTagDTO } from '../dto/post-tag.dto';
 import { PostTagAssociation } from '../interfaces';
-import { ROUTES } from '../config';
 import { TagDao } from './tag.dao';
+import { POSTS } from '../routes';
 
 @Injectable()
 export class PostTagDao extends BaseDao<PostTag, any> {
@@ -56,13 +56,13 @@ export class PostTagDao extends BaseDao<PostTag, any> {
 
   toDTO(entity: PostTagAssociation): PostTagDTO {
     return {
-      post: `${ROUTES.POSTS}/${entity.postId}`,
-      tag: `${ROUTES.TAGS}/${entity.tagId}`,
-      tag_id: entity.tagId,
+      post: entity.postId,
+      tag: entity.tagId,
       value: entity.tags.label,
 
       links: {
-        removeTag: `${ROUTES.POSTS}/${entity.postId}/tags/${entity.tagId}`
+        post: POSTS.WITH_ID.url({ postId: entity.postId }),
+        removeTag: POSTS.TAG.url({ postId: entity.postId, tagId: entity.tagId })
       },
 
       createdAt: entity.createdAt,

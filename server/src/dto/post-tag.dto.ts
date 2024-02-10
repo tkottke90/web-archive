@@ -26,13 +26,11 @@ export type TagQueryDTO = z.infer<typeof TagQuerySchema>;
 
 export const PostTag = BaseSchema(
   z.object({
-    self: z.string(),
-    post: z.string(),
-    tag: z.string(),
-    value: z.string(),
-    tag_id: z.number()
+    post: z.number(),
+    tag: z.number(),
+    value: z.string()
   })
-).omit({ self: true });
+);
 
 export const PostTagCreate = PostTag.merge(
   z.object({
