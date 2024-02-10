@@ -48,6 +48,8 @@ jobs:
         working-directory: ${{ inputs.target_dir }}
         run: npm install
 
+      - 
+
       - name: Build Server
         working-directory: ${{ inputs.target_dir }}
         run: npm run build

@@ -3,11 +3,18 @@ import express from 'express';
 import pgk from '../../package.json';
 import { SERVER } from '../routes';
 
+const BRANCH = process.env.BRANCH ?? '';
+const COMMIT = process.env.COMMIT ?? '';
+
 @Controller('/')
 export class ServerStatusController {
   @Get('/')
   getRoot(@Response() res: express.Response) {
-    res.json({ name: 'Web Storage', version: pgk.version });
+    res.json({
+      name: 'Web Storage',
+      version: pgk.version,
+      commit: COMMIT
+    });
   }
 
   @Get(SERVER.HEALTHCHECK.path)
