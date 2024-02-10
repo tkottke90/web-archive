@@ -30,13 +30,13 @@ import { PostFileDao } from '../dao/post-file.dao';
 import { BadRequestError, NotFoundError } from '../utilities/errors.util';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { TagDao } from '../dao/tag.dao';
-import { ROUTES, UPLOAD_DIR } from '../config';
+import { UPLOAD_DIR } from '../config';
 import { z } from 'zod';
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fieldSize: 25 * 1024 * 1024 }
 });
-import { POSTS } from '../routes';
+import { POSTS, TAGS } from '../routes';
 
 @Controller(POSTS.ROOT.path)
 export class PostController {
@@ -195,7 +195,7 @@ export class PostController {
           );
 
           err.details.createTagMethod = 'POST';
-          err.details.createTagUrl = `${ROUTES.TAGS}/`;
+          err.details.createTagUrl = TAGS.ROOT.fullPath;
           err.details.createTagSchema = { label: 'string' };
 
           throw err;

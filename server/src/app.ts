@@ -1,6 +1,6 @@
 import express from 'express';
 import controllers from './controllers';
-import { HttpEventMiddleware } from './middleware';
+import ui from './ui-router';
 import './db';
 
 const app = express();
@@ -8,8 +8,7 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use(HttpEventMiddleware);
-
 controllers(app);
+ui(app);
 
 export default app;

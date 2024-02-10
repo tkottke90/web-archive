@@ -9,7 +9,8 @@ import { ServerStatusController } from './server-status';
 import { PostController } from './post.controller';
 import { TagController } from './tag.controller';
 import { ParserController } from './parser.controller';
-import { API_ROOT } from '../config';
+import { API_ROOT } from '../routes';
+import { HttpEventMiddleware } from '../middleware';
 
 const controllers = [
   ParserController,
@@ -20,7 +21,8 @@ const controllers = [
 
 export default function (app: Application) {
   const API_Route = Router();
+  API_Route.use(HttpEventMiddleware);
   attachControllers(API_Route, controllers);
 
-  app.use(API_ROOT, API_Route);
+  app.use(API_ROOT.path, API_Route);
 }
