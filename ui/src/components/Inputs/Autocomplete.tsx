@@ -110,7 +110,7 @@ export function AutoComplete({
     <div>
       <input
         autoComplete="custom-autocomplete"
-        className={show ? 'z-50' : ''}
+        className={['w-full', show ? 'z-50' : ''].join(' ')}
         ref={triggerRef}
         id={id}
         value={display}
