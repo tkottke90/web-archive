@@ -41,51 +41,7 @@ const variants: Variants = {
   },
 };
 
-interface DataItem extends Record<string, any> {
-  id: number;
-}
-
-
-type ContextInterface = {
-  showOverlay: Signal<boolean>;
-  showMenu: Signal<boolean>;
-  triggerOpen: () => void;
-  triggerClose: () => void;
-}
-
-const AutocompleteContext = createContext({} as ContextInterface)
-
-interface AutoCInterface {
-  onFilterChange?: (value: string) => void;
-}
-
-function AutoC({
-  onFilterChange = (value) => {}
-}: AutoCInterface) {
-  const showOverlay = useSignal(false);
-  const showMenu = useSignal(false)
-
-  return (
-    <AutocompleteContext.Provider value={{
-      showOverlay,
-      showMenu,
-      triggerOpen: () => {
-        showOverlay.value = true;
-      },
-      triggerClose: () => {
-        showOverlay.value = false;
-      }
-    }}>
-
-
-    </AutocompleteContext.Provider >
-  )
-}
-
-
-
-
-interface AutoCompleteProps<T extends DataItem> {
+interface AutoCompleteProps {
   allowCreate?: boolean
   id?: string;
   name: string;
@@ -97,16 +53,16 @@ interface AutoCompleteProps<T extends DataItem> {
   onFocus?: () => void;
 }
 
-export function AutoComplete<T extends DataItem>({
+export function AutoComplete({
   allowCreate = false,
   id,
   name,
   filter: display,
   children,
   onFocus = () => {},
-  onFilterChange = (value) => {},
+  onFilterChange = () => {},
   onCreate = () => {}
-}: AutoCompleteProps<T>) {
+}: AutoCompleteProps) {
   const show = useSignal(false);
   const [triggerElem, setTriggerElem] = useState<HTMLInputElement | null>(null);
 
