@@ -74,7 +74,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
 
   async findByIdWithBeforeAndAfter(id: number) {
     const post = (await this.client.post.findFirst({
-      where: { id },
+      where: { id, deletedAt: null },
       include: POST_DETAILS
     })) as unknown as PostWithAssociations;
 
@@ -83,13 +83,13 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     }
 
     const before = (await this.client.post.findFirst({
-      where: { id: { lt: id } },
+      where: { id: { lt: id }, deletedAt: null },
       orderBy: { id: 'desc' },
       include: POST_DETAILS
     })) as unknown as PostWithAssociations;
 
     const after = (await this.client.post.findFirst({
-      where: { id: { gt: id } },
+      where: { id: { gt: id }, deletedAt: null },
       include: POST_DETAILS
     })) as unknown as PostWithAssociations;
 
@@ -98,6 +98,13 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       UI_POSTS.url({ postId: post.id }),
       after ? UI_POSTS.url({ postId: after.id }) : undefined
     ];
+  }
+
+  archive(postId: number) {
+    return this.client.post.update({
+      data: { deletedAt: new Date() },
+      where: { id: postId }
+    });
   }
 
   bulkCreate(input: PostCreateDTO[]) {
@@ -215,6 +222,12 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       where.metadata = {
         some: { value: { in: data.sourceId } }
       };
+    }
+
+    if (data.archived) {
+      where.NOT = { deletedAt: null };
+    } else {
+      where.deletedAt = null;
     }
 
     return {

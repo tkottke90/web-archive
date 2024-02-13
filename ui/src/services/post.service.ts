@@ -118,5 +118,5 @@ export async function uploadFilesToPost(
 ) {}
 
 export function deletePost(url: string) {
-  return remove(`${url}`);
+  return remove(`${url}?archive=true`);
 }

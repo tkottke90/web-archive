@@ -31,8 +31,6 @@ export function DetailsPage() {
     loading.value = true;
     postDetails(path.value).then(async (result) => {
       const newSiblings = await getSiblingPosts(result.id)
-      
-      console.dir(newSiblings);
 
       batch(() => {
         post.value = result;
@@ -234,7 +232,6 @@ function MediaCard({ post }: { post: PostEntity }) {
   const fileQueue = useSignal<File[]>([]);
 
   useSignalEffect(() => {
-    console.log('effect');
     if (!showAddModal.value) {
       fileQueue.value = [];
     }

@@ -37,6 +37,7 @@ const upload = multer({
   limits: { fieldSize: 25 * 1024 * 1024 }
 });
 import { POSTS, TAGS } from '../routes';
+import { FuzzyBoolean } from '../dto/utilities';
 
 @Controller(POSTS.ROOT.path)
 export class PostController {
@@ -108,14 +109,22 @@ export class PostController {
     }
   }
 
-  @Delete(POSTS.WITH_ID.path, [ZodIdValidator('postId')])
+  @Delete(POSTS.WITH_ID.path, [
+    ZodIdValidator('postId'),
+    ZodQueryValidator(z.object({ softDelete: FuzzyBoolean.optional() }))
+  ])
   async deletePost(
     @Params('postId') postId: number,
+    @Query('softDelete') softDelete = false,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
     try {
-      await this.postDao.remove(postId);
+      if (softDelete) {
+        await this.postDao.archive(postId);
+      } else {
+        await this.postDao.remove(postId);
+      }
 
       res.status(204).json({});
     } catch (error) {

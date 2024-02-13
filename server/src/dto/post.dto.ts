@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { BaseSchema, FuzzyNumber, FuzzyString, QueryFields } from './utilities';
+import {
+  BaseSchema,
+  FuzzyBoolean,
+  FuzzyNumber,
+  FuzzyString,
+  QueryFields
+} from './utilities';
 import { PostMetadata, PostMetadataCreate } from './post-metadata.dto';
 import { PostFileCreateSchema, PostFileSchema } from './post-file.dto';
 import { PostTag } from './post-tag.dto';
@@ -31,7 +37,8 @@ export const PostCreateSchema = PostSchema.merge(
 export const PostQuerySchema = QueryFields(PostSchema).merge(
   z.object({
     tag: FuzzyNumber.optional(),
-    sourceId: z.array(FuzzyString).optional()
+    sourceId: z.array(FuzzyString).optional(),
+    archived: FuzzyBoolean.optional()
   })
 );
 
