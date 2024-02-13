@@ -180,6 +180,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
 
       links: {
         self: POSTS.WITH_ID.url({ postId: input.id }),
+        ui: UI_POSTS.url({ postId: input.id }),
         tags: POSTS.TAG_SEARCH.url({ postId: input.id }),
         files: POSTS.FILES.url({ postId: input.id }),
         addTag: POSTS.TAG.url({ postId: input.id, tagId: ':tagId' })
