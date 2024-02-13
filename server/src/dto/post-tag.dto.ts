@@ -16,7 +16,12 @@ export const TagCreateSchema = TagSchema.omit({
   createdAt: true,
   updatedAt: true,
   links: true
-});
+}).merge(
+  z.object({
+    color: z.string().default('ccffff'),
+    textColor: z.string().default('222')
+  })
+);
 
 export const TagQuerySchema = QueryFields(TagSchema);
 

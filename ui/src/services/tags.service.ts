@@ -1,7 +1,6 @@
-import { Signal } from "@preact/signals";
-import { PostTagDTO, TagDTO } from "../../../server/src/dto/post-tag.dto";
-import { get, post, put, remove } from "../utilities/http.utils";
-import { PostDTO } from "../../../server/src/dto/post.dto";
+import { Signal } from '@preact/signals';
+import { PostTagDTO, TagDTO } from '../../../server/src/dto/post-tag.dto';
+import { get, post, put, remove } from '../utilities/http.utils';
 
 export const loadedTags = new Signal<TagDTO[]>([]);
 
@@ -11,15 +10,17 @@ export async function filterTagsByPost(postLink: string, filter: string) {
   search.append('limit', '5');
   search.append('label', filter);
 
-  loadedTags.value = await get<TagDTO[]>(`${postLink}?${search.toString()}`)
+  loadedTags.value = await get<TagDTO[]>(`${postLink}?${search.toString()}`);
 }
 
 export async function getTags(filter?: string) {
-  return await get<TagDTO[]>('/api/tags')
+  return await get<TagDTO[]>('/api/tags');
 }
 
 export async function applyTagToPost(postLink: string, tagId: number) {
-  return await post<unknown, PostTagDTO>(`${postLink}${tagId}`);
+  return await post<unknown, PostTagDTO>(
+    postLink.replace(':tagId', tagId.toString())
+  );
 }
 
 export async function removeTagFromPost(postTagLink: string) {
@@ -31,5 +32,4 @@ export async function createTag(tagLabel: string) {
 }
 
 // Load tags on boot
-getTags()
-  .then(tags => loadedTags.value = tags);
+getTags().then((tags) => (loadedTags.value = tags));

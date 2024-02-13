@@ -149,13 +149,13 @@ function TagCard({ post }: { post: PostEntity }) {
         allowCreate={true}
         onFocus={() => {
           if (post.value)
-            filterTagsByPost(post.value?.links.tagSearch, '');
+            filterTagsByPost(post.value?.links.tags, '');
         }}
         onFilterChange={(newFilter) => {
           filter.value = newFilter;
 
           if (post.value) {
-            filterTagsByPost(post.value?.links.tagSearch, newFilter);
+            filterTagsByPost(post.value?.links.tags, newFilter);
           }
         }}
         onCreate={async () => {
