@@ -5,18 +5,24 @@ import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Table } from "../../components/Table/Table";
 import { currentPage, pageCount, posts, loadPosts, skip } from "../../services/post.service";
 
+function currentPageQuery(pageId: number) {
+  const url = new URL(location.href);
+  url.searchParams.delete("currentPage");
+  url.searchParams.append("currentPage", String(currentPage.value));
+
+  return url
+}
+
 export function HomePage() {
   useSignalEffect(() => {
-    const url = new URL(location.href);
-    url.searchParams.delete("currentPage");
-    url.searchParams.append("currentPage", String(currentPage.value));
+    const query = currentPageQuery(currentPage.value);
 
-    if (url.searchParams.get("refresh")) {
+    if (query.searchParams.get("refresh")) {
       loadPosts({ skip: skip.value });
-      url.searchParams.delete("refresh");
+      query.searchParams.delete("refresh");
     }
 
-    history.pushState({ path: url.toString() }, "", url.toString());
+    history.pushState({ path: query.toString() }, "", query.toString());
   });
 
   return (
@@ -26,8 +32,9 @@ export function HomePage() {
         <br />
         <Table
           onRowClick={(data) => {
-            console.log(`/${data.value.links.self.split("/").slice(2).join("/")}`)
-            route(`/${data.value.links.self.split("/").slice(2).join("/")}`);
+            const query = currentPageQuery(currentPage.value);
+            console.log(`${data.value.links.ui}`)
+            route(`${data.value.links.ui}${query.search.toString()}`);
           }}
           entries={posts.value}
           headers={[

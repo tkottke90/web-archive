@@ -46,7 +46,16 @@ export function DetailsPage() {
     <DrawerLayout className="grid grid-flow-row grid-cols-4 auto-rows-min gap-2">
       <Loading loading={loading}>
         <div className="col-span-4 flex justify-between">
-          <div></div>
+          <div>
+            <button onClick={() => {
+              const url = new URL(location.href);
+              url.pathname = '/'
+
+              route(`${url.pathname}${url.search.toString()}`);
+            }}>
+              <svg className="h-[24px] w-[24px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>back</title><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+            </button>
+          </div>
           <div>
               <button disabled={!siblings.value.previous} onClick={() => {
                 route(siblings.value.previous);
