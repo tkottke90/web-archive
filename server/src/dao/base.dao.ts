@@ -6,6 +6,7 @@ type QueryDTO = Record<string, any> & {
   limit?: number;
   skip?: number;
   sort?: { [key: string]: 'ASC' | 'DESC' };
+  cursor?: number;
 };
 
 export abstract class BaseDao<Model, DTO> {
@@ -29,8 +30,10 @@ export abstract class BaseDao<Model, DTO> {
     delete query.limit;
     delete query.skip;
     delete query.sort;
+    delete query.cursor;
 
     return {
+      cursor: dto.cursor,
       take: dto.limit ?? 10,
       skip: dto.skip ?? 0,
       orderBy: dto.sort ?? undefined,

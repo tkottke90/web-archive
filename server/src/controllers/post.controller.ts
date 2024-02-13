@@ -84,6 +84,23 @@ export class PostController {
     }
   }
 
+  @Get(POSTS.NAV.path, [ZodIdValidator('postId')])
+  async getPostNavigation(
+    @Params('postId') postId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const postCollection = await this.postDao.findByIdWithBeforeAndAfter(
+        postId
+      );
+
+      res.json(postCollection);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   @Delete(POSTS.WITH_ID.path, [ZodIdValidator('postId')])
   async deletePost(
     @Params('postId') postId: number,

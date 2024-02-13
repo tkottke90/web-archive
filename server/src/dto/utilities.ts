@@ -22,6 +22,7 @@ export function QueryFields<T extends ZodRawShape>(schema: ZodObject<T>) {
       NOT: z.record(z.string(), z.any()).optional(),
       limit: FuzzyNumber.optional(),
       skip: FuzzyNumber.optional(),
+      cursor: FuzzyNumber.optional(),
       sort: z
         .record(z.enum(['id', ...keys]), z.enum(['ASC', 'DESC']))
         .optional()

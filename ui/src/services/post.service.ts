@@ -1,55 +1,55 @@
-import { Signal, batch, computed, effect } from "@preact/signals";
+import { Signal, batch, computed, effect } from '@preact/signals';
 import { PostDTO } from '../../../server/src/dto/post.dto';
-import { get, getPaged, remove } from "../utilities/http.utils";
-import { applyTagToPost } from "./tags.service";
+import { get, getPaged, remove } from '../utilities/http.utils';
+import { applyTagToPost } from './tags.service';
+
+type OptionalPath = string | undefined;
 
 const initialSearch = new URLSearchParams(window.location.search);
 
 const PAGE_SIZE = 10;
 
-export const posts = new Signal<Signal<PostDTO>[]>([])
-export const currentPage = new Signal(Number(initialSearch.get('currentPage')) ?? 0);
+export const posts = new Signal<Signal<PostDTO>[]>([]);
+export const currentPage = new Signal(
+  Number(initialSearch.get('currentPage')) ?? 0
+);
 export const pageCount = new Signal(0);
 export const loading = new Signal(true);
 export const error = new Signal<string | undefined>();
 export const skip = computed(() => {
-  return currentPage.value == 0
-    ? 0
-    : currentPage.value - 1
+  return currentPage.value == 0 ? 0 : currentPage.value - 1;
 });
 
 effect(() => {
-    loadPosts({ skip: skip.value });
-})
+  loadPosts({ skip: skip.value });
+});
 
 interface GetPostInputs {
   limit?: number;
   skip?: number;
 }
 
-function getPosts<T>({limit, skip}: GetPostInputs) {
+function getPosts<T>({ limit, skip }: GetPostInputs) {
   const queryParams = new URLSearchParams();
   queryParams.append('limit', `${limit ?? 5}`);
   queryParams.append('skip', `${skip ?? 0}`);
-  
-  return getPaged<T>(`/api/post?${queryParams.toString()}`)
+
+  return getPaged<T>(`/api/post?${queryParams.toString()}`);
 }
 
 export async function getSiblingPosts(id: number) {
-  const queryParams = new URLSearchParams();
-  queryParams.append('limit', '3');
-  queryParams.append('skip', `${id === 1 ? 0 : id - 2}`);
+  const response = await get<[OptionalPath, string, OptionalPath]>(
+    `/api/post/${id}/navigation`
+  );
 
-  const response = await getPaged<PostDTO>(`/api/post?${queryParams.toString()}`)
-
-  return ({
-    previous: `/post/${response.data[0].id}`,
-    next: response.data.length === 3 ? `/post/${response.data[2].id}`: ''
-  })
+  return {
+    previous: response[0] ?? '',
+    next: response[2] ?? ''
+  };
 }
 
 export function postDetails(url: string) {
-  let post = posts.value.find(post => post.value.links.self.endsWith(url));
+  let post = posts.value.find((post) => post.value.links.self.endsWith(url));
 
   if (post) {
     return Promise.resolve(post.value);
@@ -58,51 +58,54 @@ export function postDetails(url: string) {
   return get<PostDTO>(`/api${url}`);
 }
 
-export function loadPosts( options: { limit?: number, skip?: number}) {
-  getPosts<PostDTO>({ limit: options.limit ?? PAGE_SIZE, skip: (options.skip ?? 0) * PAGE_SIZE })
-    .then((data) => {
-
-      batch(() => {
-        posts.value = data.data.map(post => new Signal(post));
-        currentPage.value = data.pagination.currentPage;
-        pageCount.value = data.pagination.totalPages;
-      });
+export function loadPosts(options: { limit?: number; skip?: number }) {
+  getPosts<PostDTO>({
+    limit: options.limit ?? PAGE_SIZE,
+    skip: (options.skip ?? 0) * PAGE_SIZE
+  }).then((data) => {
+    batch(() => {
+      posts.value = data.data.map((post) => new Signal(post));
+      currentPage.value = data.pagination.currentPage;
+      pageCount.value = data.pagination.totalPages;
     });
+  });
 }
 
 export function updateLocalPost(post: PostDTO) {
-  const targetIndex = posts
-    .value
-    .findIndex((postSignal) => {
-      postSignal.value.links.self === post.links.self
-    })
+  const targetIndex = posts.value.findIndex((postSignal) => {
+    postSignal.value.links.self === post.links.self;
+  });
 
   if (targetIndex != -1) {
     posts.value[targetIndex].value = post;
   }
 }
 
-export async function updateLocalPostTags(post: Signal<PostDTO | undefined>, tagId: number) {
+export async function updateLocalPostTags(
+  post: Signal<PostDTO | undefined>,
+  tagId: number
+) {
   if (!post.value) {
     console.log('No Post');
-      return;
+    return;
   }
-  
+
   const postTag = await applyTagToPost(post.value.links.addTag, tagId);
 
   if (post.value.tags) {
     post.value.tags.push(postTag);
-    post.value.tags.sort((tagA, tagB) => tagA.value > tagB.value ? 1 : -1);
+    post.value.tags.sort((tagA, tagB) => (tagA.value > tagB.value ? 1 : -1));
   } else {
-    post.value.tags = [ postTag ];
+    post.value.tags = [postTag];
   }
 
   post.value = structuredClone(post.value);
 }
 
-export async function uploadFilesToPost(post: Signal<PostDTO | undefined>, files: File[]) {
-  
-}
+export async function uploadFilesToPost(
+  post: Signal<PostDTO | undefined>,
+  files: File[]
+) {}
 
 export function deletePost(url: string) {
   return remove(`${url}`);

@@ -7,7 +7,8 @@ import { PostFileDao } from './post-file.dao';
 import { PostTagDao } from './post-tag.dao';
 import { PostMetadataDao } from './post-metadata.dao';
 import { PostWithAssociations } from '../interfaces';
-import { POSTS } from '../routes';
+import { POSTS, UI_POSTS } from '../routes';
+import { NotFoundError } from '../utilities/errors.util';
 
 const POST_DETAILS = {
   postTags: { include: { tags: true } },
@@ -48,11 +49,13 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   }
 
   find(query: PostQueryDTO) {
-    const { take, skip, orderBy, where } = this.generateFindStatement(query);
+    const { cursor, take, skip, orderBy, where } =
+      this.generateFindStatement(query);
 
     return this.client.post.findMany({
       take,
       skip,
+      cursor,
       orderBy: orderBy,
       where,
       include: POST_DETAILS
@@ -67,6 +70,34 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     from "PostMetadata" pm
     WHERE name = 'SOURCE_ID'
     `;
+  }
+
+  async findByIdWithBeforeAndAfter(id: number) {
+    const post = (await this.client.post.findFirst({
+      where: { id },
+      include: POST_DETAILS
+    })) as unknown as PostWithAssociations;
+
+    if (!post) {
+      throw new NotFoundError(`Post Not Found with ID [${id}]`);
+    }
+
+    const before = (await this.client.post.findFirst({
+      where: { id: { lt: id } },
+      orderBy: { id: 'desc' },
+      include: POST_DETAILS
+    })) as unknown as PostWithAssociations;
+
+    const after = (await this.client.post.findFirst({
+      where: { id: { gt: id } },
+      include: POST_DETAILS
+    })) as unknown as PostWithAssociations;
+
+    return [
+      before ? UI_POSTS.url({ postId: before.id }) : undefined,
+      UI_POSTS.url({ postId: post.id }),
+      after ? UI_POSTS.url({ postId: after.id }) : undefined
+    ];
   }
 
   bulkCreate(input: PostCreateDTO[]) {
@@ -171,7 +202,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   }
 
   private generateFindStatement(query: PostQueryDTO) {
-    const { take, skip, orderBy, data } = this.parseQuery(query);
+    const { cursor, take, skip, orderBy, data } = this.parseQuery(query);
 
     const where: Prisma.PostWhereInput = this.toPersistance(data);
 
@@ -185,7 +216,13 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       };
     }
 
-    return { take, skip, orderBy, where };
+    return {
+      cursor: cursor ? { id: cursor } : undefined,
+      take,
+      skip,
+      orderBy,
+      where
+    };
   }
 }
 

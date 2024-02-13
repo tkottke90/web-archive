@@ -48,9 +48,6 @@ jobs:
         working-directory: ${{ inputs.target_dir }}
         run: npm install
 
-      - name: Build UI
-        run: echo "build UI"
-
       - name: Build Server
         working-directory: ${{ inputs.target_dir }}
         run: npm run build

@@ -7,10 +7,12 @@ export const SERVER = {
 };
 
 const POSTS_ROOT = API_ROOT.nest('post');
+export const UI_POSTS = new Route('post/:postId');
 
 export const POSTS = {
   ROOT: POSTS_ROOT,
   WITH_ID: POSTS_ROOT.nest(':postId'),
+  NAV: POSTS_ROOT.nest(':postId/navigation'),
   FILES: POSTS_ROOT.nest(':postId/files'),
   FILES_WITH_ID: POSTS_ROOT.nest(':postId/files/:fileId'),
   FILES_CONTENT: POSTS_ROOT.nest(':postId/files/:fileId/content'),

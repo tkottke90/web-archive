@@ -14,9 +14,7 @@ import { Http } from "../../interfaces/http.interface";
 import { deletePost, getSiblingPosts, postDetails, updateLocalPostTags } from "../../services/post.service";
 import { createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
 import { getPortalContainer } from "../../utilities/dom.utils";
-import { useCallback } from "preact/hooks";
 import { returnFileSize } from "../../utilities/number.utils";
-import { navigateOnClick } from "../../utilities/router-helpers.util";
 
 const portal = getPortalContainer("modals");
 
@@ -50,11 +48,11 @@ export function DetailsPage() {
         <div className="col-span-4 flex justify-between">
           <div></div>
           <div>
-              <button onClick={() => {
+              <button disabled={!siblings.value.previous} onClick={() => {
                 route(siblings.value.previous);
                 path.value = siblings.value.previous;
               }}>Prev</button>
-              <button onClick={() => {
+              <button disabled={!siblings.value.next} onClick={() => {
                 route(siblings.value.next);
                 path.value = siblings.value.next;
               }}>Next</button>
