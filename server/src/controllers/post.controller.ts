@@ -84,9 +84,13 @@ export class PostController {
     }
   }
 
-  @Get(POSTS.NAV.path, [ZodIdValidator('postId')])
+  @Get(POSTS.NAV.path, [
+    ZodIdValidator('postId'),
+    ZodQueryValidator(PostQuerySchema)
+  ])
   async getPostNavigation(
     @Params('postId') postId: number,
+    @Query() query: PostQueryDTO,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
@@ -95,7 +99,10 @@ export class PostController {
         postId
       );
 
-      res.json(postCollection);
+      res.json({
+        pagination: await this.postDao.paginationDetails(query),
+        navigation: postCollection
+      });
     } catch (error) {
       next(error);
     }

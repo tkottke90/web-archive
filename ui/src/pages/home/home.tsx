@@ -8,7 +8,7 @@ import { currentPage, pageCount, posts, loadPosts, skip } from "../../services/p
 function currentPageQuery(pageId: number) {
   const url = new URL(location.href);
   url.searchParams.delete("currentPage");
-  url.searchParams.append("currentPage", String(currentPage.value));
+  url.searchParams.append("currentPage", String(pageId));
 
   return url
 }

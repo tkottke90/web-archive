@@ -2,8 +2,11 @@ import { Signal, batch, computed, effect } from '@preact/signals';
 import { PostDTO } from '../../../server/src/dto/post.dto';
 import { get, getPaged, remove } from '../utilities/http.utils';
 import { applyTagToPost } from './tags.service';
+import { Http } from '../interfaces/http.interface';
 
 type OptionalPath = string | undefined;
+
+type NavigationResponse = { navigation: [OptionalPath, string, OptionalPath], pagination: Http.Pagination }
 
 const initialSearch = new URLSearchParams(window.location.search);
 
@@ -38,13 +41,20 @@ function getPosts<T>({ limit, skip }: GetPostInputs) {
 }
 
 export async function getSiblingPosts(id: number) {
-  const response = await get<[OptionalPath, string, OptionalPath]>(
-    `/api/post/${id}/navigation`
+  const queryParams = new URLSearchParams(initialSearch);
+  queryParams.set('limit', `${5}`);
+  queryParams.set('skip', `${id}`);
+  queryParams.delete('currentPage')
+  
+  const response = await get<NavigationResponse>(
+    `/api/post/${id}/navigation?${queryParams.toString()}`
   );
 
+  currentPage.value = response.pagination.currentPage;
+
   return {
-    previous: response[0] ?? '',
-    next: response[2] ?? ''
+    previous: response.navigation[0] ?? '',
+    next: response.navigation[2] ?? ''
   };
 }
 
