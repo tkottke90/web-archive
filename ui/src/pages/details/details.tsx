@@ -11,7 +11,7 @@ import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Table } from "../../components/Table/Table";
 import { Tag } from "../../components/Tag";
 import { Http } from "../../interfaces/http.interface";
-import { deletePost, getSiblingPosts, postDetails, updateLocalPostTags } from "../../services/post.service";
+import { currentPage, deletePost, getSiblingPosts, postDetails, updateLocalPostTags } from "../../services/post.service";
 import { createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
 import { getPortalContainer } from "../../utilities/dom.utils";
 import { returnFileSize } from "../../utilities/number.utils";
@@ -70,7 +70,7 @@ export function DetailsPage() {
                 if (post.value?.links.self) {
                   deletePost(post.value.links.self)
                     .then(() => {
-                      route("/?refresh=true");
+                      route(`/?currentPage=${currentPage.value}&refresh=true`);
                     })
                     .catch((err: Http.ErrorResponse) => {
                       showDeleteModal.value = false;

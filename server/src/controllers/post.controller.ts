@@ -100,8 +100,10 @@ export class PostController {
         postId
       );
 
+      const pagination = await this.postDao.paginationDetails(query);
+
       res.json({
-        pagination: await this.postDao.paginationDetails(query),
+        pagination,
         navigation: postCollection
       });
     } catch (error) {
@@ -111,11 +113,11 @@ export class PostController {
 
   @Delete(POSTS.WITH_ID.path, [
     ZodIdValidator('postId'),
-    ZodQueryValidator(z.object({ softDelete: FuzzyBoolean.optional() }))
+    ZodQueryValidator(z.object({ archive: FuzzyBoolean.optional() }))
   ])
   async deletePost(
     @Params('postId') postId: number,
-    @Query('softDelete') softDelete = false,
+    @Query('archive') softDelete = false,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
@@ -237,8 +239,6 @@ export class PostController {
         result = await this.postTagDao.create(postId, tagId);
         res.status(202).json(this.postTagDao.toDTO(result));
       }
-
-      res.send(this.postTagDao.toDTO(result));
     } catch (error) {
       next(error);
     }

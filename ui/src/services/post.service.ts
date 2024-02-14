@@ -42,15 +42,16 @@ function getPosts<T>({ limit, skip }: GetPostInputs) {
 
 export async function getSiblingPosts(id: number) {
   const queryParams = new URLSearchParams(initialSearch);
-  queryParams.set('limit', `${5}`);
+  queryParams.set('limit', `${PAGE_SIZE}`);
   queryParams.set('skip', `${id}`);
   queryParams.delete('currentPage')
-  
+
   const response = await get<NavigationResponse>(
     `/api/post/${id}/navigation?${queryParams.toString()}`
   );
 
-  currentPage.value = response.pagination.currentPage;
+  currentPage.value = response.pagination.currentPage - 1;
+  pageCount.value = response.pagination.totalPages;
 
   return {
     previous: response.navigation[0] ?? '',
