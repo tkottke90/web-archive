@@ -14,7 +14,7 @@ jobs:
     name: Lint Server
     uses: ./.github/workflows/lint-server.yaml
 
-  Build_UI:
+  Build:
     runs-on: [ ubuntu-latest ]
     steps:
       - name: Checkout repository
@@ -30,10 +30,11 @@ jobs:
         run: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       
       - name: Install Dependencies
-        working-directory: './ui'
-        run: npm install
+        run: |
+          (cd ui && npm ci)
+          (cd server && npm ci)
 
-      - name: Build Image
+      - name: Build UI
         working-directory: './ui'
         run: npm run build
       
@@ -43,22 +44,70 @@ jobs:
           git add -A
           git commit -m 'refactor: Add public changes'
 
-  Build_API:
-    uses: ./.github/workflows/build.yaml
-    name: Build API Image
-    needs: [Lint, Build_UI]
-    with:
-      deploy: ${{ github.event_name != 'pull_request' }}
-      target_dir: "server"
+      - name: Build API
+        working-directory: './server'
+        run: npm run build
+
+      - name: Get Version
+        id: version
+        working-directory: './server'
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [[ $REF_TYPE == "tag" ]]; then
+            VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)
+          else
+            if [[ $REF == *release/* ]]; then
+              VERSION=$(echo $REF | rev | cut -d '/' -f 1 | rev)-RC
+            else
+              VERSION=$(echo $SHA | cut -b 1-8)-DEV-SNAPSHOT
+            fi
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Image
+        id: img_build
+        working-directory: './server'
+        env:
+          API_IMAGE: "ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}"
+          VERSION: ${{ steps.version.outputs.version }}
+          COMMIT: ${{ github.sha }}
+          BRANCH: ${{ github.ref }}
+          FILE: Dockerfile
+        run: |
+          echo "# Image Details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "COMMIT: $COMMIT" >> $GITHUB_STEP_SUMMARY
+          echo "BRANCH: $BRANCH" >> $GITHUB_STEP_SUMMARY
+          
+          docker build \
+            -f $FILE \
+            -t $API_IMAGE \
+            --build-arg "COMMIT=$(git rev-parse HEAD)" \
+            --build-arg "BRANCH=$(git rev-parse --abbrev-ref HEAD)"  \
+            --build-arg "VERSION=$VERSION"  \
+            .
+
+          echo "imgname=$API_IMAGE" >> $GITHUB_OUTPUT
+  
+      - name: Upload image
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: ishworkh/container-image-artifact-upload@v1.0.0
+        with:
+          image: ${{ steps.img_build.outputs.imgname }}
+          retention_days: "2"
   
 
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
     name: Deploy
-    needs: [Build_API]
+    needs: [Build]
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
       packages: write
     with:
-      image: ${{ needs.Build_API.outputs.image }}
+      image: ${{ needs.Build.outputs.image }}
