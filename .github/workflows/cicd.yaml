@@ -41,7 +41,7 @@ jobs:
       
       - name: Mv to public
         run: |
-          cp ./ui/dist ./server/public
+          cp -r ./ui/dist ./server/public
           git add -A
           git commit -m 'refactor: Add public changes'
 
