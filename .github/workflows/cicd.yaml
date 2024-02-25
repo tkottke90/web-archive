@@ -42,7 +42,7 @@ jobs:
         run: npm run build
       
       - name: Mv to public
-        run: cp -r ./ui/dist ./server/public
+        run: cp -r ./ui/dist/* ./server/public
 
       - name: Build API
         working-directory: './server'
