@@ -40,10 +40,7 @@ jobs:
         run: npm run build
       
       - name: Mv to public
-        run: |
-          cp -r ./ui/dist ./server/public
-          git add -A
-          git commit -m 'refactor: Add public changes'
+        run: cp -r ./ui/dist ./server/public
 
       - name: Build API
         working-directory: './server'
