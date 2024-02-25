@@ -100,7 +100,7 @@ interface LoadingProps {
   loading: Signal<boolean>;
 }
 
-function Loading({ children, loading, loadingView }: LoadingProps) {
+function Loading({ children, loading }: LoadingProps) {
   if (loading.value) {
     return <h2>Loading</h2>;
   }
@@ -259,12 +259,12 @@ function MediaCard({ post }: { post: PostEntity }) {
           }
 
           if (file.mime.startsWith("image")) {
-            return <img src={file.links.media} className={commonClasses} />;
+            return <img key={`details-media-img-${i}`} src={file.links.media} className={commonClasses} />;
           }
 
           if (file.mime.startsWith("video")) {
             return file.size > 0
-              ? <video src={file.links.media} loop controls className={commonClasses} />
+              ? <video key={`details-media-vid-${i}`} src={file.links.media} loop controls className={commonClasses} />
               : <EmptyVideo className={commonClasses} />
           }
         })}
@@ -333,7 +333,7 @@ function MediaCard({ post }: { post: PostEntity }) {
         </label>
         <br />
         <div className="actions">
-          <button onClick={(e) => {
+          <button onClick={() => {
             const { value } = fileQueue;
             console.dir(value);
 

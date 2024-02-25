@@ -13,7 +13,7 @@ export function ConfirmButton({ label, className, confirmMessage, confirmClassNa
   const pendingConfirm = useSignal(false);
 
   return (
-    <button onClick={(e: MouseEvent) => {
+    <button onClick={() => {
       if (pendingConfirm.value) {
         onConfirm && onConfirm();
       } else {

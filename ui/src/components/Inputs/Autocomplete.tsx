@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, Variants } from "framer-motion";
-import { ComponentChildren, createContext } from "preact";
+import { ComponentChildren } from "preact";
 import { createPortal, useCallback, useState } from "preact/compat";
 import { debounceTime, fromEvent, map } from "rxjs";
 import { getPortalContainer } from "../../utilities/dom.utils";
@@ -168,7 +168,7 @@ function AutoCompleteMenu({children, id, onClose, show, triggerElem }: AutoCompl
     if (!node || !triggerElem) return;
 
     // Setup closing fn
-    const closeMenu = (e: MouseEvent) => { onClose() }
+    const closeMenu = () => { onClose() }
 
     // Calculate trigger position
     const triggerDim = triggerElem.getBoundingClientRect();

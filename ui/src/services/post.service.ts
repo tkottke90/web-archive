@@ -113,10 +113,10 @@ export async function updateLocalPostTags(
   post.value = structuredClone(post.value);
 }
 
-export async function uploadFilesToPost(
-  post: Signal<PostDTO | undefined>,
-  files: File[]
-) {}
+// export async function uploadFilesToPost(
+//   post: Signal<PostDTO | undefined>,
+//   files: File[]
+// ) {}
 
 export function deletePost(url: string) {
   return remove(`${url}?archive=true`);

@@ -14,7 +14,12 @@ export async function filterTagsByPost(postLink: string, filter: string) {
 }
 
 export async function getTags(filter?: string) {
-  return await get<TagDTO[]>('/api/tags');
+  const query = new URLSearchParams();
+  if (filter) {
+    query.append('label[contains]', filter);
+  }
+
+  return await get<TagDTO[]>(`/api/tags?${query.toString()}`);
 }
 
 export async function applyTagToPost(postLink: string, tagId: number) {

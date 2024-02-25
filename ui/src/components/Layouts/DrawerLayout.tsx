@@ -1,4 +1,4 @@
-import { ComponentChildren, ComponentProps } from "preact"
+import { ComponentChildren } from "preact"
 import { Link } from "preact-router"
 
 type DrawerProps = {
