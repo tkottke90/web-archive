@@ -16,6 +16,7 @@ WORKDIR /usr/app/
 # Install Files
 COPY ./dist .
 COPY ./prisma ./prisma
+COPY ./public ./public
 COPY README.md .
 COPY package.json .
 COPY package-lock.json .

@@ -14,22 +14,47 @@ jobs:
     name: Lint Server
     uses: ./.github/workflows/lint-server.yaml
 
-  Build:
+  Build_UI:
+    runs-on: [ ubuntu-latest ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Install Dependencies
+        working-directory: './ui'
+        run: npm install
+
+      - name: Build Image
+        working-directory: './ui'
+        run: npm run build
+      
+      - name: Mv to public
+        run: |
+          cp ./ui/dist ./server/public
+          git add -A
+          git commit -m 'refactor: Add public changes'
+
+  Build_API:
     uses: ./.github/workflows/build.yaml
-    name: Build Image
-    needs: [Lint]
+    name: Build API Image
+    needs: [Lint, Build_UI]
     with:
       deploy: ${{ github.event_name != 'pull_request' }}
       target_dir: "server"
-      
+  
 
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
     name: Deploy
-    needs: [Build]
+    needs: [Build_API]
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
       packages: write
     with:
-      image: ${{ needs.build.outputs.image }}
+      image: ${{ needs.Build_API.outputs.image }}
