@@ -17,6 +17,8 @@ jobs:
   Build:
     runs-on: [ ubuntu-latest ]
     needs: [Lint]
+    outputs:
+      image: ${{ steps.img_build.outputs.imgname }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
