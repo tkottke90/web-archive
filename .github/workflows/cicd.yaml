@@ -26,6 +26,7 @@ jobs:
           node-version: 18
 
       - name: Setup PAT
+        working-directory: './ui'
         run: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       
       - name: Install Dependencies
