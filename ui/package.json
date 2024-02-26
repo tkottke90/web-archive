@@ -12,7 +12,7 @@
     "@popperjs/core": "^2.11.8",
     "@preact/signals": "^1.2.2",
     "@tkottke/hateos-url-manager": "github:tkottke90/javscript-hateos-router",
-    "@tkottke90/preact-components": "github:tkottke90/my-preact-components#v1.4.0",
+    "@tkottke90/preact-components": "github:tkottke90/my-preact-components#v1.6.0",
     "framer-motion": "^10.16.16",
     "install": "^0.13.0",
     "npm": "^10.4.0",
