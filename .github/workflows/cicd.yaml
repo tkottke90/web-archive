@@ -44,6 +44,9 @@ jobs:
       - name: Mv to public
         run: cp -r ./ui/dist/* ./server/public
 
+      - name: Mv to public
+        run: cp -r ./ui/package.json ./server/public
+
       - name: Build API
         working-directory: './server'
         run: npm run build
