@@ -28,11 +28,9 @@ jobs:
         with:
           node-version: 18
 
-      - name: Setup PAT
+      - name: Setup NPM PKG Token
         working-directory: './ui'
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=$TOKEN" > .npmrc
-          cat .npmrc
+        run: echo "//npm.pkg.github.com/:_authToken=$TOKEN" > .npmrc
         env:
           TOKEN: ${{ secrets.GH_PKG_SECRET }}
       
