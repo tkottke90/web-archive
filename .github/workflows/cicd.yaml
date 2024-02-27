@@ -34,7 +34,7 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=$TOKEN" > .npmrc
           cat .npmrc
         env:
-          TOKEN: secrets.GH_PKG_SECRET
+          TOKEN: ${{ secrets.GH_PKG_SECRET }}
       
       - name: Install Dependencies
         run: |
