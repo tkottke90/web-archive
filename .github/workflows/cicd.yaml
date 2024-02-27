@@ -30,7 +30,9 @@ jobs:
 
       - name: Setup PAT
         working-directory: './ui'
-        run: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+        run: echo "//npm.pkg.github.com/:_authToken=$TOKEN" >> .npmrc
+        env:
+          TOKEN: secrets.GH_PKG_SECRET
       
       - name: Install Dependencies
         run: |
