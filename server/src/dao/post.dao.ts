@@ -154,7 +154,11 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   }
 
   async remove(postId: number) {
-    await this.postFileDao.deleteFiles(postId);
+    const post = await this.client.post.findFirstOrThrow({
+      where: { id: postId }
+    });
+
+    await this.postFileDao.deleteFiles(post.id);
 
     return this.client.post.delete({
       where: { id: postId }

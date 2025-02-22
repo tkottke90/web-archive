@@ -1,3 +1,23 @@
+export class BaseError extends Error {
+  constructor(
+    public message: string,
+    readonly details: Record<string, any> = {}
+  ) {
+    super(message);
+  }
+
+  toJSON() {
+    return {
+      ...this,
+      stack: this.stack
+    };
+  }
+
+  toString() {
+    return `${this.name} ${JSON.stringify(this.toJSON())}`;
+  }
+}
+
 export class HTTPError extends Error {
   code: number;
   details: Record<string, any>;

@@ -1,6 +1,8 @@
 import { Container } from '@decorators/di';
 
-type tempLevels = 'error' | 'warn' | 'info' | 'debug';
+const Log_Levels = ['error', 'warn', 'info', 'debug'] as const;
+
+type tempLevels = typeof Log_Levels[number];
 
 interface ILoggerService<Levels extends string> {
   log: (level: Levels, message: string, metadata?: Record<string, any>) => void;
@@ -10,12 +12,34 @@ interface ILoggerService<Levels extends string> {
 export class LoggerService implements ILoggerService<tempLevels> {
   constructor(private commonMetadata: Record<string, any> = {}) {}
 
+  get Log_Level() {
+    const envLevel = (process.env.LOG_LEVEL ?? 'info').toLocaleLowerCase();
+
+    if (envLevel in Log_Levels) {
+      return Log_Levels.indexOf(envLevel as tempLevels);
+    } else {
+      return Log_Levels.indexOf('info');
+    }
+  }
+
+  isHighEnoughSeverity(level: tempLevels) {
+    const logLevel = Log_Levels.indexOf(level);
+
+    return logLevel <= this.Log_Level;
+  }
+
   log(level: tempLevels, message: string, metadata?: Record<string, any>) {
-    const combinedMetadata = Object.assign(this.commonMetadata, metadata);
+    // Check if the severity is high enough to log;
+    if (!this.isHighEnoughSeverity(level)) {
+      return;
+    }
+
+    const combinedMetadata = { ...this.commonMetadata, ...metadata };
 
     // Allow for the input of a location to add more detail to the
     // log messages
-    const locationStr = combinedMetadata?.location ?? '';
+    const locationStr = combinedMetadata?.location ?? 'App';
+    delete combinedMetadata.location;
 
     const metadataStr = JSON.stringify(combinedMetadata);
 
@@ -46,4 +70,11 @@ export class LoggerService implements ILoggerService<tempLevels> {
 
 Container.provide([{ provide: 'LoggerService', useClass: LoggerService }]);
 
-export default new LoggerService();
+const signletonLogger = new LoggerService();
+signletonLogger.log(
+  'info',
+  `Logger Setup - Level ${Log_Levels[signletonLogger.Log_Level].toUpperCase()}`,
+  { location: 'Setup' }
+);
+
+export default signletonLogger;
