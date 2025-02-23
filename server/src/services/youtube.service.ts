@@ -16,10 +16,14 @@ import { stat } from 'fs/promises';
 import mime from 'mime-types';
 import { DownloadJobDao } from '../dao/download-job.dao';
 import { JobScheduler } from '../jobs';
+import { CmdOutput, spawnCommand } from '../utilities/shell.utils';
+import { BaseError } from '../utilities/errors.util';
 
 const exec = promisify(childProcess.exec);
 
 const YOUTUBE_JOB = 'Youtube';
+const FFMPEG_VIDEO_CODEC = process.env.YOUTUBE_DL_VCODEC ?? 'libx264';
+const YOU_DL_CMD = process.env.YOUTUBE_DL_CMD ?? 'yt-dlp';
 
 export class YoutubeParser {
   private parserLogger: LoggerService;
@@ -38,7 +42,7 @@ export class YoutubeParser {
   }
 
   async getVideoMetadata(url: string) {
-    const result = await exec(`youtube-dl --dump-json '${url}'`);
+    const result = await exec(`${YOU_DL_CMD} --dump-json '${url}'`);
 
     return JSON.parse(result.stdout) as YoutubeDetails;
   }
@@ -52,7 +56,8 @@ export class YoutubeParser {
     // Create a logger related to the specific metadata
     const logger = this.parserLogger.createLogger({
       url,
-      source_id: metadata.id
+      source_id: metadata.id,
+      location: 'YoutubeParser'
     });
 
     logger.log('debug', 'Checking for post with matching ID');
@@ -68,10 +73,10 @@ export class YoutubeParser {
 
       return existingPost;
     } else {
-      logger.log('debug', 'No Video found in Database');
+      this.logger.log('debug', 'No Video found in Database');
     }
 
-    logger.log('info', 'Creating new post');
+    this.logger.log('info', 'Creating new post');
 
     const path = resolve(this.fileSystem.UPLOAD_DIR, `${randomUUID()}.mp4`);
     const post = await this.postDao.create({
@@ -94,9 +99,38 @@ export class YoutubeParser {
 
     this.queueDownloadJob(url, path, metadata._filename, post.id);
 
-    logger.log('info', 'Added video to queue');
+    this.logger.log('info', 'Added video to queue');
 
     return post;
+  }
+
+  private async handleDownloadFailure(
+    jobId: number,
+    path: string,
+    cmdResponse: CmdOutput,
+    jobLogger: LoggerService
+  ) {
+    const errors = cmdResponse.stdErr.filter((line) =>
+      line.startsWith('ERROR:')
+    );
+
+    jobLogger.log('info', 'Removing files downloaded');
+    const fileDetails = this.fileSystem.getFileParts(path);
+
+    const removedFiles = await this.fileSystem.removePattern(
+      new RegExp(`${fileDetails.name}.*`, 'g')
+    );
+
+    jobLogger.log('info', 'Removed job files', { removedFiles });
+
+    throw new BaseError(
+      `Command Returned a Non-Zero Exit Code [Code: ${cmdResponse.code}]`,
+      {
+        cmd: cmdResponse.command,
+        jobId,
+        errors
+      }
+    );
   }
 
   private async queueDownloadJob(
@@ -129,56 +163,109 @@ export class YoutubeParser {
 
         for (const job of jobs) {
           const { postId, path, ogFilename, url } = job.data as YoutubeJob;
-          this.logger.log('info', `Downloading video: ${url}`, {
-            targetPath: path
+
+          const jobLogger = this.logger.createLogger({
+            job: job.id,
+            location: 'YoutubeParser | Job: ' + job.id
           });
 
-          await new Promise<void>((resolve, reject) => {
-            const dlInstance = childProcess.spawn(
-              'youtube-dl',
+          try {
+            // Load the metadata about the video
+            const videoDetails = await this.getVideoMetadata(url);
+            // Generate the filename where the file will be downloaded
+            const downloadedFilePath = resolve(
+              this.fileSystem.UPLOAD_DIR,
+              this.fileSystem.getFileParts(videoDetails._filename).name + '.mp4'
+            );
+            // Generate pre-transcode filename
+            const preTranscodeFilePath = `${this.fileSystem.UPLOAD_DIR}/${
+              this.fileSystem.getFileParts(path).name
+            }.raw.mp4`;
+
+            jobLogger.log('info', `Downloading video: ${url}`, {
+              targetPath: downloadedFilePath
+            });
+
+            // Trigger the download
+            const downloadFileCmd = await spawnCommand(
+              'Video Download',
+              YOU_DL_CMD,
               [
-                '-k',
-                '-o',
-                `${path}`,
+                '--verbose',
+                '--rm-cache-dir',
                 '-f',
                 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
                 url
               ],
-              { env: process.env }
+              { cwd: this.fileSystem.UPLOAD_DIR }
             );
 
-            dlInstance.stdin.on('data', (data: Buffer) =>
-              this.logger.log('debug', data.toString())
+            // Process the result of the download
+            if (!downloadFileCmd.success) {
+              this.handleDownloadFailure(
+                job.id,
+                path,
+                downloadFileCmd,
+                jobLogger
+              );
+            }
+
+            await this.fileSystem.mv(downloadedFilePath, preTranscodeFilePath);
+
+            jobLogger.log(
+              'info',
+              `Transcoding video to: ${FFMPEG_VIDEO_CODEC}`,
+              {
+                file: preTranscodeFilePath,
+                targetPath: path
+              }
             );
 
-            dlInstance.stdout.on('data', (data: Buffer) =>
-              this.logger.log('debug', data.toString())
+            // Transcode to the configured video codec
+            const transcodeCmd = await spawnCommand(
+              'Video Transcode',
+              'ffmpeg',
+              [
+                '-v',
+                'debug',
+                '-i',
+                preTranscodeFilePath,
+                '-vcodec',
+                FFMPEG_VIDEO_CODEC,
+                path
+              ]
             );
 
-            dlInstance.stderr.on('data', (data: Buffer) =>
-              this.logger.log('warn', data.toString())
+            // Process transcode results
+            if (!transcodeCmd.success) {
+              this.handleDownloadFailure(job.id, path, transcodeCmd, jobLogger);
+            }
+
+            jobLogger.log(
+              'info',
+              'Transcoding Complete. Cleaning up download files'
             );
 
-            dlInstance.on('error', (err: Error) => {
-              reject(`Error: ${err.message}`);
-              this.downloadJobsDao.jobError(job.id, err.message);
+            jobLogger.log('debug', 'Removing original file', {
+              targetPath: path
             });
+            await this.fileSystem.remove(preTranscodeFilePath);
 
-            dlInstance.on('close', (code: number) => {
-              this.logger.log('info', 'Download Complete ', {
-                jobId: job.id,
-                post: postId,
-                code
-              });
-
-              code !== 0
-                ? reject(`Error Downloading Video [code: ${code}]`)
-                : resolve();
+            jobLogger.log('debug', 'Cleanup complete', {
+              targetPath: path
             });
-          });
+          } catch (error: any) {
+            const details = error?.toString() ?? error.message;
+
+            jobLogger.log('error', details);
+            await this.downloadJobsDao.jobError(job.id, details);
+            continue;
+          }
 
           const fileDetails = await stat(path);
           const mimeType = mime.lookup(path);
+
+          // TODO: Get Codec/Encoding for video
 
           // Delete Existing Files
           const post = await this.postDao.getById(postId);
@@ -192,7 +279,7 @@ export class YoutubeParser {
 
           // Upload newly created files
           await this.postFileDao.create(postId, {
-            encoding: '',
+            encoding: FFMPEG_VIDEO_CODEC,
             filename: path,
             original_filename: ogFilename,
             mime: mimeType ? mimeType : 'octet/stream',
@@ -201,6 +288,8 @@ export class YoutubeParser {
 
           // Update job as complete
           await this.downloadJobsDao.completeJobs([job.id]);
+
+          jobLogger.log('info', 'Job Completed Successfully');
         }
 
         this.logger.log('debug', 'Youtube Job Executed', {

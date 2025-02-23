@@ -100,6 +100,18 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     ];
   }
 
+  /**
+   * Fetches the index of the post in the table.  Specifically for
+   * calculating the pagination
+   */
+  async getPostIndex(id: number) {
+    const beforeCount = await this.client.post.count({
+      where: { id: { lte: id } }
+    });
+
+    return beforeCount;
+  }
+
   archive(postId: number) {
     return this.client.post.update({
       data: { deletedAt: new Date() },
@@ -154,7 +166,11 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   }
 
   async remove(postId: number) {
-    await this.postFileDao.deleteFiles(postId);
+    const post = await this.client.post.findFirstOrThrow({
+      where: { id: postId }
+    });
+
+    await this.postFileDao.deleteFiles(post.id);
 
     return this.client.post.delete({
       where: { id: postId }
@@ -162,12 +178,17 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   }
 
   async paginationDetails(query: PostQueryDTO) {
-    const { take, skip, where } = this.generateFindStatement(query);
+    const { take, cursor, skip, where } = this.generateFindStatement(query);
 
     const count = await this.client.post.count({ where });
+    let postIndex = skip ?? 0;
+
+    if (cursor?.id) {
+      postIndex = await this.getPostIndex(cursor.id);
+    }
 
     return {
-      currentPage: Math.ceil(skip / take) + 1,
+      currentPage: Math.ceil(postIndex / take + 1),
       totalPages: Math.ceil(count / take),
       totalItems: count
     };

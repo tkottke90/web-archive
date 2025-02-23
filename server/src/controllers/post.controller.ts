@@ -1,43 +1,49 @@
+import { Inject } from '@decorators/di';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Headers as HttpHeaders,
   Next,
+  Params,
   Post,
   Query,
-  Response,
   Request,
-  Body,
-  Params,
-  Delete
+  Response
 } from '@decorators/express';
 import express from 'express';
+import multer from 'multer';
+import { z } from 'zod';
+import { UPLOAD_DIR } from '../config';
+import { PostFileDao } from '../dao/post-file.dao';
+import { PostTagDao } from '../dao/post-tag.dao';
+import { PostDao } from '../dao/post.dao';
+import { TagDao } from '../dao/tag.dao';
 import {
   PostCreateDTO,
   PostCreateSchema,
   PostQueryDTO,
   PostQuerySchema
 } from '../dto/post.dto';
+import { FuzzyBoolean } from '../dto/utilities';
+import { MultipartJson } from '../middleware';
 import {
   ZodBodyValidator,
   ZodIdValidator,
   ZodQueryValidator
 } from '../middleware/zod.middleware';
-import { Inject } from '@decorators/di';
-import { PostDao } from '../dao/post.dao';
-import multer from 'multer';
-import { MultipartJson } from '../middleware';
-import { PostFileDao } from '../dao/post-file.dao';
+import { POSTS, TAGS } from '../routes';
 import { BadRequestError, NotFoundError } from '../utilities/errors.util';
-import { PostTagDao } from '../dao/post-tag.dao';
-import { TagDao } from '../dao/tag.dao';
-import { UPLOAD_DIR } from '../config';
-import { z } from 'zod';
+import { Prisma } from '@prisma/client';
+import { FS_CONSTS } from '../constants';
+import { createReadStream } from 'fs';
+import { FileSystemFactory } from '../services';
+
 const upload = multer({
   dest: UPLOAD_DIR,
-  limits: { fieldSize: 25 * 1024 * 1024 }
+  limits: { fieldSize: FS_CONSTS.MAX_UPLOAD_SIZE }
 });
-import { POSTS, TAGS } from '../routes';
-import { FuzzyBoolean } from '../dto/utilities';
 
 @Controller(POSTS.ROOT.path)
 export class PostController {
@@ -45,7 +51,8 @@ export class PostController {
     @Inject('PostDao') private readonly postDao: PostDao,
     @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
     @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
-    @Inject('TagDao') private readonly tagDao: TagDao
+    @Inject('TagDao') private readonly tagDao: TagDao,
+    @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory
   ) {}
 
   @Get('/', [ZodQueryValidator(PostQuerySchema)])
@@ -130,6 +137,10 @@ export class PostController {
 
       res.status(204).json({});
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        next(new NotFoundError('Post Not Found with ID'));
+      }
+
       next(error);
     }
   }
@@ -156,18 +167,48 @@ export class PostController {
   @Get(POSTS.FILES_CONTENT.path, [ZodIdValidator('fileId')])
   async getPostContent(
     @Params('fileId') fileId: number,
+    @HttpHeaders('range') range: string,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
     try {
       const content = await this.postFileDao.getById(fileId);
 
+      // If there is no database record
       if (!content) {
         throw new NotFoundError('Unable to get file');
       }
 
-      res.contentType(content.mime);
-      res.sendFile(content.filename);
+      await this.fileSystem.exists(content.filename).catch(async (err: any) => {
+        // If the file does not exist, we should remove the corresponding record
+        // from the database
+        await this.postFileDao.delete(content.id);
+
+        throw new NotFoundError('File Missing from file system');
+      });
+
+      if (content.mime.startsWith('video') && range) {
+        const start = Number(range.replace(/\D/g, ''));
+        const end = Math.min(
+          start + FS_CONSTS.VIDEO_CHUNK_SIZE,
+          content.size - 1
+        );
+        const contentLength = end - start + 1;
+
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${content.size}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': contentLength,
+          'Content-Type': 'video/mp4'
+        });
+
+        const videoStream = createReadStream(content.filename, { start, end });
+        videoStream.pipe(res);
+      } else {
+        // Not a video, so send back the file
+        res.contentType(content.mime);
+        res.sendFile(content.filename);
+      }
     } catch (error) {
       next(error);
     }

@@ -15,6 +15,8 @@ import { currentPage, deletePost, getSiblingPosts, postDetails, updateLocalPostT
 import { createTag, filterTagsByPost, loadedTags, removeTagFromPost } from "../../services/tags.service";
 import { getPortalContainer } from "../../utilities/dom.utils";
 import { returnFileSize } from "../../utilities/number.utils";
+import { useAsyncResource } from "../../components/Layouts/AsyncResource";
+import { useEffect } from "preact/hooks";
 
 const portal = getPortalContainer("modals");
 
@@ -231,6 +233,9 @@ function MediaCard({ post }: { post: PostEntity }) {
   const showAddModal = useSignal(false);
   const fileQueue = useSignal<File[]>([]);
 
+  const TextLoader = useAsyncResource();
+
+
   useSignalEffect(() => {
     if (!showAddModal.value) {
       fileQueue.value = [];
@@ -266,6 +271,22 @@ function MediaCard({ post }: { post: PostEntity }) {
             return file.size > 0
               ? <video key={`details-media-vid-${i}`} src={file.links.media} loop controls className={commonClasses} />
               : <EmptyVideo className={commonClasses} />
+          }
+
+          if (file.mime.startsWith('text')) {
+            const key = `details-media-text-${i}`;
+            const textValue = useSignal('');
+
+            useEffect(() => {
+              TextLoader.execute<string>(fetch(file.links.media)
+                .then(async res => textValue.value = await res.text()))
+            });
+
+            return (
+              <TextLoader.Provider key={key} >
+                <pre className="whitespace-pre-wrap p-2 overflow-hidden" >{ textValue }</pre>
+              </TextLoader.Provider>
+            )
           }
         })}
       </div>

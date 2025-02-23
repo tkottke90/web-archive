@@ -4,8 +4,279 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Web Archiver</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body > main {
+      width: clamp(300px, 50vw, 800px);
+      margin: auto;
+      padding-top: 1rem;
+    }
+
+    ul {
+      width: 100%;
+    }
+
+    li + li {
+      margin-top: 0.5rem;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem;
+
+      --theme-hue: 200;
+      --theme-sat: 50%;
+      --theme-lig: 50%;
+
+      background-color: hsla(
+        var(--theme-hue),
+        var(--theme-sat),
+        var(--theme-lig),
+        50%
+      );
+
+      border: 1px solid hsl(var(--theme-hue), var(--theme-sat),var(--theme-lig));
+    }
+
+    .action-group {
+      display: flex;
+      justify-content: space-evenly;
+    }
+
+    .drawer {
+      display: block;
+      top: 0;
+     
+      height: 100vh;
+      width: clamp(300px, 50vw, 600px);
+
+      margin: 0;
+      margin-left: auto;
+
+      transform: translateX(100%);
+      transition: 
+        transform 250ms ease-in 50ms,
+        overlay 250ms ease-out allow-discrete;
+
+      border: 1px solid hsla(0, 0%, 50%);
+      box-shadow: 0 4px 6px -1px hsla(0, 0%, 0%, 0.1), 0 2px 4px -2px hsla(0, 0%, 0%, 0.1);
+    }
+
+    .drawer::backdrop {
+      display: block;
+      background-color: hsl(0, 0%, 13%);
+      opacity: 0%;
+      
+      transform: scale(0);
+      pointer-events: none;
+
+      transition:
+        overlay 250ms allow-discrete,
+        opacity 250ms ease-in 25ms;
+    }
+
+    .drawer[open] {
+      transform: translateX(0)
+    }
+
+    .drawer[open]::backdrop {
+      opacity: 50%;
+      transform: scale(1);
+      pointer-events: all;
+    }
+
+    .drawer * { margin: 0; }
+
+    .drawer #source-link {
+      --color-opacity: 0%;
+      background-color: hsla(0, 0%, 90%, var(--color-opacity));
+
+      display: block;
+      width: 100%;
+      color: inherit;
+
+      padding: 0.5rem 1rem;
+      text-align: center;
+      text-decoration: none;
+
+      cursor: pointer;
+    }
+
+    .drawer #source-link:hover { 
+      --color-opacity: 50%;
+      text-decoration: underline;
+    }
+
+    .drawer #source-link:active {
+      --color-opacity: 80%;
+    }
+
+    .drawer .content {
+      width: 100%;
+
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    pre {
+      background-color: hsl(0, 0%, 90%);
+      padding: 1rem;
+      overflow: auto;
+    }
+  </style>
 </head>
 <body>
-  <h2>Web Archiver</h2>
+  <main>
+    <h2 style="margin: 0;">Web Archiver</h2>
+    <small>This page is only used in dev for debugging</small>
+  
+    <h3>Records</h3>
+    <ul></ul>
+
+  </main>
+
+  <dialog id="post-details" class="drawer">
+    <h3 id="title">Title</h3>
+    <p id="author">Author</p>
+    <br />
+    <a id="source-link" target="_blank" >Source</a>
+    <br />
+    <div id="drawer-content" class="content">
+      Content Here
+    </div>
+  </dialog>
+
+
+  <script type="module">
+    /* @type {HTMLDialogElement} */
+    const drawer = document.getElementById('post-details');
+    const list = document.querySelector('ul');
+
+    let isLoading = false;
+    const loadAbortController = new AbortController();
+
+    function abort() {
+      if (isLoading) {
+        loadAbortController.abort();
+      }
+    }
+
+    drawer.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!target) return;
+      if (target !== drawer) return;
+
+      const targetRect = target.getBoundingClientRect();
+
+      const isWithinX = event.pageX >= targetRect.left && event.pageX <= targetRect.right
+      const isWithinY = event.pageY >= targetRect.top && event.pageY <= targetRect.bottom
+
+      if (isWithinX && isWithinY) {
+        return;
+      }
+      
+      drawer.close();
+    })
+    
+    function showDrawer(post) {
+      abort();
+      const title = document.getElementById('title');
+      title.textContent = post.label;
+
+      const author = document.getElementById('author');
+      author.textContent = post.author;
+
+      const sourceLink = document.getElementById('source-link');
+      sourceLink.href = post.metadata.find(metadata => metadata.name === 'PERMALINK')?.value ?? post.source;
+
+      const content = document.getElementById('drawer-content');
+      content.innerHTML = '';
+
+      post.files.forEach(async file => {
+        switch(true) {
+          case file.mime.startsWith('video'): {
+            const vidElem = document.createElement('video');
+            vidElem.loop = true;
+            vidElem.controls = true;
+
+            const source = document.createElement('source');
+            source.src = file.links.media ?? '';
+
+            vidElem.appendChild(source);
+            content.appendChild(vidElem);
+            break;
+          }
+          case file.mime.startsWith('image'): {
+            const imgElem = document.createElement('img');
+            imgElem.src = file.links.media ?? ''
+
+            content.appendChild(imgElem);
+            break;
+          }
+          case file.mime.startsWith('text'): {
+            const wrapper = document.createElement('pre');
+            const code = document.createElement('code');
+            
+            code.textContent = "Loading..."
+            
+            wrapper.appendChild(code);
+            content.appendChild(wrapper);
+
+            isLoading = true;
+            code.textContent = await fetch(file.links.media, { signal: loadAbortController.signal }).then(res => res.text());
+            isLoading = false;
+            break;
+          }
+        }
+      });
+
+      drawer.showModal();
+    }
+
+    function reload() {
+      list.innerHTML = '';
+
+      fetch('/api/post')
+        .then(res => res.json())
+        .then(data => {
+          data.data.forEach(post => {
+            const postElem = document.createElement('li');
+            postElem.classList.add('item');
+  
+            const title = document.createElement('span');
+            title.textContent = post.label;
+            
+            const viewBtn = document.createElement('button');
+            viewBtn.textContent = "View";
+            viewBtn.addEventListener('click', () => showDrawer(post));
+  
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = "Delete";
+            deleteBtn.addEventListener('click', () => {
+              fetch(post.links.self, { method: 'DELETE' })
+                .then(res => {
+                  if(res.status > 400) {
+                    list.removeChild(postElem);
+                  }
+                })
+            });
+
+            postElem.appendChild(title);
+            postElem.appendChild(viewBtn);
+            list.appendChild(postElem);
+          })
+        })
+    }
+
+
+    reload();
+  </script>
 </body>
 </html>
