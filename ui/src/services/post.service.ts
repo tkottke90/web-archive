@@ -10,7 +10,7 @@ type NavigationResponse = { navigation: [OptionalPath, string, OptionalPath], pa
 
 const initialSearch = new URLSearchParams(window.location.search);
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 10;
 
 export const posts = new Signal<Signal<PostDTO>[]>([]);
 export const currentPage = new Signal(
