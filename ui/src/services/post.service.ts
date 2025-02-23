@@ -10,7 +10,7 @@ type NavigationResponse = { navigation: [OptionalPath, string, OptionalPath], pa
 
 const initialSearch = new URLSearchParams(window.location.search);
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 3;
 
 export const posts = new Signal<Signal<PostDTO>[]>([]);
 export const currentPage = new Signal(
@@ -43,7 +43,7 @@ function getPosts<T>({ limit, skip }: GetPostInputs) {
 export async function getSiblingPosts(id: number) {
   const queryParams = new URLSearchParams(initialSearch);
   queryParams.set('limit', `${PAGE_SIZE}`);
-  queryParams.set('skip', `${id}`);
+  queryParams.set('cursor', `${id}`);
   queryParams.delete('currentPage')
 
   const response = await get<NavigationResponse>(
