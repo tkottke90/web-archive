@@ -4,8 +4,120 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Web Archiver</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    main {
+      width: clamp(300px, 50vw, 800px);
+      margin: auto;
+      padding-top: 1rem;
+    }
+
+    ul {
+      width: 100%;
+    }
+
+    li + li {
+      margin-top: 0.5rem;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem;
+
+      --theme-hue: 200;
+      --theme-sat: 50%;
+      --theme-lig: 50%;
+
+      background-color: hsla(
+        var(--theme-hue),
+        var(--theme-sat),
+        var(--theme-lig),
+        50%
+      );
+
+      border: 1px solid hsl(var(--theme-hue), var(--theme-sat),var(--theme-lig));
+    }
+
+    .action-group {
+      display: flex;
+      justify-content: space-evenly;
+    }
+  </style>
 </head>
 <body>
-  <h2>Web Archiver</h2>
+  <main>
+    <h2 style="margin: 0;">Web Archiver</h2>
+    <small>This page is only used in dev for debugging</small>
+  
+    <h3>Records</h3>
+    <ul></ul>
+
+  </main>
+
+  <!-- <video style="width: 25vw;" loop controls>
+    <source src="/api/post/45/files/51/content" type="video/mp4">
+  </video> -->
+
+  <script type="module">
+    const list = document.querySelector('ul');
+
+
+    fetch('/api/post')
+      .then(res => res.json())
+      .then(data => {
+        data.data.forEach(post => {
+          const postElem = document.createElement('li');
+          postElem.classList.add('item');
+
+
+          const title = document.createElement('span');
+          title.textContent = post.label;
+          
+          const linkGroup = document.createElement('div');
+          linkGroup.classList.add('action-group')
+
+          const jsonLink = document.createElement('a');
+          jsonLink.href = post.links.self;
+          jsonLink.textContent = 'JSON Link';
+          linkGroup.appendChild(jsonLink);
+
+          const contentLinks = document.createElement('ul');
+
+          post.files.forEach(file => {
+            const contentItem = document.createElement('li');
+            const contentLink = document.createElement('a');
+
+            contentLink.href = file.links.media;
+            contentLink.textContent = file.original_filename
+
+            contentItem.appendChild(contentLink);
+            contentLinks.appendChild(contentLink);
+          });
+
+          if (post.files.length === 0) {
+            const emptyItem = document.createElement('li');
+            emptyItem.textContent = 'No Items for Post'
+
+            contentLinks.appendChild(emptyItem)
+          }
+
+          const contentLink = document.createElement('a');
+          jsonLink.href = post.links.self;
+          jsonLink.textContent = 'JSON Link';
+
+          linkGroup.appendChild(contentLinks)
+
+          postElem.appendChild(title);
+          postElem.appendChild(linkGroup);
+          list.appendChild(postElem);
+        })
+      })
+  </script>
 </body>
 </html>
