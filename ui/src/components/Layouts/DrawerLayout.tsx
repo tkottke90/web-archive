@@ -15,7 +15,7 @@ export function DrawerLayout(props: DrawerProps) {
 
         </section>
         <section>
-          <Link disabled>
+          <Link>
             <nav class="w-full p-4 uppercase text-center text-lg">Settings</nav>
           </Link>
         </section>
