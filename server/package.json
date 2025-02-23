@@ -1,6 +1,6 @@
 {
   "name": "web-storage",
-  "version": "1.2.0",
+  "version": "0.0.0",
   "description": "Web application to store content I find on the web that I want to keep in a standardized way",
   "main": "index.js",
   "scripts": {
