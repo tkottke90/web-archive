@@ -17,7 +17,6 @@ import { getPortalContainer } from "../../utilities/dom.utils";
 import { returnFileSize } from "../../utilities/number.utils";
 import { useAsyncResource } from "../../components/Layouts/AsyncResource";
 import { useEffect } from "preact/hooks";
-import { LoadingSkeleton } from "../../components/Layouts/Loading-Skeleton";
 
 const portal = getPortalContainer("modals");
 
@@ -113,7 +112,7 @@ function Loading({ children, loading }: LoadingProps) {
 
 function PropertiesCard({ post }: { post: PostEntity }) {
   return (
-    <Card className="col-span-3">
+    <Card className="col-span-4 md:col-span-3">
       <h2>Post Details</h2>
 
       <div className="flex flex-col gap-2">
@@ -140,7 +139,7 @@ function TagCard({ post }: { post: PostEntity }) {
   const filter = useSignal("");
 
   return (
-    <Card className="col-span-1">
+    <Card className="col-span-4 md:col-span-1">
       <h4>Tags</h4>
       <br />
       <AutoComplete
@@ -216,7 +215,7 @@ function MetadataCard({ post }: { post: PostEntity }) {
   }
 
   return (
-    <Card className="col-span-2">
+    <Card className="col-span-4 md:col-span-2">
       <h4>Metadata</h4>
 
       <Table
@@ -244,7 +243,7 @@ function MediaCard({ post }: { post: PostEntity }) {
   });
 
   return (
-    <Card className="col-span-2">
+    <Card className="col-span-4 md:col-span-2">
       <div className="flex justify-between">
         <h4>Media</h4>
         <div>
