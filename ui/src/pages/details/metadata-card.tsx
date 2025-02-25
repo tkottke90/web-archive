@@ -12,7 +12,7 @@ export function MetadataCard({ className }: CustomComponent) {
   }
 
   return (
-    <Card className={`col-span-4 md:col-span-2 ${className}`}>
+    <Card className={`col-span-4 md:col-span-2 h-fit ${className}`}>
       <h4>Metadata</h4>
 
       <Table

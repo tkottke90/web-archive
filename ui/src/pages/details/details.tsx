@@ -1,6 +1,6 @@
 import { Signal, useSignal } from "@preact/signals";
 import { Modal } from "@tkottke90/preact-components";
-import { ArrowLeft, ArrowRight, CornerUpLeft, } from "lucide-preact";
+import { ArrowLeft, ArrowRight, CornerUpLeft, ShieldAlert, Trash, } from "lucide-preact";
 import { ComponentChildren, Fragment, JSX } from "preact";
 import { route } from "preact-router";
 import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
@@ -75,8 +75,9 @@ function PostNavigation({}: CustomComponent) {
       </button>
 
       <ConfirmButton
-        label="Delete"
-        className="text-crown-500 border border-crown-500"
+        label={(<span><span className="hidden md:inline">Delete</span><Trash className="md:hidden" /></span>)}
+        confirm={(<span><span className="hidden md:inline">Confirm</span><ShieldAlert className="md:hidden" /></span>)}
+        className="text-slate-200 md:text-crown-500 md:border md:border-crown-500"
         confirmClassName="bg-crown-500 text-slate-200"
         onConfirm={() => {
           showDeleteModal.value = true;
