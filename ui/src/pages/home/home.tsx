@@ -1,9 +1,11 @@
-import { Signal, useComputed, useSignalEffect } from "@preact/signals";
+import { Signal, useComputed, useSignal, useSignalEffect } from "@preact/signals";
+import { Menu } from "lucide-preact";
 import { ComponentChildren } from "preact";
 import { route } from "preact-router";
+import { AppBarCalloutBtn, AppBarOpenBtn, BottomAppBar } from "../../components/Layouts/BottomAppBar";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Table } from "../../components/Table/Table";
-import { currentPage, pageCount, posts, loadPosts, skip } from "../../services/post.service";
+import { currentPage, loadPosts, pageCount, posts, skip } from "../../services/post.service";
 
 function currentPageQuery(pageId: number) {
   const url = new URL(location.href);
@@ -14,6 +16,8 @@ function currentPageQuery(pageId: number) {
 }
 
 export function HomePage() {
+  const drawerState = useSignal(false);
+
   useSignalEffect(() => {
     const query = currentPageQuery(currentPage.value);
 
@@ -26,11 +30,14 @@ export function HomePage() {
   });
 
   return (
-    <DrawerLayout>
+    <DrawerLayout openDrawer={drawerState}>
       <div class="bg-cloud-100 border rounded border-cloud-400 shadow-md p-4">
-        <h2 className="text-2xl">Posts</h2>
+        <h2 className="text-2xl">
+          <span>Posts</span>
+        </h2>
         <br />
         <Table
+          className=""
           onRowClick={(data) => {
             const query = currentPageQuery(currentPage.value);
             console.log(`${data.value.links.ui}`)
@@ -45,9 +52,9 @@ export function HomePage() {
               label: "Tags",
               transform: (tags) => (tags ?? []).slice(0, 3).map((tag) => <Tag>{tag.value}</Tag>),
               className: "flex flex-wrap gap-px",
-              columnStyles: "w-60",
+              columnStyles: "md:w-60",
             },
-            { key: "createdAt", label: "Added On", transform: (date) => new Date(date).toLocaleDateString(), className: "text-right", columnStyles: "w-32" },
+            { key: "createdAt", label: "Added On", transform: (date) => new Date(date).toLocaleDateString(), className: "text-right", columnStyles: "md:w-32" },
           ]}
         />
         <br />
@@ -59,6 +66,17 @@ export function HomePage() {
           }}
         />
       </div>
+
+      <BottomAppBar
+        slots={{
+          left: <AppBarOpenBtn alignment="start"><Menu /></AppBarOpenBtn>,
+          center: <AppBarCalloutBtn />
+        }}
+      >
+        <section>
+          <p>Things go here for the ome page</p>
+        </section>
+      </BottomAppBar>
     </DrawerLayout>
   );
 }

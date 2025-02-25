@@ -18,6 +18,22 @@ table {
 
 @layer components {
 
+  .theme {
+
+    &--primary {
+      @apply bg-burnt-500 text-slate-200;
+    }
+
+    &--accent {
+      @apply bg-cloud-500 text-slate-200;
+    }
+
+    &--warn {
+      @apply bg-red-500 text-slate-200;
+    }
+
+  }
+
   .actions {
     @apply flex justify-end gap-2;
   }
@@ -35,8 +51,24 @@ table {
   button {
     @apply py-2 px-4 uppercase rounded hover:brightness-125;
 
+    &:disabled {
+      @apply hover:brightness-100;
+    }
+
     &.primary {
-      @apply bg-burnt-500 text-slate-200;
+      @apply theme--primary;
+    }
+
+    &.accent {
+      @apply bg-cloud-500 text-slate-200;
+    }
+
+    &.icon-button {
+      @apply shadow-lg rounded-full active:shadow-none translate-y-[-1.75rem] active:translate-y-[-1.5rem]; 
+    
+      &.accent {
+        @apply shadow-cloud-800;
+      }
     }
   }
 }
