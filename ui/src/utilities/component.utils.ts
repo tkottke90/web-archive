@@ -2,7 +2,7 @@ import { ComponentChildren } from "preact";
 
 export interface DefaultProps  {
   key?: string;
-  children: ComponentChildren,
+  children?: ComponentChildren,
   className?: string
 }
 

@@ -1,6 +1,6 @@
 import { Signal } from "@preact/signals";
 import { Fragment } from "preact";
-import { Link } from "preact-router";
+import { Link } from "preact-router/match";
 import { compoundClass, CustomComponent } from "../../utilities/component.utils";
 
 type DrawerProps = {
@@ -31,14 +31,10 @@ export function DrawerLayout(props: CustomComponent<DrawerProps>) {
   )
 }
 
-function Navigation() {
+export function Navigation() {
   return (
-    <section>
-      <br />
-      <br />
-      <Link>
-        <nav class="w-full p-4 uppercase text-center text-lg">Jobs</nav>
-      </Link>
-    </section>
+    <nav>
+      <Link activeClassName="active-link">Jobs</Link>
+    </nav>
   )
 }

@@ -1,10 +1,10 @@
 import { Signal, useSignal } from "@preact/signals";
 import { Modal } from "@tkottke90/preact-components";
-import { ArrowLeft, ArrowRight, CornerUpLeft, ShieldAlert, Trash, } from "lucide-preact";
+import { ArrowLeft, ArrowRight, ArrowUpLeft, ShieldAlert, Trash } from "lucide-preact";
 import { ComponentChildren, Fragment, JSX } from "preact";
 import { route } from "preact-router";
 import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
-import { AppBarBtnBar, AppBarCalloutBtn, BottomAppBar } from "../../components/Layouts/BottomAppBar";
+import BottomAppBar from "../../components/Layouts/BottomAppBar";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Http } from "../../interfaces/http.interface";
 import { currentPage, deletePost } from "../../services/post.service";
@@ -45,12 +45,15 @@ export function DetailsPage() {
           <MediaCard className="hidden md:block"/>
         </Loading>
 
-        <BottomAppBar
-          slots={{
-            left: <AppBarCalloutBtn icon={<CornerUpLeft />} onClick={() => route('/')} />,
-            right: <AppBarBtnBar alignment="end"><PostNavigation /></AppBarBtnBar>
-          }}
-        />
+        <BottomAppBar>
+          <BottomAppBar.AppBarHeader>
+            <BottomAppBar.AppBarCalloutBtnSlot icon={<ArrowUpLeft />} onClick={() => route('/')} />
+            <BottomAppBar.AppBarBtnSlot></BottomAppBar.AppBarBtnSlot>
+            <BottomAppBar.AppBarBtnSlot>
+              <PostNavigation />
+            </BottomAppBar.AppBarBtnSlot>
+          </BottomAppBar.AppBarHeader>
+        </BottomAppBar>
 
       </DetailsPageContext>
     </DrawerLayout>

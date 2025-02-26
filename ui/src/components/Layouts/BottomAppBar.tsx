@@ -1,8 +1,8 @@
 import { motion, Variants } from "framer-motion"
 import { CustomComponent, getPortalContainer } from "../../utilities/component.utils"
-import { Signal, useSignal } from "@preact/signals";
-import { Plus, X } from "lucide-preact";
-import { createContext, createPortal, JSX, useContext } from "preact/compat";
+import { Signal, untracked, useSignal } from "@preact/signals";
+import { Menu, Plus, X } from "lucide-preact";
+import { createContext, createPortal, JSX, useCallback, useContext, useEffect, useMemo } from "preact/compat";
 
 const bottomAppBarPortal = getPortalContainer('mobile-drawer')
 
@@ -24,21 +24,20 @@ const variants: Variants = {
   }
 }
 
-interface Slots {
-  left?: JSX.Element
-  center?: JSX.Element
-  right?: JSX.Element
-}
+type AppBarSlots =  'left' | 'right' | 'center'
+type SlotChildPositions = JSX.CSSProperties['justifyContent']
 
 const appBarContext = createContext({
   drawerVisible: new Signal(BottomAppBarState.CLOSED)
 });
 
-export function BottomAppBar({ children, slots }: CustomComponent<{ slots?: Slots }>) {
+function BottomAppBar({ children }: CustomComponent) {
   const showDrawer = useSignal(BottomAppBarState.CLOSED);
 
   return (
-    <appBarContext.Provider value={{ drawerVisible: showDrawer }}>
+    <appBarContext.Provider value={{
+      drawerVisible: showDrawer
+    }}>
       <div className="m-[60px]"></div>
       {createPortal(
         <div id="drawer-container" className="md:hidden">
@@ -49,14 +48,7 @@ export function BottomAppBar({ children, slots }: CustomComponent<{ slots?: Slot
             initial={{ y: '-80px' }}
             transition={{ ease: 'easeOut', duration: 0.25 }}
           >
-            <div id="drawer-header" className="w-full flex h-[80px] text-white">
-              { slots?.left ?? <AppBarBtnBar alignment="start" /> }
-              { slots?.center ?? <AppBarBtnBar alignment="start" /> }
-              { slots?.right ?? <AppBarBtnBar alignment="start" /> }
-            </div>
-            <AppBarBody drawerState={showDrawer}>
-              {children}
-            </AppBarBody>
+            {children}
           </motion.aside>
         </div>
       , bottomAppBarPortal)}
@@ -64,39 +56,85 @@ export function BottomAppBar({ children, slots }: CustomComponent<{ slots?: Slot
   )
 }
 
-export function AppBarBtnBar({ alignment, children }: CustomComponent<{ alignment: 'start' | 'end' }>) {
 
+function AppBarHeader({ children, className }: CustomComponent) {
   return (
-    <div className={`w-full h-full px-2 bg-burnt-500 flex justify-${alignment} active:inset-shadow-sm active:shadow-blue-600`}>
+    <div id="drawer-header" className={`w-full flex h-[80px] ${className}`}>
       {children}
     </div>
   )
 }
 
-export function AppBarCalloutBtn({ onClick, icon }: CustomComponent<{ onClick?: () => void, icon?: JSX.Element }>) {
-  return (<div className="relative">
-    <button className="accent icon-button absolute left-1/2 translate-x-[-50%] w-14 h-14" onClick={onClick}>
-      { icon ?? <Plus /> }
-    </button>
-
-    <svg
-      width="128"
-      height="80"
-      viewBox="0 0 128 80"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-
-    >
-      <path d="M0 0C34 0 32 34 64 34C96 34 94.0002 0 128 0V128H0V0Z" className="fill-burnt-500"/>
-    </svg>
-  </div>)
+/**
+ * Basic Slot for Bottom App Bar.  It shows the children inside of the wrapper component.  You select a slot you want
+ * want this element to appear in and it is registered to that slot in the app bar.
+ */
+function AppBarSlot({ alignment, children }: CustomComponent<{ slot?: AppBarSlots, alignment?: SlotChildPositions }>) {
+  return (
+    <div className={`w-full h-full px-2 bg-burnt-500 text-slate-200 flex justify-${alignment ?? 'start'}`}>
+      {children}
+    </div>
+  );
 }
 
-function AppBarBody({ drawerState, children }: CustomComponent<{ drawerState: Signal<BottomAppBarState> }>) {
+/**
+ * Special callout button style.  This element shows a button elevated above the app bar which also curves around the button.
+ * Typically used for a call to action button.
+ */
+function AppBarCalloutBtnSlot({ onClick, icon }: CustomComponent<{ onClick?: () => void, icon?: JSX.Element }>) {
+  return (
+    <div className="relative">
+      <button className="accent icon-button absolute left-1/2 translate-x-[-50%] w-14 h-14" onClick={onClick}>
+        { icon ?? <Plus /> }
+      </button>
+  
+      <svg
+        width="128"
+        height="80"
+        viewBox="0 0 128 80"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+  
+      >
+        <path d="M0 0C34 0 32 34 64 34C96 34 94.0002 0 128 0V128H0V0Z" className="fill-burnt-500"/>
+      </svg>
+    </div>
+  )
+}
+
+/**
+ * Creates a Slot with a single button which will open/close the App Bar Menu (slides up from the bottom) 
+ */
+function AppBarOpenBtnSlot({ children, alignment }: CustomComponent<{ alignment?: SlotChildPositions }>) {
+  const AppBarContext = useContext(appBarContext);
+  
+  return (
+    <AppBarSlot alignment={alignment} >
+      <button onClick={() => AppBarContext.drawerVisible.value = BottomAppBarState.OPEN}>
+        {children}
+      </button>
+    </AppBarSlot>
+  )
+}
+
+/**
+ * Creates a Slot with a single button which will open/close the App Bar Menu (slides up from the bottom) 
+ */
+function AppBarBtnSlot({ children }: CustomComponent) {
+  
+  return (
+    <AppBarSlot alignment={'between'}>
+      {children}
+    </AppBarSlot>
+  )
+}
+
+function AppBarBody({ children }: CustomComponent) {
+  const AppBarContext = useContext(appBarContext);
 
   return (
     <div id="drawer-body" className="h-[100dvh] relative theme--primary">
-      <div className="absolute right-0 top-0 p-4" onClick={() => drawerState.value = BottomAppBarState.CLOSED}>
+      <div className="absolute right-0 top-0 p-4" onClick={() => AppBarContext.drawerVisible.value = BottomAppBarState.CLOSED}>
         <X size="32" />
       </div>
       <br />
@@ -106,14 +144,14 @@ function AppBarBody({ drawerState, children }: CustomComponent<{ drawerState: Si
   )
 }
 
-export function AppBarOpenBtn({ children, alignment }: CustomComponent<{ alignment: 'start' | 'end' }>) {
-  const AppBarContext = useContext(appBarContext);
-  
-  return (
-    <div className={`w-full h-full bg-burnt-500 flex justify-${alignment} active:inset-shadow-sm active:shadow-blue-600`}>
-      <button onClick={() => AppBarContext.drawerVisible.value = BottomAppBarState.OPEN}>
-        {children}
-      </button>
-    </div>
-  )
-} 
+export default Object.assign(
+  BottomAppBar,
+  {
+    AppBarSlot: AppBarSlot,
+    AppBarBtnSlot: AppBarBtnSlot,
+    AppBarCalloutBtnSlot: AppBarCalloutBtnSlot,
+    AppBarHeader: AppBarHeader,
+    AppBarOpenBtnSlot: AppBarOpenBtnSlot,
+    AppBarBody: AppBarBody
+  }
+)

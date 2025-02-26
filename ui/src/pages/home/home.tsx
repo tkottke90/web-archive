@@ -1,8 +1,8 @@
 import { Signal, useComputed, useSignal, useSignalEffect } from "@preact/signals";
-import { Menu } from "lucide-preact";
+import { Menu, Plus } from "lucide-preact";
 import { ComponentChildren } from "preact";
 import { route } from "preact-router";
-import { AppBarCalloutBtn, AppBarOpenBtn, BottomAppBar } from "../../components/Layouts/BottomAppBar";
+import BottomAppBar from "../../components/Layouts/BottomAppBar";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Table } from "../../components/Table/Table";
 import { currentPage, loadPosts, pageCount, posts, skip } from "../../services/post.service";
@@ -67,15 +67,17 @@ export function HomePage() {
         />
       </div>
 
-      <BottomAppBar
-        slots={{
-          left: <AppBarOpenBtn alignment="start"><Menu /></AppBarOpenBtn>,
-          center: <AppBarCalloutBtn />
-        }}
-      >
-        <section>
-          <p>Things go here for the ome page</p>
-        </section>
+      <BottomAppBar>
+        <BottomAppBar.AppBarHeader>
+          <BottomAppBar.AppBarOpenBtnSlot><Menu /></BottomAppBar.AppBarOpenBtnSlot>
+          <BottomAppBar.AppBarCalloutBtnSlot><Plus /></BottomAppBar.AppBarCalloutBtnSlot>
+          <BottomAppBar.AppBarSlot />
+        </BottomAppBar.AppBarHeader>
+
+        <BottomAppBar.AppBarBody>
+
+        </BottomAppBar.AppBarBody>
+      
       </BottomAppBar>
     </DrawerLayout>
   );
