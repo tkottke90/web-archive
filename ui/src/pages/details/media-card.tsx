@@ -146,29 +146,3 @@ export function MediaCard({ className }: CustomComponent) {
     </Card>
   );
 }
-
-function Image({ src, className }: CustomComponent<{ src: string }>) {
-  const imgRef = useRef<HTMLImageElement>();
-  const loading = useSignal(true);
-
-  useEffect(() => {
-    if (!imgRef.current) return;
-
-    const loadSignal = new AbortController();
-
-    imgRef.current.addEventListener('load', () => {
-      loading.value = false;
-    }, { signal: loadSignal.signal })
-
-    return () => {
-      loadSignal.abort();
-    }
-  }, [src]);
-
-  return (
-    <div className="relative">
-      <img src={src} className={className} />
-      { loading.value && <div class="image-facade absolute inset-0"></div>}
-    </div>
-  )
-}

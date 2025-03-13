@@ -108,15 +108,3 @@ jobs:
           API_IMAGE: "ghcr.io/${{ steps.img_build.outputs.imgname }}:${{ steps.version.outputs.version }}"
         run: |
           docker push $API_IMAGE
-
-
-  Deploy:
-    uses: ./.github/workflows/build-docker.yaml
-    name: Deploy
-    needs: [Build]
-    if: ${{ github.event_name != 'pull_request' }}
-    permissions:
-      contents: read
-      packages: write
-    with:
-      image: ${{ needs.Build.outputs.image }}
