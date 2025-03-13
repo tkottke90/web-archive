@@ -105,6 +105,6 @@ jobs:
   
       - name: Push to Github Packeges
         env:
-          API_IMAGE: "ghcr.io/${{ steps.img_build.outputs.imgname }}:${{ steps.version.outputs.version }}"
+          API_IMAGE: "${{ steps.img_build.outputs.imgname }}"
         run: |
           docker push $API_IMAGE
