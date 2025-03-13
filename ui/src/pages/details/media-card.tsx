@@ -7,7 +7,6 @@ import { Card } from "../../components/Layouts/Card";
 import { CustomComponent, getPortalContainer } from "../../utilities/component.utils";
 import { returnFileSize } from "../../utilities/number.utils";
 import { useDetailsPageContext } from "./context";
-import { Fragment } from "preact/jsx-runtime";
 
 const portal = getPortalContainer("modals");
 

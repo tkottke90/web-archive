@@ -1,8 +1,8 @@
-import { motion, Variants } from "framer-motion"
-import { CustomComponent, getPortalContainer } from "../../utilities/component.utils"
-import { Signal, untracked, useSignal } from "@preact/signals";
-import { Menu, Plus, X } from "lucide-preact";
-import { createContext, createPortal, JSX, useCallback, useContext, useEffect, useMemo } from "preact/compat";
+import { Signal, useSignal } from "@preact/signals";
+import { motion, Variants } from "framer-motion";
+import { Plus, X } from "lucide-preact";
+import { createContext, createPortal, JSX, useContext } from "preact/compat";
+import { CustomComponent, getPortalContainer } from "../../utilities/component.utils";
 
 const bottomAppBarPortal = getPortalContainer('mobile-drawer')
 

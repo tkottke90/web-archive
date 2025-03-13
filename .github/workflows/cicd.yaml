@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node Env
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Setup PAT
         working-directory: './ui'
@@ -96,13 +96,19 @@ jobs:
 
           echo "imgname=$API_IMAGE" >> $GITHUB_OUTPUT
   
-      - name: Upload image
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: ishworkh/container-image-artifact-upload@v1.0.0
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
-          image: ${{ steps.img_build.outputs.imgname }}
-          retention_days: "2"
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
   
+      - name: Push to Github Packeges
+        env:
+          API_IMAGE: "ghcr.io/${{ steps.img_build.outputs.imgname }}:${{ steps.version.outputs.version }}"
+        run: |
+          docker push $API_IMAGE
+
 
   Deploy:
     uses: ./.github/workflows/build-docker.yaml
