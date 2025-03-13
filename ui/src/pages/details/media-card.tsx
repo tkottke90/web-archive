@@ -1,6 +1,6 @@
 import { useSignal, useSignalEffect } from "@preact/signals";
 import { Modal } from "@tkottke90/preact-components";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { EmptyVideo } from "../../components/EmptyAsset";
 import { useAsyncResource } from "../../components/Layouts/AsyncResource";
 import { Card } from "../../components/Layouts/Card";
