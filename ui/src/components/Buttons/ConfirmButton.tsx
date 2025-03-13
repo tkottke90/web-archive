@@ -1,15 +1,15 @@
 import { useSignal } from "@preact/signals";
 import { JSX } from "preact/jsx-runtime";
+import { compoundClass, CustomComponent } from "../../utilities/component.utils";
 
 type ConfirmBtnProps = {
-  label: string,
-  className?: string;
-  confirmMessage?: JSX.Element,
+  label: JSX.Element,
+  confirm?: JSX.Element,
   confirmClassName?: string,
   onConfirm?: () => void
 };
 
-export function ConfirmButton({ label, className, confirmMessage, confirmClassName, onConfirm }: ConfirmBtnProps) {
+export function ConfirmButton({ label, className, confirm, confirmClassName, onConfirm }: CustomComponent<ConfirmBtnProps>) {
   const pendingConfirm = useSignal(false);
 
   return (
@@ -23,10 +23,13 @@ export function ConfirmButton({ label, className, confirmMessage, confirmClassNa
         }, 2500);
       }
     }}
-    className={[pendingConfirm.value ? confirmClassName : className, 'transition-all'].join(' ')}
+    className={compoundClass('transition-all', {
+      [confirmClassName ?? '_blank-confirm-classname']: pendingConfirm.value,
+      [className ?? '_blank-confirm']: !pendingConfirm.value
+    })}
     >
       {pendingConfirm.value 
-        ? confirmMessage ?? (<span>confirm</span>)
+        ? confirm ?? (<span>confirm</span>)
         : label}
     </button>
   )

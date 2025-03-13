@@ -17,6 +17,11 @@ jobs:
   Build:
     runs-on: [ ubuntu-latest ]
     needs: [Lint]
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     outputs:
       image: ${{ steps.img_build.outputs.imgname }}
     steps:
@@ -26,7 +31,7 @@ jobs:
       - name: Setup Node Env
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Setup PAT
         working-directory: './ui'
@@ -96,21 +101,15 @@ jobs:
 
           echo "imgname=$API_IMAGE" >> $GITHUB_OUTPUT
   
-      - name: Upload image
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: ishworkh/container-image-artifact-upload@v1.0.0
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
-          image: ${{ steps.img_build.outputs.imgname }}
-          retention_days: "2"
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
   
-
-  Deploy:
-    uses: ./.github/workflows/build-docker.yaml
-    name: Deploy
-    needs: [Build]
-    if: ${{ github.event_name != 'pull_request' }}
-    permissions:
-      contents: read
-      packages: write
-    with:
-      image: ${{ needs.Build.outputs.image }}
+      - name: Push to Github Packeges
+        env:
+          API_IMAGE: "${{ steps.img_build.outputs.imgname }}"
+        run: |
+          docker push $API_IMAGE
