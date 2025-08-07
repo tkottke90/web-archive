@@ -39,6 +39,7 @@ import { Prisma } from '@prisma/client';
 import { FS_CONSTS } from '../constants';
 import { createReadStream } from 'fs';
 import { FileSystemFactory } from '../services';
+import { parseRangeHeader } from '../utilities/streaming.utils';
 
 const upload = multer({
   dest: UPLOAD_DIR,
@@ -188,11 +189,16 @@ export class PostController {
       });
 
       if (content.mime.startsWith('video') && range) {
-        const start = Number(range.replace(/\D/g, ''));
-        const end = Math.min(
-          start + FS_CONSTS.VIDEO_CHUNK_SIZE,
-          content.size - 1
-        );
+        const rangeHeader = parseRangeHeader(range);
+
+        const start = rangeHeader.start;
+        const end =
+          rangeHeader.end !== -1
+            ? rangeHeader.end
+            : Math.min(
+                rangeHeader.start + FS_CONSTS.VIDEO_CHUNK_SIZE,
+                content.size - 1
+              );
         const contentLength = end - start + 1;
 
         res.writeHead(206, {
