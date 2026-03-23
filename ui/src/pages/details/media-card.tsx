@@ -7,6 +7,7 @@ import { Card } from "../../components/Layouts/Card";
 import { CustomComponent, getPortalContainer } from "../../utilities/component.utils";
 import { returnFileSize } from "../../utilities/number.utils";
 import { useDetailsPageContext } from "./context";
+import * as PostService from '../../services/post.service';
 
 const portal = getPortalContainer("modals");
 
@@ -136,10 +137,15 @@ export function MediaCard({ className }: CustomComponent) {
         </label>
         <br />
         <div className="actions">
-          <button onClick={() => {
+          <button onClick={async () => {
             const { value } = fileQueue;
-            console.dir(value);
-
+            if (value.length === 0) return;
+            try {
+              await PostService.uploadFilesToPost(post, value);
+              showAddModal.value = false;
+            } catch (err) {
+              console.error('Failed to upload files:', err);
+            }
           }} className="primary">Upload</button>
         </div>
       </Modal>
