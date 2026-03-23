@@ -1,7 +1,9 @@
 const RANGE_BYTES_HEADER_VALUE = 'bytes=';
 
 function parseBytesHeader(bytesHeader: string) {
-  const [start, end] = bytesHeader.split('-').map(Number);
+  const parts = bytesHeader.split('-');
+  const start = Number(parts[0]);
+  const end = parts[1] === '' || parts[1] === undefined ? -1 : Number(parts[1]);
   return { start, end };
 }
 

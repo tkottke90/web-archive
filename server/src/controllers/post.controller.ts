@@ -205,7 +205,7 @@ export class PostController {
           'Content-Range': `bytes ${start}-${end}/${content.size}`,
           'Accept-Ranges': 'bytes',
           'Content-Length': contentLength,
-          'Content-Type': 'video/mp4'
+          'Content-Type': content.mime
         });
 
         const videoStream = createReadStream(content.filename, { start, end });
