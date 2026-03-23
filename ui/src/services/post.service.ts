@@ -1,6 +1,6 @@
 import { Signal, batch, computed, effect } from '@preact/signals';
 import { PostDTO } from '../../../server/src/dto/post.dto';
-import { get, getPaged, remove } from '../utilities/http.utils';
+import { get, getPaged, postMultipart, remove } from '../utilities/http.utils';
 import { applyTagToPost } from './tags.service';
 import { Http } from '../interfaces/http.interface';
 
@@ -113,10 +113,20 @@ export async function updateLocalPostTags(
   post.value = structuredClone(post.value);
 }
 
-// export async function uploadFilesToPost(
-//   post: Signal<PostDTO | undefined>,
-//   files: File[]
-// ) {}
+export async function uploadFilesToPost(
+  post: Signal<PostDTO | undefined>,
+  files: File[]
+) {
+  if (!post.value) {
+    throw new Error('No post loaded');
+  }
+
+  const formData = new FormData();
+  files.forEach((file) => formData.append('file', file));
+
+  const updatedPost = await postMultipart<PostDTO>(post.value.links.files, formData);
+  post.value = updatedPost;
+}
 
 export function deletePost(url: string) {
   return remove(`${url}?archive=true`);

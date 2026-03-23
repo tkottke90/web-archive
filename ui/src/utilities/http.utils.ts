@@ -103,6 +103,17 @@ export function put<Input, Output>(path: string, body?: Input, init?: RequestIni
   ).then(parseResponse<Output>);
 }
 
+export function postMultipart<Output>(path: string, body: FormData, init?: RequestInit) {
+  return fetch(
+    path,
+    {
+      ...init,
+      body,
+      method: 'POST'
+    }
+  ).then(parseResponse<Output>);
+}
+
 export function remove(path: string, init?: RequestInit) {
   return fetch(path, Object.assign({}, init, { method: 'DELETE' })).then(parseTextResponse);
 }
