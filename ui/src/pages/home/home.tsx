@@ -1,16 +1,26 @@
 import { Signal, useComputed, useSignal, useSignalEffect } from "@preact/signals";
-import { Menu, Plus } from "lucide-preact";
+import { Menu, Plus, Search, X } from "lucide-preact";
 import { ComponentChildren } from "preact";
 import { route } from "preact-router";
 import BottomAppBar from "../../components/Layouts/BottomAppBar";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Table } from "../../components/Table/Table";
-import { currentPage, loadPosts, pageCount, posts, skip } from "../../services/post.service";
+import { currentPage, filterAuthor, filterKeyword, filterTags, getFilterParams, loadPosts, pageCount, posts, skip } from "../../services/post.service";
+import { getTags } from "../../services/tags.service";
+import { TagDTO } from "../../../../server/src/dto/post-tag.dto";
 
 function currentPageQuery(pageId: number) {
   const url = new URL(location.href);
   url.searchParams.delete("currentPage");
   url.searchParams.append("currentPage", String(pageId));
+
+  // Sync filter params into URL
+  url.searchParams.delete("author");
+  url.searchParams.delete("keyword");
+  url.searchParams.delete("tag");
+
+  const filters = getFilterParams();
+  filters.forEach((value, key) => url.searchParams.append(key, value));
 
   return url
 }
@@ -35,6 +45,8 @@ export function HomePage() {
         <h2 className="text-2xl">
           <span>Posts</span>
         </h2>
+        <br />
+        <FilterBar />
         <br />
         <Table
           className=""
@@ -80,6 +92,129 @@ export function HomePage() {
       
       </BottomAppBar>
     </DrawerLayout>
+  );
+}
+
+function FilterBar() {
+  const allTags = useSignal<TagDTO[]>([]);
+  const tagSearchInput = useSignal('');
+
+  // Load all tags on mount
+  useSignalEffect(() => {
+    getTags().then(tags => { allTags.value = tags; });
+  });
+
+  // Find tag labels for selected tag IDs
+  const selectedTagLabels = useComputed(() => {
+    return filterTags.value.map(id => {
+      const tag = allTags.value.find(t => t.id === id);
+      return { id, label: tag?.label ?? `Tag ${id}` };
+    });
+  });
+
+  // Filter available tags based on search input and exclude already selected
+  const availableTags = useComputed(() => {
+    const selected = new Set(filterTags.value);
+    return allTags.value
+      .filter(t => !selected.has(t.id))
+      .filter(t => !tagSearchInput.value || t.label.toLowerCase().includes(tagSearchInput.value.toLowerCase()));
+  });
+
+  const showTagDropdown = useSignal(false);
+
+  return (
+    <div class="flex flex-wrap gap-3 items-end">
+      <div class="flex-1 min-w-[150px]">
+        <label class="block text-sm font-medium text-slate-600 mb-1">Keyword</label>
+        <div class="relative">
+          <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            class="w-full pl-8 pr-2 py-1 border border-cloud-400 rounded bg-white text-sm"
+            placeholder="Search label or author..."
+            value={filterKeyword.value}
+            onInput={(e) => {
+              filterKeyword.value = (e.target as HTMLInputElement).value;
+              currentPage.value = 1;
+            }}
+          />
+        </div>
+      </div>
+      <div class="flex-1 min-w-[150px]">
+        <label class="block text-sm font-medium text-slate-600 mb-1">Author</label>
+        <input
+          type="text"
+          class="w-full px-2 py-1 border border-cloud-400 rounded bg-white text-sm"
+          placeholder="Filter by author..."
+          value={filterAuthor.value}
+          onInput={(e) => {
+            filterAuthor.value = (e.target as HTMLInputElement).value;
+            currentPage.value = 1;
+          }}
+        />
+      </div>
+      <div class="flex-1 min-w-[200px] relative">
+        <label class="block text-sm font-medium text-slate-600 mb-1">Tags</label>
+        <input
+          type="text"
+          class="w-full px-2 py-1 border border-cloud-400 rounded bg-white text-sm"
+          placeholder="Search tags..."
+          value={tagSearchInput.value}
+          onInput={(e) => {
+            tagSearchInput.value = (e.target as HTMLInputElement).value;
+          }}
+          onFocus={() => { showTagDropdown.value = true; }}
+        />
+        {showTagDropdown.value && availableTags.value.length > 0 && (
+          <div class="absolute z-50 w-full mt-1 bg-white border border-cloud-400 rounded shadow-md max-h-40 overflow-y-auto">
+            {/* Click-away overlay */}
+            <div class="fixed inset-0 z-40" onClick={() => { showTagDropdown.value = false; }} />
+            {availableTags.value.slice(0, 10).map(tag => (
+              <div
+                class="relative z-50 px-3 py-1 text-sm cursor-pointer hover:bg-burnt-500 hover:text-slate-200"
+                onClick={() => {
+                  filterTags.value = [...filterTags.value, tag.id];
+                  tagSearchInput.value = '';
+                  showTagDropdown.value = false;
+                  currentPage.value = 1;
+                }}
+              >
+                {tag.label}
+              </div>
+            ))}
+          </div>
+        )}
+        {selectedTagLabels.value.length > 0 && (
+          <div class="flex flex-wrap gap-1 mt-1">
+            {selectedTagLabels.value.map(tag => (
+              <span class="inline-flex items-center gap-1 rounded-full bg-crown-300 px-2 py-0.5 text-xs font-bold">
+                {tag.label}
+                <X
+                  class="w-3 h-3 cursor-pointer hover:brightness-150"
+                  onClick={() => {
+                    filterTags.value = filterTags.value.filter(id => id !== tag.id);
+                    currentPage.value = 1;
+                  }}
+                />
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      {(filterAuthor.value || filterKeyword.value || filterTags.value.length > 0) && (
+        <button
+          class="px-3 py-1 text-sm border border-cloud-400 rounded hover:bg-cloud-200"
+          onClick={() => {
+            filterAuthor.value = '';
+            filterKeyword.value = '';
+            filterTags.value = [];
+            currentPage.value = 1;
+          }}
+        >
+          Clear
+        </button>
+      )}
+    </div>
   );
 }
 

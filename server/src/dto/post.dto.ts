@@ -36,9 +36,10 @@ export const PostCreateSchema = PostSchema.merge(
 
 export const PostQuerySchema = QueryFields(PostSchema).merge(
   z.object({
-    tag: FuzzyNumber.optional(),
+    tag: z.union([FuzzyNumber, z.array(FuzzyNumber)]).optional(),
     sourceId: z.array(FuzzyString).optional(),
-    archived: FuzzyBoolean.optional()
+    archived: FuzzyBoolean.optional(),
+    keyword: FuzzyString.optional()
   })
 );
 

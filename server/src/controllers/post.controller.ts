@@ -105,7 +105,8 @@ export class PostController {
   ) {
     try {
       const postCollection = await this.postDao.findByIdWithBeforeAndAfter(
-        postId
+        postId,
+        query
       );
 
       const pagination = await this.postDao.paginationDetails(query);

@@ -72,9 +72,16 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     `;
   }
 
-  async findByIdWithBeforeAndAfter(id: number) {
+  async findByIdWithBeforeAndAfter(id: number, query?: PostQueryDTO) {
+    let baseWhere: Prisma.PostWhereInput = { deletedAt: null };
+
+    if (query) {
+      const { where } = this.generateFindStatement(query);
+      baseWhere = where;
+    }
+
     const post = (await this.client.post.findFirst({
-      where: { id, deletedAt: null },
+      where: { ...baseWhere, id },
       include: POST_DETAILS
     })) as unknown as PostWithAssociations;
 
@@ -83,13 +90,13 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     }
 
     const before = (await this.client.post.findFirst({
-      where: { id: { lt: id }, deletedAt: null },
+      where: { ...baseWhere, id: { lt: id } },
       orderBy: { id: 'desc' },
       include: POST_DETAILS
     })) as unknown as PostWithAssociations;
 
     const after = (await this.client.post.findFirst({
-      where: { id: { gt: id }, deletedAt: null },
+      where: { ...baseWhere, id: { gt: id } },
       include: POST_DETAILS
     })) as unknown as PostWithAssociations;
 
@@ -233,22 +240,46 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   private generateFindStatement(query: PostQueryDTO) {
     const { cursor, take, skip, orderBy, data } = this.parseQuery(query);
 
-    const where: Prisma.PostWhereInput = this.toPersistance(data);
+    // Remove filter-specific fields before converting to Prisma where input
+    const { tag, sourceId, archived, keyword, author, label, ...rest } = data;
+    const where: Prisma.PostWhereInput = this.toPersistance(rest);
 
-    if (data.tag) {
-      where.postTags = { some: { tagId: data.tag } };
+    // Author contains filter
+    if (author) {
+      where.author = { contains: author, mode: 'insensitive' };
     }
 
-    if (data.sourceId) {
+    // Label contains filter
+    if (label) {
+      where.label = { contains: label, mode: 'insensitive' };
+    }
+
+    // Tag filter - supports single or multiple tags
+    if (tag) {
+      const tags = Array.isArray(tag) ? tag : [tag];
+      if (tags.length > 0) {
+        where.postTags = { some: { tagId: { in: tags } } };
+      }
+    }
+
+    if (sourceId) {
       where.metadata = {
-        some: { value: { in: data.sourceId } }
+        some: { value: { in: sourceId } }
       };
     }
 
-    if (data.archived) {
+    if (archived) {
       where.NOT = { deletedAt: null };
     } else {
       where.deletedAt = null;
+    }
+
+    // Keyword search across label and author
+    if (keyword) {
+      where.OR = [
+        { label: { contains: keyword, mode: 'insensitive' } },
+        { author: { contains: keyword, mode: 'insensitive' } }
+      ];
     }
 
     return {

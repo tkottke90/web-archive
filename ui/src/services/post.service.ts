@@ -23,6 +23,22 @@ export const skip = computed(() => {
   return currentPage.value == 0 ? 0 : currentPage.value - 1;
 });
 
+// Filter state
+export const filterAuthor = new Signal(initialSearch.get('author') ?? '');
+export const filterKeyword = new Signal(initialSearch.get('keyword') ?? '');
+export const filterTags = new Signal<number[]>(
+  initialSearch.getAll('tag').map(Number).filter(n => !isNaN(n))
+);
+
+/** Build a URLSearchParams containing only active filter values */
+export function getFilterParams(): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filterAuthor.value) params.set('author', filterAuthor.value);
+  if (filterKeyword.value) params.set('keyword', filterKeyword.value);
+  filterTags.value.forEach(tag => params.append('tag', String(tag)));
+  return params;
+}
+
 effect(() => {
   loadPosts({ skip: skip.value });
 });
@@ -37,14 +53,18 @@ function getPosts<T>({ limit, skip }: GetPostInputs) {
   queryParams.append('limit', `${limit ?? 5}`);
   queryParams.append('skip', `${skip ?? 0}`);
 
+  // Append active filter params
+  const filters = getFilterParams();
+  filters.forEach((value, key) => queryParams.append(key, value));
+
   return getPaged<T>(`/api/post?${queryParams.toString()}`);
 }
 
 export async function getSiblingPosts(id: number) {
-  const queryParams = new URLSearchParams(initialSearch);
+  const queryParams = new URLSearchParams(window.location.search);
   queryParams.set('limit', `${PAGE_SIZE}`);
   queryParams.set('cursor', `${id}`);
-  queryParams.delete('currentPage')
+  queryParams.delete('currentPage');
 
   const response = await get<NavigationResponse>(
     `/api/post/${id}/navigation?${queryParams.toString()}`
