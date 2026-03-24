@@ -114,10 +114,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
   async getPostIndex(id: number, where?: Prisma.PostWhereInput) {
     const beforeCount = await this.client.post.count({
       where: {
-        AND: [
-          where ?? {},
-          { id: { lte: id } }
-        ]
+        AND: [where ?? {}, { id: { lte: id } }]
       }
     });
 
