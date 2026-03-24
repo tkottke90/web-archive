@@ -446,6 +446,12 @@ export class RedditScraper {
           const jobData = job.data as Record<string, unknown>;
 
           if ('url' in jobData && 'postId' in jobData) {
+            this.logger.log('info', 'Starting Reddit Recovery Job', {
+              jobId: job.id,
+              postId: jobData.postId,
+              url: jobData.url
+            });
+
             // Recovery job — re-download files for an existing post
             this.recoverPostFiles(
               jobData.postId as number,
@@ -459,6 +465,11 @@ export class RedditScraper {
               });
           } else if ('url' in jobData && !('kind' in jobData)) {
             // URL-based job (e.g. manual URL import) - fetch the full post first
+            this.logger.log('info', 'Starting URL Job', {
+              jobId: job.id,
+              url: jobData.url
+            });
+
             this.getPostByUrl(jobData.url as string)
               .then(async () => {
                 await this.downloadJobsDao.completeJobs([job.id]);
@@ -468,6 +479,12 @@ export class RedditScraper {
               });
           } else {
             const post = jobData as unknown as RedditPost;
+
+            this.logger.log('info', 'Starting Reddit Recovery Job', {
+              jobId: job.id,
+              postId: jobData.postId,
+              url: jobData.url
+            });
 
             this.parsePost(post)
               .then(async (postCreateDTO) => {
