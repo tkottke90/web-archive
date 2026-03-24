@@ -252,6 +252,12 @@ interface PaginationProps {
 }
 
 function Pagination(props: PaginationProps) {
+  const localPage = useSignal(props.currentPage.value);
+
+  useSignalEffect(() => {
+    localPage.value = props.currentPage.value;
+  });
+
   const minDisabled = useComputed(() => {
     return props.currentPage.value <= 1;
   });
@@ -259,6 +265,12 @@ function Pagination(props: PaginationProps) {
   const maxDisabled = useComputed(() => {
     return props.currentPage.value >= props.pageCount.value;
   });
+
+  const commitPage = () => {
+    const page = Math.max(1, Math.min(localPage.value, props.pageCount.value));
+    localPage.value = page;
+    props.onPageChange(page);
+  };
 
   return (
     <div class="flex gap-2 ml-auto justify-end">
@@ -279,12 +291,17 @@ function Pagination(props: PaginationProps) {
           className="inline bg-transparent border-b-2 border-slate-300 w-16 text-right"
           min={1}
           max={props.pageCount.value}
-          value={props.currentPage.value}
-          onChange={(e) => {
-            e.preventDefault();
-
-            const target = e.target as HTMLInputElement;
-            props.onPageChange(Number(target.value));
+          value={localPage.value}
+          onInput={(e) => {
+            const val = Number((e.target as HTMLInputElement).value);
+            if (!isNaN(val)) localPage.value = val;
+          }}
+          onBlur={() => commitPage()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitPage();
+            }
           }}
         />
         <span>&nbsp;of {props.pageCount}</span>
