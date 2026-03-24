@@ -73,9 +73,7 @@ export class PostRecoveryController {
 
         if (parser) {
           if (parser === REDDIT_JOB) {
-            const permalink = post.metadata.find(
-              (m) => m.name === 'PERMALINK'
-            );
+            const permalink = post.metadata.find((m) => m.name === 'PERMALINK');
             if (permalink) {
               await this.downloadJobsDao.create([
                 { parser: REDDIT_JOB, data: { url: permalink.value } }
