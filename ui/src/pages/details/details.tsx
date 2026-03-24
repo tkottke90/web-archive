@@ -7,7 +7,7 @@ import { ConfirmButton } from "../../components/Buttons/ConfirmButton";
 import BottomAppBar from "../../components/Layouts/BottomAppBar";
 import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Http } from "../../interfaces/http.interface";
-import { currentPage, deletePost } from "../../services/post.service";
+import { currentPage, deletePost, getFilterParams } from "../../services/post.service";
 import { CustomComponent } from "../../utilities/component.utils";
 import { getPortalContainer } from "../../utilities/dom.utils";
 import { DetailsPageContext, useDetailsPageContext } from "./context";
@@ -17,6 +17,22 @@ import { PropertiesCard } from "./properties-card";
 import { TagCard } from "./tag-card";
 
 const portal = getPortalContainer("modals");
+
+function buildBackUrl() {
+  const params = new URLSearchParams();
+  params.set('currentPage', String(currentPage.value));
+  const filters = getFilterParams();
+  filters.forEach((value, key) => params.append(key, value));
+  return `/?${params.toString()}`;
+}
+
+function buildPostUrlWithFilters(postUrl: string) {
+  const params = new URLSearchParams();
+  params.set('currentPage', String(currentPage.value));
+  const filters = getFilterParams();
+  filters.forEach((value, key) => params.append(key, value));
+  return `${postUrl}?${params.toString()}`;
+}
 
 export function DetailsPage() {
   const loading = useSignal(false);
@@ -28,7 +44,7 @@ export function DetailsPage() {
           <header className="hidden md:flex col-span-4 justify-between">
             <div>
               <button onClick={() => {
-                route(`/`);
+                route(buildBackUrl());
               }}>
                 <svg className="h-[24px] w-[24px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>back</title><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
               </button>
@@ -47,7 +63,7 @@ export function DetailsPage() {
 
         <BottomAppBar>
           <BottomAppBar.AppBarHeader>
-            <BottomAppBar.AppBarCalloutBtnSlot icon={<ArrowUpLeft />} onClick={() => route('/')} />
+            <BottomAppBar.AppBarCalloutBtnSlot icon={<ArrowUpLeft />} onClick={() => route(buildBackUrl())} />
             <BottomAppBar.AppBarBtnSlot></BottomAppBar.AppBarBtnSlot>
             <BottomAppBar.AppBarBtnSlot>
               <PostNavigation />
@@ -62,6 +78,12 @@ export function DetailsPage() {
 
 function PostNavigation({}: CustomComponent) {
   const { nextPost, prevPost, path, showDeleteModal, post } = useDetailsPageContext();
+
+  const navigateWithFilters = (postUrl: string) => {
+    const fullUrl = buildPostUrlWithFilters(postUrl);
+    route(fullUrl);
+    path.value = postUrl;
+  };
   
   return (
     <Fragment>
@@ -69,8 +91,7 @@ function PostNavigation({}: CustomComponent) {
         disabled={!prevPost.value} 
         className="disabled:text-burnt-400"
         onClick={() => {
-          route(prevPost.value);
-          path.value = prevPost.value;
+          navigateWithFilters(prevPost.value);
         }}
       >
           <span className="hidden md:inline">Prev</span>
@@ -88,7 +109,7 @@ function PostNavigation({}: CustomComponent) {
           if (post.value?.links.self) {
             deletePost(post.value.links.self)
               .then(() => {
-                route(`/?currentPage=${currentPage.value}&refresh=true`);
+                route(`${buildBackUrl()}&refresh=true`);
               })
               .catch((err: Http.ErrorResponse) => {
                 showDeleteModal.value = false;
@@ -103,8 +124,7 @@ function PostNavigation({}: CustomComponent) {
         disabled={!nextPost.value}
         className="disabled:text-burnt-400"
         onClick={() => {
-          route(nextPost.value);
-          path.value = nextPost.value;
+          navigateWithFilters(nextPost.value);
         }}
       >
         <span className="hidden md:inline">Next</span>
