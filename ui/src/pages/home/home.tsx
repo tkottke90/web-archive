@@ -1,4 +1,4 @@
-import { Signal, useComputed, useSignal, useSignalEffect } from "@preact/signals";
+import { Signal, batch, useComputed, useSignal, useSignalEffect } from "@preact/signals";
 import { Menu, Plus, Search, X } from "lucide-preact";
 import { ComponentChildren } from "preact";
 import { route } from "preact-router";
@@ -98,6 +98,8 @@ export function HomePage() {
 function FilterBar() {
   const allTags = useSignal<TagDTO[]>([]);
   const tagSearchInput = useSignal('');
+  const localKeyword = useSignal(filterKeyword.value);
+  const localAuthor = useSignal(filterAuthor.value);
 
   // Load all tags on mount
   useSignalEffect(() => {
@@ -122,6 +124,14 @@ function FilterBar() {
 
   const showTagDropdown = useSignal(false);
 
+  const applyFilters = () => {
+    batch(() => {
+      filterKeyword.value = localKeyword.value;
+      filterAuthor.value = localAuthor.value;
+      currentPage.value = 1;
+    });
+  };
+
   return (
     <div class="flex flex-wrap gap-3 items-end">
       <div class="flex-1 min-w-[150px]">
@@ -132,10 +142,12 @@ function FilterBar() {
             type="text"
             class="w-full pl-8 pr-2 py-1 border border-cloud-400 rounded bg-white text-sm"
             placeholder="Search label or author..."
-            value={filterKeyword.value}
+            value={localKeyword.value}
             onInput={(e) => {
-              filterKeyword.value = (e.target as HTMLInputElement).value;
-              currentPage.value = 1;
+              localKeyword.value = (e.target as HTMLInputElement).value;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') applyFilters();
             }}
           />
         </div>
@@ -146,10 +158,12 @@ function FilterBar() {
           type="text"
           class="w-full px-2 py-1 border border-cloud-400 rounded bg-white text-sm"
           placeholder="Filter by author..."
-          value={filterAuthor.value}
+          value={localAuthor.value}
           onInput={(e) => {
-            filterAuthor.value = (e.target as HTMLInputElement).value;
-            currentPage.value = 1;
+            localAuthor.value = (e.target as HTMLInputElement).value;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') applyFilters();
           }}
         />
       </div>
@@ -200,14 +214,24 @@ function FilterBar() {
           </div>
         )}
       </div>
-      {(filterAuthor.value || filterKeyword.value || filterTags.value.length > 0) && (
+      <button
+        class="px-3 py-1 text-sm bg-burnt-500 text-slate-200 rounded hover:brightness-110"
+        onClick={applyFilters}
+      >
+        Search
+      </button>
+      {(filterAuthor.value || filterKeyword.value || localKeyword.value || localAuthor.value || filterTags.value.length > 0) && (
         <button
           class="px-3 py-1 text-sm border border-cloud-400 rounded hover:bg-cloud-200"
           onClick={() => {
-            filterAuthor.value = '';
-            filterKeyword.value = '';
-            filterTags.value = [];
-            currentPage.value = 1;
+            batch(() => {
+              localKeyword.value = '';
+              localAuthor.value = '';
+              filterAuthor.value = '';
+              filterKeyword.value = '';
+              filterTags.value = [];
+              currentPage.value = 1;
+            });
           }}
         >
           Clear
