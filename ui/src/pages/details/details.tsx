@@ -26,6 +26,14 @@ function buildBackUrl() {
   return `/?${params.toString()}`;
 }
 
+function buildPostUrlWithFilters(postUrl: string) {
+  const params = new URLSearchParams();
+  params.set('currentPage', String(currentPage.value));
+  const filters = getFilterParams();
+  filters.forEach((value, key) => params.append(key, value));
+  return `${postUrl}?${params.toString()}`;
+}
+
 export function DetailsPage() {
   const loading = useSignal(false);
 
@@ -72,11 +80,7 @@ function PostNavigation({}: CustomComponent) {
   const { nextPost, prevPost, path, showDeleteModal, post } = useDetailsPageContext();
 
   const navigateWithFilters = (postUrl: string) => {
-    const params = new URLSearchParams();
-    params.set('currentPage', String(currentPage.value));
-    const filters = getFilterParams();
-    filters.forEach((value, key) => params.append(key, value));
-    const fullUrl = `${postUrl}?${params.toString()}`;
+    const fullUrl = buildPostUrlWithFilters(postUrl);
     route(fullUrl);
     path.value = postUrl;
   };

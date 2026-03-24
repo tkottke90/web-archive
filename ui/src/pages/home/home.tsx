@@ -167,8 +167,7 @@ function FilterBar() {
         />
         {showTagDropdown.value && availableTags.value.length > 0 && (
           <div class="absolute z-50 w-full mt-1 bg-white border border-cloud-400 rounded shadow-md max-h-40 overflow-y-auto">
-            {/* Click-away overlay */}
-            <div class="fixed inset-0 z-40" onClick={() => { showTagDropdown.value = false; }} />
+            <div class="fixed inset-0 z-40" role="presentation" onClick={() => { showTagDropdown.value = false; }} />
             {availableTags.value.slice(0, 10).map(tag => (
               <div
                 class="relative z-50 px-3 py-1 text-sm cursor-pointer hover:bg-burnt-500 hover:text-slate-200"

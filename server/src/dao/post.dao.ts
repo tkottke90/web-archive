@@ -276,9 +276,13 @@ export class PostDao extends BaseDao<Post, PostDTO> {
 
     // Keyword search across label and author
     if (keyword) {
-      where.OR = [
-        { label: { contains: keyword, mode: 'insensitive' } },
-        { author: { contains: keyword, mode: 'insensitive' } }
+      const keywordConditions = [
+        { label: { contains: keyword, mode: 'insensitive' as const } },
+        { author: { contains: keyword, mode: 'insensitive' as const } }
+      ];
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : []),
+        { OR: keywordConditions }
       ];
     }
 
