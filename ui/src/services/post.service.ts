@@ -70,7 +70,7 @@ export async function getSiblingPosts(id: number) {
     `/api/post/${id}/navigation?${queryParams.toString()}`
   );
 
-  currentPage.value = response.pagination.currentPage - 1;
+  currentPage.value = response.pagination.currentPage;
   pageCount.value = response.pagination.totalPages;
 
   return {
