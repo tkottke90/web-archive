@@ -41,6 +41,10 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     }
   }
 
+  deleteRecord(postFileId: number) {
+    return this.client.postFile.delete({ where: { id: postFileId } });
+  }
+
   getById(id: number) {
     return this.client.postFile.findFirst(this.idSelector(id));
   }
