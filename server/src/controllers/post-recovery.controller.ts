@@ -44,6 +44,7 @@ export class PostRecoveryController {
 
       const posts = await this.postDao.find({
         cursor,
+        skip: parseInt(query.skip, 10) || undefined,
         limit: parseInt(query.limit, 10) || 100,
         archived: false
       });
