@@ -1,4 +1,4 @@
-import { Controller, Get, Next, Response } from '@decorators/express';
+import { Controller, Next, Post, Response } from '@decorators/express';
 import express from 'express';
 import { Inject } from '@decorators/di';
 import { PostDao } from '../dao/post.dao';
@@ -31,7 +31,7 @@ export class PostRecoveryController {
     });
   }
 
-  @Get(SYSTEM.POST_RECOVERY.path)
+  @Post(SYSTEM.POST_RECOVERY.path)
   async runPostRecovery(
     @Response() res: express.Response,
     @Next() next: express.NextFunction
@@ -153,15 +153,23 @@ export class PostRecoveryController {
   }
 
   private getParserType(source: string): string | null {
-    if (source.includes('reddit.com')) {
-      return REDDIT_JOB;
-    }
+    try {
+      const url = new URL(source);
+      const hostname = url.hostname.toLowerCase();
 
-    if (
-      source.includes('youtube.com') ||
-      source.includes('youtu.be')
-    ) {
-      return YOUTUBE_JOB;
+      if (hostname === 'reddit.com' || hostname.endsWith('.reddit.com')) {
+        return REDDIT_JOB;
+      }
+
+      if (
+        hostname === 'youtube.com' ||
+        hostname.endsWith('.youtube.com') ||
+        hostname === 'youtu.be'
+      ) {
+        return YOUTUBE_JOB;
+      }
+    } catch {
+      // Invalid URL, cannot determine parser type
     }
 
     return null;
