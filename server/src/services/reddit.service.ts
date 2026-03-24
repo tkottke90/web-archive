@@ -374,20 +374,33 @@ export class RedditScraper {
         });
 
         for (const job of jobs) {
-          const post = job.data as unknown as RedditPost;
+          const jobData = job.data as Record<string, unknown>;
 
-          this.parsePost(post)
-            .then(async (postCreateDTO) => {
-              // Save to database
-              const newPost = await this.postDao.create(postCreateDTO);
-              // Add default tags
-              await this.addDefaultTags(newPost, post);
+          if ('url' in jobData && !('kind' in jobData)) {
+            // URL-based job (e.g. from post recovery) - fetch the full post first
+            this.getPostByUrl(jobData.url as string)
+              .then(async () => {
+                await this.downloadJobsDao.completeJobs([job.id]);
+              })
+              .catch(async (err) => {
+                await this.downloadJobsDao.jobError(job.id, err.message);
+              });
+          } else {
+            const post = jobData as unknown as RedditPost;
 
-              await this.downloadJobsDao.completeJobs([job.id]);
-            })
-            .catch(async (err) => {
-              await this.downloadJobsDao.jobError(job.id, err.message);
-            });
+            this.parsePost(post)
+              .then(async (postCreateDTO) => {
+                // Save to database
+                const newPost = await this.postDao.create(postCreateDTO);
+                // Add default tags
+                await this.addDefaultTags(newPost, post);
+
+                await this.downloadJobsDao.completeJobs([job.id]);
+              })
+              .catch(async (err) => {
+                await this.downloadJobsDao.jobError(job.id, err.message);
+              });
+          }
         }
       },
       {
