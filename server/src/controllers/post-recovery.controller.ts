@@ -65,7 +65,9 @@ export class PostRecoveryController {
           }
         }
 
-        if (missingFiles.length === 0) {
+        // If we have no missing files but the files are not empty,
+        // it means the record should be good
+        if (missingFiles.length === 0 && post.files.length > 0) {
           continue;
         }
 
