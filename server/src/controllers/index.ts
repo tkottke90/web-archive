@@ -9,12 +9,14 @@ import { ServerStatusController } from './server-status';
 import { PostController } from './post.controller';
 import { TagController } from './tag.controller';
 import { ParserController } from './parser.controller';
+import { PostRecoveryController } from './post-recovery.controller';
 import { API_ROOT } from '../routes';
 import { HttpEventMiddleware } from '../middleware';
 
 const controllers = [
   ParserController,
   PostController,
+  PostRecoveryController,
   ServerStatusController,
   TagController
 ];

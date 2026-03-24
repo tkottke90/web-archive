@@ -35,3 +35,10 @@ export const PARSERS = {
   REDDIT_BULK: PARSERS_ROOT.nest('reddit-bulk'),
   YOUTUBE: PARSERS_ROOT.nest('youtube')
 };
+
+const SYSTEM_ROOT = API_ROOT.nest('system');
+
+export const SYSTEM = {
+  ROOT: SYSTEM_ROOT,
+  POST_RECOVERY: SYSTEM_ROOT.nest('post-recovery')
+};
