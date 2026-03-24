@@ -1,5 +1,6 @@
 import { Container, Inject, Injectable } from '@decorators/di';
 import { PostDao } from '../dao/post.dao';
+import { PostFileDao } from '../dao/post-file.dao';
 import {
   MediaMetadataValue,
   RedditListing,
@@ -31,6 +32,7 @@ export class RedditScraper {
     @Inject('JobScheduler') private readonly jobs: JobScheduler,
     @Inject('LoggerService') private readonly logger: LoggerService,
     @Inject('PostDao') private readonly postDao: PostDao,
+    @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
     @Inject('PostTagDao') private readonly postTagDao: PostTagDao
   ) {
     this.registerDownloadCronJob();
@@ -138,6 +140,67 @@ export class RedditScraper {
         }
       }
     );
+  }
+
+  async recoverPostFiles(postId: number, url: string) {
+    this.logger.log('info', 'Recovering files for existing post', {
+      postId,
+      url
+    });
+
+    // Check if the post already has files — skip recovery if so
+    const existingPost = await this.postDao.getById(postId);
+    if (existingPost?.files?.length > 0) {
+      this.logger.log('info', 'Post already has files, skipping recovery', {
+        postId,
+        fileCount: existingPost.files.length
+      });
+      return 0;
+    }
+
+    // Fetch the Reddit JSON for the permalink
+    const listings: RedditResponse = await this.getRedditJSON(new URL(url));
+    const parsedList = listings.filter(
+      (listing) =>
+        listing.data.children.filter((child) => child.kind === 't3').length
+    );
+
+    const postListing = parsedList.shift();
+
+    if (!postListing) {
+      throw new NotFoundError(
+        `No Reddit listing found for recovery URL: ${url}`
+      );
+    }
+
+    const redditPost = this.getPostsFromListing(postListing).shift();
+
+    if (!redditPost) {
+      throw new NotFoundError(
+        `No Reddit post found in listing for recovery URL: ${url}`
+      );
+    }
+
+    // Download the files and save them to disk
+    const savedFiles = await this.downloadAndSaveFiles(redditPost);
+
+    // Create PostFile records for each downloaded file
+    for (const file of savedFiles) {
+      await this.postFileDao.create(postId, {
+        filename: file.filename,
+        mime: file.mime,
+        size: file.size,
+        encoding: file.encoding,
+        original_filename: file.original_filename
+      });
+    }
+
+    this.logger.log('info', 'Post file recovery complete', {
+      postId,
+      filesRecovered: savedFiles.length
+    });
+
+    return savedFiles.length;
   }
 
   private async addDefaultTags(newPost: Post, redditData: RedditPost) {
@@ -297,32 +360,16 @@ export class RedditScraper {
       }));
   }
 
-  private async parsePost(post: RedditPost) {
-    this.logger.log('debug', 'Processing Reddit Post');
-
-    const { author, id, permalink, subreddit_name_prefixed, title, url } =
-      post.data;
-
-    // Create the new entry record
-    const newEntry: PostCreateDTO = {
-      author,
-      label: title,
-      source: `https://reddit.com${subreddit_name_prefixed}`,
-      metadata: [
-        {
-          name: RedditPostMetadataKeys.PERMALINK,
-          value: `https://reddit.com/${permalink}`
-        },
-        { name: RedditPostMetadataKeys.SOURCE_ID, value: id }
-      ],
-      files: []
-    };
+  private async downloadAndSaveFiles(post: RedditPost) {
+    const { id, url } = post.data;
 
     const fileDetails: {
       contentType: string | null;
       data: Buffer;
       error: string;
     }[] = await this.getRedditPostContents(post);
+
+    const savedFiles: PostCreateDTO['files'] = [];
 
     if (fileDetails.length > 0) {
       await Promise.all(
@@ -341,19 +388,41 @@ export class RedditScraper {
             newFilename
           );
 
-          newEntry.files = [
-            ...(newEntry.files ?? []),
-            {
-              filename,
-              mime: detail.contentType ?? '',
-              size: detail.data.length,
-              encoding: '',
-              original_filename: basename(url)
-            }
-          ];
+          savedFiles.push({
+            filename,
+            mime: detail.contentType ?? '',
+            size: detail.data.length,
+            encoding: '',
+            original_filename: basename(url)
+          });
         })
       );
     }
+
+    return savedFiles;
+  }
+
+  private async parsePost(post: RedditPost) {
+    this.logger.log('debug', 'Processing Reddit Post');
+
+    const { author, permalink, subreddit_name_prefixed, title } = post.data;
+
+    // Create the new entry record
+    const newEntry: PostCreateDTO = {
+      author,
+      label: title,
+      source: `https://reddit.com${subreddit_name_prefixed}`,
+      metadata: [
+        {
+          name: RedditPostMetadataKeys.PERMALINK,
+          value: `https://reddit.com/${permalink}`
+        },
+        { name: RedditPostMetadataKeys.SOURCE_ID, value: post.data.id }
+      ],
+      files: []
+    };
+
+    newEntry.files = await this.downloadAndSaveFiles(post);
 
     return newEntry;
   }
@@ -374,20 +443,45 @@ export class RedditScraper {
         });
 
         for (const job of jobs) {
-          const post = job.data as unknown as RedditPost;
+          const jobData = job.data as Record<string, unknown>;
 
-          this.parsePost(post)
-            .then(async (postCreateDTO) => {
-              // Save to database
-              const newPost = await this.postDao.create(postCreateDTO);
-              // Add default tags
-              await this.addDefaultTags(newPost, post);
+          if ('url' in jobData && 'postId' in jobData) {
+            // Recovery job — re-download files for an existing post
+            this.recoverPostFiles(
+              jobData.postId as number,
+              jobData.url as string
+            )
+              .then(async () => {
+                await this.downloadJobsDao.completeJobs([job.id]);
+              })
+              .catch(async (err) => {
+                await this.downloadJobsDao.jobError(job.id, err.message);
+              });
+          } else if ('url' in jobData && !('kind' in jobData)) {
+            // URL-based job (e.g. manual URL import) - fetch the full post first
+            this.getPostByUrl(jobData.url as string)
+              .then(async () => {
+                await this.downloadJobsDao.completeJobs([job.id]);
+              })
+              .catch(async (err) => {
+                await this.downloadJobsDao.jobError(job.id, err.message);
+              });
+          } else {
+            const post = jobData as unknown as RedditPost;
 
-              await this.downloadJobsDao.completeJobs([job.id]);
-            })
-            .catch(async (err) => {
-              await this.downloadJobsDao.jobError(job.id, err.message);
-            });
+            this.parsePost(post)
+              .then(async (postCreateDTO) => {
+                // Save to database
+                const newPost = await this.postDao.create(postCreateDTO);
+                // Add default tags
+                await this.addDefaultTags(newPost, post);
+
+                await this.downloadJobsDao.completeJobs([job.id]);
+              })
+              .catch(async (err) => {
+                await this.downloadJobsDao.jobError(job.id, err.message);
+              });
+          }
         }
       },
       {

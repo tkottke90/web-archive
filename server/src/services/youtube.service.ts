@@ -162,7 +162,8 @@ export class YoutubeParser {
         await this.downloadJobsDao.startJobs(jobs.map((job) => job.id));
 
         for (const job of jobs) {
-          const { postId, path, ogFilename, url } = job.data as YoutubeJob;
+          const { postId, url } = job.data as YoutubeJob;
+          let { path, ogFilename } = job.data as YoutubeJob;
 
           const jobLogger = this.logger.createLogger({
             job: job.id,
@@ -172,6 +173,15 @@ export class YoutubeParser {
           try {
             // Load the metadata about the video
             const videoDetails = await this.getVideoMetadata(url);
+
+            // For recovery jobs, path and ogFilename may be empty — derive from metadata
+            if (!path) {
+              path = resolve(this.fileSystem.UPLOAD_DIR, `${randomUUID()}.mp4`);
+            }
+            if (!ogFilename) {
+              ogFilename = videoDetails._filename;
+            }
+
             // Generate the filename where the file will be downloaded
             const downloadedFilePath = resolve(
               this.fileSystem.UPLOAD_DIR,
