@@ -1,4 +1,4 @@
-import { Controller, Next, Post, Response } from '@decorators/express';
+import { Controller, Next, Post, Query, Response } from '@decorators/express';
 import express from 'express';
 import { Inject } from '@decorators/di';
 import { PostDao } from '../dao/post.dao';
@@ -33,13 +33,20 @@ export class PostRecoveryController {
 
   @Post(SYSTEM.POST_RECOVERY.path)
   async runPostRecovery(
+    @Query() query: any,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
     try {
       this.scannerLogger.log('info', 'Starting post recovery scan');
 
-      const posts = await this.postDao.find({});
+      const cursor = parseInt(query.cursor, 10) || undefined;
+
+      const posts = await this.postDao.find({
+        cursor,
+        limit: parseInt(query.limit, 10) || 100,
+        archived: false
+      });
       let postsScanned = 0;
       let postsWithMissingFiles = 0;
       let filesDeleted = 0;
