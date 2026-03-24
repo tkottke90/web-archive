@@ -111,9 +111,14 @@ export class PostDao extends BaseDao<Post, PostDTO> {
    * Fetches the index of the post in the table.  Specifically for
    * calculating the pagination
    */
-  async getPostIndex(id: number) {
+  async getPostIndex(id: number, where?: Prisma.PostWhereInput) {
     const beforeCount = await this.client.post.count({
-      where: { id: { lte: id } }
+      where: {
+        AND: [
+          where ?? {},
+          { id: { lte: id } }
+        ]
+      }
     });
 
     return beforeCount;
@@ -188,14 +193,18 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     const { take, cursor, skip, where } = this.generateFindStatement(query);
 
     const count = await this.client.post.count({ where });
-    let postIndex = skip ?? 0;
+    let currentPage: number;
 
     if (cursor?.id) {
-      postIndex = await this.getPostIndex(cursor.id);
+      const postIndex = await this.getPostIndex(cursor.id, where);
+      currentPage = Math.ceil(postIndex / take);
+    } else {
+      const postIndex = skip ?? 0;
+      currentPage = Math.ceil(postIndex / take + 1);
     }
 
     return {
-      currentPage: Math.ceil(postIndex / take + 1),
+      currentPage,
       totalPages: Math.ceil(count / take),
       totalItems: count
     };
