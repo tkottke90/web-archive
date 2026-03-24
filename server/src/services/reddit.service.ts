@@ -148,6 +148,16 @@ export class RedditScraper {
       url
     });
 
+    // Check if the post already has files — skip recovery if so
+    const existingPost = await this.postDao.getById(postId);
+    if (existingPost?.files?.length > 0) {
+      this.logger.log('info', 'Post already has files, skipping recovery', {
+        postId,
+        fileCount: existingPost.files.length
+      });
+      return 0;
+    }
+
     // Fetch the Reddit JSON for the permalink
     const listings: RedditResponse = await this.getRedditJSON(new URL(url));
     const parsedList = listings.filter(
