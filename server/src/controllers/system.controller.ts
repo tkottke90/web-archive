@@ -13,7 +13,7 @@ const REDDIT_JOB = 'Reddit';
 const YOUTUBE_JOB = 'Youtube';
 
 @Controller(SYSTEM.ROOT.path)
-export class PostRecoveryController {
+export class SystemController {
   private readonly scannerLogger: LoggerService;
 
   constructor(
@@ -27,7 +27,7 @@ export class PostRecoveryController {
     @Inject('JobScheduler') private readonly jobs: JobScheduler
   ) {
     this.scannerLogger = this.logger.createLogger({
-      location: 'PostRecoveryScanner'
+      location: 'SystemController'
     });
   }
 
@@ -157,6 +157,55 @@ export class PostRecoveryController {
         postsWithMissingFiles,
         filesDeleted,
         jobsCreated
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Post(SYSTEM.AUTO_ARCHIVE.path)
+  async runAutoArchive(
+    @Query() query: any,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      this.scannerLogger.log('info', 'Starting auto-archive scan');
+
+      const cursor = parseInt(query.cursor, 10) || undefined;
+
+      const posts = await this.postDao.find({
+        cursor,
+        skip: parseInt(query.skip, 10) || undefined,
+        limit: parseInt(query.limit, 10) || 100,
+        archived: false
+      });
+
+      let postsScanned = 0;
+      let postsArchived = 0;
+
+      for (const post of posts) {
+        postsScanned++;
+
+        if (post.files.length === 0) {
+          await this.postDao.archive(post.id);
+          postsArchived++;
+          this.scannerLogger.log(
+            'info',
+            `Archived post ${post.id} with 0 files`,
+            { postId: post.id }
+          );
+        }
+      }
+
+      this.scannerLogger.log('info', 'Auto-archive scan complete', {
+        postsScanned,
+        postsArchived
+      });
+
+      res.json({
+        postsScanned,
+        postsArchived
       });
     } catch (error) {
       next(error);

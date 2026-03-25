@@ -40,7 +40,8 @@ const SYSTEM_ROOT = API_ROOT.nest('system');
 
 export const SYSTEM = {
   ROOT: SYSTEM_ROOT,
-  POST_RECOVERY: SYSTEM_ROOT.nest('post-recovery')
+  POST_RECOVERY: SYSTEM_ROOT.nest('post-recovery'),
+  AUTO_ARCHIVE: SYSTEM_ROOT.nest('auto-archive')
 };
 
 const JOBS_ROOT = API_ROOT.nest('jobs');
