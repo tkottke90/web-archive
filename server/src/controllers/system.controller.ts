@@ -13,7 +13,7 @@ const REDDIT_JOB = 'Reddit';
 const YOUTUBE_JOB = 'Youtube';
 
 @Controller(SYSTEM.ROOT.path)
-export class PostRecoveryController {
+export class SystemController {
   private readonly scannerLogger: LoggerService;
 
   constructor(
@@ -27,7 +27,7 @@ export class PostRecoveryController {
     @Inject('JobScheduler') private readonly jobs: JobScheduler
   ) {
     this.scannerLogger = this.logger.createLogger({
-      location: 'PostRecoveryScanner'
+      location: 'SystemController'
     });
   }
 
@@ -157,6 +157,65 @@ export class PostRecoveryController {
         postsWithMissingFiles,
         filesDeleted,
         jobsCreated
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Post(SYSTEM.AUTO_ARCHIVE.path)
+  async runAutoArchive(
+    @Query() query: { cursor?: string; skip?: string; limit?: string },
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      this.scannerLogger.log('info', 'Starting auto-archive scan');
+
+      const cursor = query.cursor
+        ? parseInt(query.cursor, 10) || undefined
+        : undefined;
+      const skip = query.skip
+        ? parseInt(query.skip, 10) || undefined
+        : undefined;
+      const limit = query.limit ? parseInt(query.limit, 10) || 100 : 100;
+
+      const posts = await this.postDao.find({
+        cursor,
+        skip,
+        limit,
+        archived: false
+      });
+
+      let postsScanned = 0;
+      let postsArchived = 0;
+
+      for (const post of posts) {
+        postsScanned++;
+
+        if (post.files.length === 0) {
+          await this.postDao.archive(post.id);
+          postsArchived++;
+          this.scannerLogger.log(
+            'info',
+            `Archived post ${post.id} with 0 files`,
+            { postId: post.id }
+          );
+        }
+      }
+
+      this.scannerLogger.log('info', 'Auto-archive scan complete', {
+        postsScanned,
+        postsArchived,
+        skip,
+        limit
+      });
+
+      res.json({
+        postsScanned,
+        postsArchived,
+        skip,
+        limit
       });
     } catch (error) {
       next(error);
