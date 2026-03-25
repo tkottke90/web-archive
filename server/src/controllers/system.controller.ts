@@ -175,11 +175,15 @@ export class SystemController {
       const cursor = query.cursor
         ? parseInt(query.cursor, 10) || undefined
         : undefined;
+      const skip = query.skip
+        ? parseInt(query.skip, 10) || undefined
+        : undefined;
+      const limit = query.limit ? parseInt(query.limit, 10) || 100 : 100;
 
       const posts = await this.postDao.find({
         cursor,
-        skip: query.skip ? parseInt(query.skip, 10) || undefined : undefined,
-        limit: query.limit ? parseInt(query.limit, 10) || 100 : 100,
+        skip,
+        limit,
         archived: false
       });
 
@@ -202,12 +206,16 @@ export class SystemController {
 
       this.scannerLogger.log('info', 'Auto-archive scan complete', {
         postsScanned,
-        postsArchived
+        postsArchived,
+        skip,
+        limit
       });
 
       res.json({
         postsScanned,
-        postsArchived
+        postsArchived,
+        skip,
+        limit
       });
     } catch (error) {
       next(error);
