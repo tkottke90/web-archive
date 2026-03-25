@@ -97,6 +97,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
 
     const after = (await this.client.post.findFirst({
       where: { ...baseWhere, id: { gt: id } },
+      orderBy: { id: 'asc' },
       include: POST_DETAILS
     })) as unknown as PostWithAssociations;
 
