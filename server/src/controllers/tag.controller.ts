@@ -36,7 +36,10 @@ export class TagController {
     @Next() next: express.NextFunction
   ) {
     try {
-      const result = await this.tagDao.find(query);
+      const result = await this.tagDao.find({
+        ...query,
+        limit: query.limit ?? 100
+      });
 
       res.json(result.map((tag) => this.tagDao.toDTO(tag)));
     } catch (error) {
