@@ -165,19 +165,21 @@ export class SystemController {
 
   @Post(SYSTEM.AUTO_ARCHIVE.path)
   async runAutoArchive(
-    @Query() query: any,
+    @Query() query: { cursor?: string; skip?: string; limit?: string },
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
     try {
       this.scannerLogger.log('info', 'Starting auto-archive scan');
 
-      const cursor = parseInt(query.cursor, 10) || undefined;
+      const cursor = query.cursor
+        ? parseInt(query.cursor, 10) || undefined
+        : undefined;
 
       const posts = await this.postDao.find({
         cursor,
-        skip: parseInt(query.skip, 10) || undefined,
-        limit: parseInt(query.limit, 10) || 100,
+        skip: query.skip ? parseInt(query.skip, 10) || undefined : undefined,
+        limit: query.limit ? parseInt(query.limit, 10) || 100 : 100,
         archived: false
       });
 
