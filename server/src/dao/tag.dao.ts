@@ -2,7 +2,12 @@ import { Container, Inject, Injectable } from '@decorators/di';
 import { BaseDao } from './base.dao';
 import { Tag } from '@prisma/client';
 import { DBClient } from '../db';
-import { TagCreateDTO, TagDTO, TagQueryDTO } from '../dto/post-tag.dto';
+import {
+  TagCreateDTO,
+  TagDTO,
+  TagQueryDTO,
+  TagUpdateDTO
+} from '../dto/post-tag.dto';
 import { TAGS } from '../routes';
 
 @Injectable()
@@ -46,7 +51,7 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
     });
   }
 
-  updateTag(id: number, tag: TagCreateDTO) {
+  updateTag(id: number, tag: TagCreateDTO | TagUpdateDTO) {
     return this.client.tag.update({
       where: { id },
       data: tag
@@ -63,7 +68,7 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
       textColor: entity.textColor,
 
       links: {
-        self: TAGS.ROOT.url(undefined, { query: { id: entity.id } })
+        self: TAGS.WITH_ID.url({ tagId: entity.id })
       },
 
       createdAt: entity.createdAt,

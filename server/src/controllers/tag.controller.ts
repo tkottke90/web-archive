@@ -5,6 +5,7 @@ import {
   Get,
   Next,
   Params,
+  Patch,
   Put,
   Query,
   Response
@@ -15,7 +16,9 @@ import {
   TagCreateDTO,
   TagCreateSchema,
   TagQueryDTO,
-  TagQuerySchema
+  TagQuerySchema,
+  TagUpdateDTO,
+  TagUpdateSchema
 } from '../dto/post-tag.dto';
 import {
   ZodBodyValidator,
@@ -24,6 +27,7 @@ import {
 } from '../middleware/zod.middleware';
 import { TagDao } from '../dao/tag.dao';
 import { TAGS } from '../routes';
+import { NotFoundError } from '../utilities/errors.util';
 
 @Controller(TAGS.ROOT.path)
 export class TagController {
@@ -63,6 +67,30 @@ export class TagController {
       }
 
       res.json(this.tagDao.toDTO(tag));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Patch(TAGS.WITH_ID.path, [
+    ZodIdValidator('tagId'),
+    ZodBodyValidator(TagUpdateSchema)
+  ])
+  async updateTag(
+    @Params('tagId') tagId: number,
+    @Body() body: TagUpdateDTO,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const existing = await this.tagDao.getById(tagId);
+
+      if (!existing) {
+        throw new NotFoundError(`Tag with id ${tagId} not found`);
+      }
+
+      const updated = await this.tagDao.updateTag(tagId, body);
+      res.json(this.tagDao.toDTO(updated));
     } catch (error) {
       next(error);
     }

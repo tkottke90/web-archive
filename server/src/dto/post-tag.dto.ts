@@ -23,10 +23,17 @@ export const TagCreateSchema = TagSchema.omit({
   })
 );
 
+export const TagUpdateSchema = z.object({
+  label: z.string().min(1).optional(),
+  color: z.string().min(1).optional(),
+  textColor: z.string().min(1).optional()
+});
+
 export const TagQuerySchema = QueryFields(TagSchema);
 
 export type TagDTO = z.infer<typeof TagSchema>;
 export type TagCreateDTO = z.infer<typeof TagCreateSchema>;
+export type TagUpdateDTO = z.infer<typeof TagUpdateSchema>;
 export type TagQueryDTO = z.infer<typeof TagQuerySchema>;
 
 export const PostTag = BaseSchema(

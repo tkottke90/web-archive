@@ -31,10 +31,19 @@ export function DrawerLayout(props: CustomComponent<DrawerProps>) {
   )
 }
 
+function NavLink({ href, children }: { href: string; children: string }) {
+  return (
+    <Link activeClassName="active-link" class="px-4 py-2 hover:bg-burnt-400" path={href} {...{ href } as any}>
+      {children}
+    </Link>
+  );
+}
+
 export function Navigation() {
   return (
-    <nav>
-      <Link activeClassName="active-link">Jobs</Link>
+    <nav class="flex flex-col">
+      <NavLink href="/">Posts</NavLink>
+      <NavLink href="/tags">Tags</NavLink>
     </nav>
   )
 }
