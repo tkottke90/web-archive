@@ -10,12 +10,7 @@ const portal = getPortalContainer('modals');
 
 export function TagsPage() {
   const drawerState = useSignal(false);
-  const tags = useSignal<TagDTO[]>([]);
   const editingTag = useSignal<TagDTO | null>(null);
-
-  useSignalEffect(() => {
-    tags.value = loadedTags.value;
-  });
 
   useSignalEffect(() => {
     getTags().then((result) => {
@@ -28,7 +23,7 @@ export function TagsPage() {
       <div class="bg-cloud-100 border rounded border-cloud-400 shadow-md p-4">
         <h2 className="text-2xl">Tags</h2>
         <br />
-        {tags.value.length === 0 ? (
+        {loadedTags.value.length === 0 ? (
           <p class="text-cloud-600">No tags found.</p>
         ) : (
           <table class="w-full text-left">
@@ -41,7 +36,7 @@ export function TagsPage() {
               </tr>
             </thead>
             <tbody>
-              {tags.value.map((tag) => (
+              {loadedTags.value.map((tag) => (
                 <tr
                   key={tag.id}
                   class="border-b border-cloud-200 hover:bg-cloud-200"

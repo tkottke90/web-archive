@@ -31,6 +31,9 @@ export function DrawerLayout(props: CustomComponent<DrawerProps>) {
   )
 }
 
+// NavLink wraps preact-router/match Link with href prop.
+// The `as any` cast is needed because Link's TypeScript types don't include
+// href despite it being required for navigation (passed through to <a>).
 function NavLink({ href, children }: { href: string; children: string }) {
   return (
     <Link activeClassName="active-link" class="px-4 py-2 hover:bg-burnt-400" path={href} {...{ href } as any}>

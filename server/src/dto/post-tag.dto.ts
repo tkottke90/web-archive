@@ -25,8 +25,14 @@ export const TagCreateSchema = TagSchema.omit({
 
 export const TagUpdateSchema = z.object({
   label: z.string().min(1).optional(),
-  color: z.string().min(1).optional(),
-  textColor: z.string().min(1).optional()
+  color: z
+    .string()
+    .regex(/^[0-9A-Fa-f]{3,8}$/, 'Must be a valid hex color')
+    .optional(),
+  textColor: z
+    .string()
+    .regex(/^[0-9A-Fa-f]{3,8}$/, 'Must be a valid hex color')
+    .optional()
 });
 
 export const TagQuerySchema = QueryFields(TagSchema);
