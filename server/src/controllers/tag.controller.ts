@@ -27,7 +27,7 @@ import {
 } from '../middleware/zod.middleware';
 import { TagDao } from '../dao/tag.dao';
 import { TAGS } from '../routes';
-import { NotFoundError } from '../utilities/errors.util';
+import { BadRequestError, NotFoundError } from '../utilities/errors.util';
 
 @Controller(TAGS.ROOT.path)
 export class TagController {
@@ -83,6 +83,12 @@ export class TagController {
     @Next() next: express.NextFunction
   ) {
     try {
+      if (Object.keys(body).length === 0) {
+        throw new BadRequestError(
+          'At least one field must be provided for update'
+        );
+      }
+
       const existing = await this.tagDao.getById(tagId);
 
       if (!existing) {
@@ -96,9 +102,9 @@ export class TagController {
     }
   }
 
-  @Delete(TAGS.WITH_ID.path, [ZodIdValidator('tag')])
+  @Delete(TAGS.WITH_ID.path, [ZodIdValidator('tagId')])
   async deleteTag(
-    @Params('tag') tagId: number,
+    @Params('tagId') tagId: number,
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {

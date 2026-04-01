@@ -27,11 +27,17 @@ export const TagUpdateSchema = z.object({
   label: z.string().min(1).optional(),
   color: z
     .string()
-    .regex(/^[0-9A-Fa-f]{3,8}$/, 'Must be a valid hex color')
+    .regex(
+      /^[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/,
+      'Must be a valid 3 or 6 digit hex color'
+    )
     .optional(),
   textColor: z
     .string()
-    .regex(/^[0-9A-Fa-f]{3,8}$/, 'Must be a valid hex color')
+    .regex(
+      /^[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/,
+      'Must be a valid 3 or 6 digit hex color'
+    )
     .optional()
 });
 

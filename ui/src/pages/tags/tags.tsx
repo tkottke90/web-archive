@@ -8,14 +8,27 @@ import { getPortalContainer } from '../../utilities/dom.utils';
 
 const portal = getPortalContainer('modals');
 
+/**
+ * Normalize a hex color string to 6 digits for use with <input type="color">.
+ * Expands 3-digit hex (e.g. "222" → "222222") by doubling each character.
+ */
+function normalizeHex(hex: string): string {
+  if (hex.length === 3) {
+    return hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+  return hex;
+}
+
 export function TagsPage() {
   const drawerState = useSignal(false);
   const editingTag = useSignal<TagDTO | null>(null);
 
   useSignalEffect(() => {
-    getTags().then((result) => {
-      loadedTags.value = result;
-    });
+    if (loadedTags.value.length === 0) {
+      getTags().then((result) => {
+        loadedTags.value = result;
+      });
+    }
   });
 
   return (
@@ -108,8 +121,8 @@ interface EditTagModalProps {
 
 function EditTagModal({ tag, onClose, onSave }: EditTagModalProps) {
   const label = useSignal(tag.label);
-  const color = useSignal(tag.color);
-  const textColor = useSignal(tag.textColor);
+  const color = useSignal(normalizeHex(tag.color));
+  const textColor = useSignal(normalizeHex(tag.textColor));
   const saving = useSignal(false);
 
   const handleSave = async () => {

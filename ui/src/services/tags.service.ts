@@ -1,5 +1,9 @@
 import { Signal } from '@preact/signals';
-import { PostTagDTO, TagDTO } from '../../../server/src/dto/post-tag.dto';
+import {
+  PostTagDTO,
+  TagDTO,
+  TagUpdateDTO
+} from '../../../server/src/dto/post-tag.dto';
 import { get, patch, post, put, remove } from '../utilities/http.utils';
 
 export const loadedTags = new Signal<TagDTO[]>([]);
@@ -36,11 +40,8 @@ export async function createTag(tagLabel: string) {
   return await put<{ label: string }, TagDTO>('/api/tags', { label: tagLabel });
 }
 
-export async function updateTag(
-  tagId: number,
-  updates: { label?: string; color?: string; textColor?: string }
-) {
-  const result = await patch<typeof updates, TagDTO>(
+export async function updateTag(tagId: number, updates: TagUpdateDTO) {
+  const result = await patch<TagUpdateDTO, TagDTO>(
     `/api/tags/${tagId}`,
     updates
   );

@@ -104,9 +104,9 @@ export function put<Input, Output>(path: string, body?: Input, init?: RequestIni
 }
 
 export function patch<Input, Output>(path: string, body?: Input, init?: RequestInit) {
-  const headers = new Headers();
+  const headers = new Headers(init?.headers);
 
-  headers.append('Content-Type', 'application/json');
+  headers.set('Content-Type', 'application/json');
   
   return fetch(
     path,
