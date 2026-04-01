@@ -8,6 +8,7 @@ import {
   Next,
   Params,
   Post,
+  Put,
   Query,
   Request,
   Response
@@ -345,6 +346,95 @@ export class PostController {
           })
         )
       );
+
+      // Refresh post
+      const updatedPost = await this.postDao.getById(postId);
+
+      res.json(this.postDao.toDTO(updatedPost));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Delete(POSTS.FILES_WITH_ID.path, [
+    ZodIdValidator('postId'),
+    ZodIdValidator('fileId')
+  ])
+  async deleteFile(
+    @Params('postId') postId: number,
+    @Params('fileId') fileId: number,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const file = await this.postFileDao.getById(fileId);
+
+      if (!file || file.postId !== postId) {
+        throw new NotFoundError(`File with id [${fileId}] not found`);
+      }
+
+      await this.postFileDao.delete(fileId);
+
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Put(POSTS.FILES_WITH_ID.path, [
+    upload.fields([{ name: 'file' }]),
+    ZodIdValidator('postId'),
+    ZodIdValidator('fileId')
+  ])
+  async replaceFile(
+    @Params('postId') postId: number,
+    @Params('fileId') fileId: number,
+    @Request('files') files: Record<string, Express.Multer.File[]>,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const existingFile = await this.postFileDao.getById(fileId);
+
+      if (!existingFile || existingFile.postId !== postId) {
+        throw new NotFoundError(`File with id [${fileId}] not found`);
+      }
+
+      const { file: fileList } = files;
+
+      if (!fileList?.length) {
+        throw new BadRequestError('No file provided');
+      }
+
+      const newFile = fileList[0];
+      const oldFilename = existingFile.filename;
+
+      try {
+        // Use a transaction so that if the DB update succeeds but the old file
+        // removal fails (or vice-versa), the whole operation is rolled back and
+        // the DB remains consistent with the filesystem.
+        await this.postFileDao.replace(
+          fileId,
+          {
+            encoding: newFile.encoding,
+            filename: newFile.path,
+            mime: newFile.mimetype,
+            original_filename: newFile.originalname,
+            size: newFile.size
+          },
+          oldFilename
+        );
+      } catch (replaceError) {
+        // The replace failed – attempt to remove the newly uploaded file so it
+        // doesn't linger on disk without a corresponding DB record. Ignore
+        // cleanup errors so the original error is always surfaced.
+        try {
+          await this.fileSystem.remove(newFile.path);
+        } catch (_) {
+          // best-effort cleanup; ignore
+        }
+        throw replaceError;
+      }
 
       // Refresh post
       const updatedPost = await this.postDao.getById(postId);

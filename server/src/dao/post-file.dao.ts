@@ -2,7 +2,11 @@ import { Container, Inject, Injectable } from '@decorators/di';
 import { BaseDao } from './base.dao';
 import { PostFile } from '@prisma/client';
 import { DBClient } from '../db';
-import { PostFileCreateDTO, PostFileDTO } from '../dto/post-file.dto';
+import {
+  PostFileCreateDTO,
+  PostFileDTO,
+  PostFileUpdateDTO
+} from '../dto/post-file.dto';
 import { FileSystemFactory } from '../services';
 import { POSTS } from '../routes';
 
@@ -22,7 +26,9 @@ export class PostFileDao extends BaseDao<PostFile, any> {
   }
 
   async delete(postFileId: number) {
-    const file = await this.client.postFile.findFirst();
+    const file = await this.client.postFile.findFirst({
+      where: { id: postFileId }
+    });
 
     if (!file) {
       throw new Error(`PostFile with ID [${postFileId}] not found`);
@@ -31,6 +37,28 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     await this.client.postFile.delete({ where: { id: postFileId } });
 
     await this.fileSystem.remove(file.filename);
+  }
+
+  update(postFileId: number, dto: PostFileUpdateDTO) {
+    return this.client.postFile.update({
+      where: { id: postFileId },
+      data: dto
+    });
+  }
+
+  async replace(
+    postFileId: number,
+    dto: PostFileUpdateDTO,
+    oldFilename: string
+  ) {
+    await this.client.$transaction(async (tx) => {
+      await tx.postFile.update({
+        where: { id: postFileId },
+        data: dto
+      });
+
+      await this.fileSystem.remove(oldFilename);
+    });
   }
 
   async deleteFiles(postId: number) {

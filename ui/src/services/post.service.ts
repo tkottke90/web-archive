@@ -1,6 +1,6 @@
 import { Signal, batch, computed, effect } from '@preact/signals';
 import { PostDTO } from '../../../server/src/dto/post.dto';
-import { get, getPaged, postMultipart, remove } from '../utilities/http.utils';
+import { get, getPaged, postMultipart, putMultipart, remove } from '../utilities/http.utils';
 import { applyTagToPost } from './tags.service';
 import { Http } from '../interfaces/http.interface';
 
@@ -145,6 +145,36 @@ export async function uploadFilesToPost(
   files.forEach((file) => formData.append('file', file));
 
   const updatedPost = await postMultipart<PostDTO>(post.value.links.files, formData);
+  post.value = updatedPost;
+}
+
+export async function deleteFileFromPost(
+  post: Signal<PostDTO | undefined>,
+  fileUrl: string
+) {
+  if (!post.value) {
+    throw new Error('No post loaded');
+  }
+
+  await remove(fileUrl);
+
+  const updatedPost = await get<PostDTO>(`/api${post.value.links.self}`);
+  post.value = updatedPost;
+}
+
+export async function replaceFileInPost(
+  post: Signal<PostDTO | undefined>,
+  fileUrl: string,
+  file: File
+) {
+  if (!post.value) {
+    throw new Error('No post loaded');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const updatedPost = await putMultipart<PostDTO>(fileUrl, formData);
   post.value = updatedPost;
 }
 
