@@ -8,13 +8,17 @@ import { CustomComponent, getPortalContainer } from "../../utilities/component.u
 import { returnFileSize } from "../../utilities/number.utils";
 import { useDetailsPageContext } from "./context";
 import * as PostService from '../../services/post.service';
+import { PostFileDTO } from "../../../../server/src/dto/post-file.dto";
 
 const portal = getPortalContainer("modals");
 
 export function MediaCard({ className }: CustomComponent) {
   const { post } = useDetailsPageContext();
   const showAddModal = useSignal(false);
+  const showReplaceModal = useSignal(false);
   const fileQueue = useSignal<File[]>([]);
+  const replaceQueue = useSignal<File[]>([]);
+  const editingFile = useSignal<PostFileDTO | undefined>(undefined);
 
   const TextLoader = useAsyncResource();
 
@@ -22,6 +26,13 @@ export function MediaCard({ className }: CustomComponent) {
   useSignalEffect(() => {
     if (!showAddModal.value) {
       fileQueue.value = [];
+    }
+  });
+
+  useSignalEffect(() => {
+    if (!showReplaceModal.value) {
+      editingFile.value = undefined;
+      replaceQueue.value = [];
     }
   });
 
@@ -46,14 +57,55 @@ export function MediaCard({ className }: CustomComponent) {
             commonClasses += " col-span-3 m-auto";
           }
 
+          const wrapperClass = `grid grid-cols-3 gap-1 ${fileList.length < 2 ? 'col-span-3' : ''}`;
+
+          const mediaActions = (
+            <div className="flex gap-1 justify-end col-span-3">
+              <button
+                title="Replace file"
+                className="rounded-full hover:bg-stone-400 p-1"
+                onClick={() => {
+                  editingFile.value = file;
+                  showReplaceModal.value = true;
+                }}
+              >
+                <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>pencil</title><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" /></svg>
+              </button>
+              <button
+                title="Delete file"
+                className="rounded-full hover:bg-stone-400 p-1"
+                onClick={async () => {
+                  try {
+                    await PostService.deleteFileFromPost(post, file.links.self);
+                  } catch (err) {
+                    console.error('Failed to delete file:', err);
+                  }
+                }}
+              >
+                <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>delete</title><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" /></svg>
+              </button>
+            </div>
+          );
+
           if (file.mime.startsWith("image")) {
-            return <img key={`details-media-img-${i}`} src={file.links.media} className={commonClasses} />;
+            return (
+              <div key={`details-media-img-${i}`} className={wrapperClass}>
+                <img src={file.links.media} className={`col-span-3 ${commonClasses}`} />
+                {mediaActions}
+              </div>
+            );
           }
 
           if (file.mime.startsWith("video")) {
-            return file.size > 0
-              ? <video key={`details-media-vid-${i}`} src={file.links.media} loop controls className={commonClasses} />
-              : <EmptyVideo className={commonClasses} />
+            return (
+              <div key={`details-media-vid-${i}`} className={wrapperClass}>
+                {file.size > 0
+                  ? <video src={file.links.media} loop controls className={`col-span-3 ${commonClasses}`} />
+                  : <EmptyVideo className={`col-span-3 ${commonClasses}`} />
+                }
+                {mediaActions}
+              </div>
+            );
           }
 
           if (file.mime.startsWith('text')) {
@@ -66,9 +118,12 @@ export function MediaCard({ className }: CustomComponent) {
             });
 
             return (
-              <TextLoader.Provider key={key} >
-                <pre className="whitespace-pre-wrap p-2 overflow-hidden" >{ textValue }</pre>
-              </TextLoader.Provider>
+              <div key={key} className={wrapperClass}>
+                <TextLoader.Provider>
+                  <pre className="whitespace-pre-wrap p-2 overflow-hidden col-span-3" >{ textValue }</pre>
+                </TextLoader.Provider>
+                {mediaActions}
+              </div>
             )
           }
         })}
@@ -147,6 +202,68 @@ export function MediaCard({ className }: CustomComponent) {
               console.error('Failed to upload files:', err);
             }
           }} className="primary">Upload</button>
+        </div>
+      </Modal>
+      <Modal portal={portal} show={showReplaceModal} className="p-4">
+        <h3>Replace File</h3>
+        {editingFile.value && <p className="text-sm text-gray-500">{editingFile.value.original_filename}</p>}
+        <br />
+        <label
+          htmlFor="replace-file-input"
+          className="flex flex-col justify-center items-center min-w-[500px] min-h-40 border-dashed border-2 border-slate-500 rounded relative cursor-pointer transition-transform"
+          onDragEnter={e => {
+            e.preventDefault();
+            const target = e.target as HTMLInputElement;
+            target.classList.add('scale-[1.02]');
+          }}
+          onDragLeave={e => {
+            e.preventDefault();
+            const target = e.target as HTMLInputElement;
+            target.classList.remove('scale-[1.02]');
+          }}
+          onDragOver={e => e.preventDefault()}
+          onDrop={e => {
+            e.preventDefault();
+            if (e.dataTransfer?.files?.length) {
+              replaceQueue.value = [e.dataTransfer.files[0]];
+            }
+          }}
+        >
+          <p className={["z-40 absolute text-4xl transition-opacity", replaceQueue.value.length === 0 ? 'opacity-50' : 'opacity-5'].join(' ')}>Click to Upload or Drag a File</p>
+          <div className="z-50 w-[90%]">
+            {replaceQueue.value.length > 0 && replaceQueue.value.map((file) => (
+              <div key={file.name} className="flex justify-between w-full">
+                <p>{file.name}</p>
+                <p>{returnFileSize(file.size)}</p>
+                <svg
+                  onClick={(e) => {
+                    e.preventDefault();
+                    replaceQueue.value = [];
+                  }}
+                  className="w-[24px] h-[24px]"
+                  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>close</title><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" /></svg>
+              </div>
+            ))}
+          </div>
+          <input onChange={(e) => {
+            const input = e.target as HTMLInputElement;
+            if (input.files?.length) {
+              replaceQueue.value = [input.files[0]];
+            }
+          }} id="replace-file-input" type="file" className="hidden" />
+        </label>
+        <br />
+        <div className="actions">
+          <button onClick={async () => {
+            if (!replaceQueue.value.length || !editingFile.value) return;
+            try {
+              await PostService.replaceFileInPost(post, editingFile.value.links.self, replaceQueue.value[0]);
+              showReplaceModal.value = false;
+            } catch (err) {
+              console.error('Failed to replace file:', err);
+            }
+          }} className="primary">Replace</button>
+          <button onClick={() => showReplaceModal.value = false}>Cancel</button>
         </div>
       </Modal>
     </Card>

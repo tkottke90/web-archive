@@ -21,5 +21,14 @@ export const PostFileCreateSchema = PostFileSchema.omit({
   links: true
 });
 
+export const PostFileUpdateSchema = z.object({
+  original_filename: z.string(),
+  filename: z.string(),
+  size: z.number(),
+  mime: z.string(),
+  encoding: z.string()
+});
+
 export type PostFileDTO = z.infer<typeof PostFileSchema>;
 export type PostFileCreateDTO = z.infer<typeof PostFileCreateSchema>;
+export type PostFileUpdateDTO = z.infer<typeof PostFileUpdateSchema>;

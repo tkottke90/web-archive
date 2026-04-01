@@ -114,6 +114,17 @@ export function postMultipart<Output>(path: string, body: FormData, init?: Reque
   ).then(parseResponse<Output>);
 }
 
+export function putMultipart<Output>(path: string, body: FormData, init?: RequestInit) {
+  return fetch(
+    path,
+    {
+      ...init,
+      body,
+      method: 'PUT'
+    }
+  ).then(parseResponse<Output>);
+}
+
 export function remove(path: string, init?: RequestInit) {
   return fetch(path, Object.assign({}, init, { method: 'DELETE' })).then(parseTextResponse);
 }
