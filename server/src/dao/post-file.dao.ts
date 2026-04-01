@@ -46,7 +46,11 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     });
   }
 
-  async replace(postFileId: number, dto: PostFileUpdateDTO, oldFilename: string) {
+  async replace(
+    postFileId: number,
+    dto: PostFileUpdateDTO,
+    oldFilename: string
+  ) {
     await this.client.$transaction(async (tx) => {
       await tx.postFile.update({
         where: { id: postFileId },

@@ -425,9 +425,14 @@ export class PostController {
           oldFilename
         );
       } catch (replaceError) {
-        // The replace failed – remove the newly uploaded file so it doesn't
-        // linger on disk without a corresponding DB record.
-        await this.fileSystem.remove(newFile.path).catch(() => {});
+        // The replace failed – attempt to remove the newly uploaded file so it
+        // doesn't linger on disk without a corresponding DB record. Ignore
+        // cleanup errors so the original error is always surfaced.
+        try {
+          await this.fileSystem.remove(newFile.path);
+        } catch (_) {
+          // best-effort cleanup; ignore
+        }
         throw replaceError;
       }
 
