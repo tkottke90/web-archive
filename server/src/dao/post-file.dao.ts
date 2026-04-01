@@ -46,6 +46,17 @@ export class PostFileDao extends BaseDao<PostFile, any> {
     });
   }
 
+  async replace(postFileId: number, dto: PostFileUpdateDTO, oldFilename: string) {
+    await this.client.$transaction(async (tx) => {
+      await tx.postFile.update({
+        where: { id: postFileId },
+        data: dto
+      });
+
+      await this.fileSystem.remove(oldFilename);
+    });
+  }
+
   async deleteFiles(postId: number) {
     const files = await this.client.postFile.findMany({ where: { postId } });
 
