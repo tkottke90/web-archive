@@ -103,6 +103,22 @@ export function put<Input, Output>(path: string, body?: Input, init?: RequestIni
   ).then(parseResponse<Output>);
 }
 
+export function patch<Input, Output>(path: string, body?: Input, init?: RequestInit) {
+  const headers = new Headers(init?.headers);
+
+  headers.set('Content-Type', 'application/json');
+  
+  return fetch(
+    path,
+    { 
+      ...init,
+      headers,
+      body: JSON.stringify(body),
+      method: 'PATCH'
+    }
+  ).then(parseResponse<Output>);
+}
+
 export function postMultipart<Output>(path: string, body: FormData, init?: RequestInit) {
   return fetch(
     path,

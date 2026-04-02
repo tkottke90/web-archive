@@ -1,6 +1,10 @@
 import { Signal } from '@preact/signals';
-import { PostTagDTO, TagDTO } from '../../../server/src/dto/post-tag.dto';
-import { get, post, put, remove } from '../utilities/http.utils';
+import {
+  PostTagDTO,
+  TagDTO,
+  TagUpdateDTO
+} from '../../../server/src/dto/post-tag.dto';
+import { get, patch, post, put, remove } from '../utilities/http.utils';
 
 export const loadedTags = new Signal<TagDTO[]>([]);
 
@@ -34,6 +38,16 @@ export async function removeTagFromPost(postTagLink: string) {
 
 export async function createTag(tagLabel: string) {
   return await put<{ label: string }, TagDTO>('/api/tags', { label: tagLabel });
+}
+
+export async function updateTag(tagId: number, updates: TagUpdateDTO) {
+  const result = await patch<TagUpdateDTO, TagDTO>(
+    `/api/tags/${tagId}`,
+    updates
+  );
+  // Refresh the loaded tags signal so all UI reflects the change
+  loadedTags.value = await getTags();
+  return result;
 }
 
 // Load tags on boot
