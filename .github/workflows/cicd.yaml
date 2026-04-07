@@ -14,9 +14,33 @@ jobs:
     name: Lint Server
     uses: ./.github/workflows/lint-server.yaml
 
+  SonarScan:
+    name: Sonar Scan
+    runs-on: ubuntu-latest
+    needs: [Lint]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install Packages
+        working-directory: server
+        run: npm install
+
+      - name: Run Sonar Scanner
+        working-directory: server
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: npm run scan
+
   Build:
     runs-on: [ ubuntu-latest ]
-    needs: [Lint]
+    needs: [Lint, SonarScan]
     permissions:
       contents: read
       packages: write
