@@ -35,6 +35,9 @@ jobs:
         working-directory: server
         run: npm ci
 
+      - name: Run Tests
+        working-directory: server
+        run: npm test
       - name: Run Sonar Scanner
         working-directory: server
         env:
