@@ -1,7 +1,7 @@
 import chai from 'chai';
 import sinon from 'sinon';
 
-const should = chai.should();
+chai.should();
 
 describe('Sample Test Suite', () => {
   afterEach(() => {
