@@ -21,6 +21,7 @@ import { PostFileDao } from '../dao/post-file.dao';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { PostDao } from '../dao/post.dao';
 import { TagDao } from '../dao/tag.dao';
+import { DownloadJobDao } from '../dao/download-job.dao';
 import {
   PostCreateDTO,
   PostCreateSchema,
@@ -54,7 +55,8 @@ export class PostController {
     @Inject('PostFileDao') private readonly postFileDao: PostFileDao,
     @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
     @Inject('TagDao') private readonly tagDao: TagDao,
-    @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory
+    @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory,
+    @Inject('DownloadJobDao') private readonly downloadJobDao: DownloadJobDao
   ) {}
 
   @Get('/', [ZodQueryValidator(PostQuerySchema)])
@@ -88,7 +90,12 @@ export class PostController {
         throw new NotFoundError('No Post with ID found ' + postId);
       }
 
-      res.json(this.postDao.toDTO(post));
+      const jobs = await this.downloadJobDao.findByPostId(postId);
+
+      res.json({
+        ...this.postDao.toDTO(post),
+        jobs: jobs.map((job) => this.downloadJobDao.toJobListItem(job))
+      });
     } catch (error) {
       next(error);
     }

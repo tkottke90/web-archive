@@ -47,6 +47,7 @@ export function Navigation() {
     <nav class="flex flex-col">
       <NavLink href="/">Posts</NavLink>
       <NavLink href="/tags">Tags</NavLink>
+      <NavLink href="/jobs">Jobs</NavLink>
     </nav>
   )
 }
