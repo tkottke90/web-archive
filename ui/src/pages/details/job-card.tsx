@@ -4,32 +4,19 @@ import { createPortal } from 'preact/compat';
 import { Card } from '../../components/Layouts/Card';
 import { CustomComponent } from '../../utilities/component.utils';
 import { useDetailsPageContext } from './context';
-import { getJobDetail, JobDetail, JobListItem, retryJob } from '../../services/job.service';
+import { getJobDetail, JobDetail, retryJob } from '../../services/job.service';
 import { getPortalContainer } from '../../utilities/dom.utils';
 import { statusColor } from '../../components/Jobs/status-color';
 import { JobDrawer } from '../../components/Jobs/JobDrawer';
 
 const portal = getPortalContainer('modals');
 
-type PostWithJobs = {
-  jobs?: JobListItem[];
-};
-
-function getJobList(post: unknown): JobListItem[] {
-  if (!post || typeof post !== 'object' || !('jobs' in post)) {
-    return [];
-  }
-
-  const { jobs } = post as PostWithJobs;
-  return Array.isArray(jobs) ? jobs : [];
-}
-
 export function JobCard({ className }: CustomComponent) {
   const { post } = useDetailsPageContext();
   const collapsed = useSignal(true);
   const selectedJob = useSignal<JobDetail | null>(null);
 
-  const jobList = getJobList(post.value);
+  const jobList = post.value?.jobs ?? [];
 
   if (jobList.length === 0) {
     return null;

@@ -15,7 +15,7 @@ export interface JobDetail {
   type: string;
   status: string;
   done: boolean;
-  data: Record<string, any>;
+  data: unknown;
   jobNotes: string;
   createdAt: string;
   updatedAt: string;

@@ -10,6 +10,14 @@ import { PostMetadata, PostMetadataCreate } from './post-metadata.dto';
 import { PostFileCreateSchema, PostFileSchema } from './post-file.dto';
 import { PostTag } from './post-tag.dto';
 
+export const JobListItemSchema = z.object({
+  job_id: z.number(),
+  type: z.string(),
+  status: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+});
+
 export const PostSchema = BaseSchema(
   z.object({
     id: FuzzyNumber,
@@ -18,7 +26,8 @@ export const PostSchema = BaseSchema(
     source: z.string().url(),
     metadata: z.array(PostMetadata).optional(),
     files: z.array(PostFileSchema).optional(),
-    tags: z.array(PostTag).optional()
+    tags: z.array(PostTag).optional(),
+    jobs: z.array(JobListItemSchema).optional()
   })
 );
 
@@ -31,7 +40,8 @@ export const PostCreateSchema = PostSchema.merge(
   id: true,
   createdAt: true,
   updatedAt: true,
-  links: true
+  links: true,
+  jobs: true
 });
 
 export const PostQuerySchema = QueryFields(PostSchema).merge(
