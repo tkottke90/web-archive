@@ -84,6 +84,12 @@ export class JobController {
         throw new NotFoundError(`Job with id ${jobId} not found`);
       }
 
+      if (job.status === JOB_STATUS.IN_PROGRESS) {
+        throw new BadRequestError(
+          'Cannot retry a job that is currently in progress'
+        );
+      }
+
       if (job.status !== JOB_STATUS.ERROR) {
         throw new BadRequestError('Only jobs with error status can be retried');
       }

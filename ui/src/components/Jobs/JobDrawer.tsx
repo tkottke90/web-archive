@@ -1,4 +1,6 @@
 import { Fragment } from 'preact';
+import { useSignal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import { JobDetail } from '../../services/job.service';
 import { statusColor } from './status-color';
 
@@ -9,19 +11,34 @@ interface JobDrawerProps {
 }
 
 export function JobDrawer({ job, onClose, onRetry }: JobDrawerProps) {
+  const visible = useSignal(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      visible.value = true;
+    });
+  }, []);
+
+  const handleClose = () => {
+    visible.value = false;
+    setTimeout(onClose, 200);
+  };
+
   return (
     <Fragment>
       <div
-        class="fixed inset-0 bg-black bg-opacity-50 z-50"
-        onClick={onClose}
+        class={`fixed inset-0 z-50 transition-opacity duration-200 ${visible.value ? 'bg-black bg-opacity-50' : 'bg-transparent'}`}
+        onClick={handleClose}
       />
-      <div class="fixed top-0 right-0 bottom-0 z-50 w-[90%] md:w-[90%] lg:w-[500px] bg-white shadow-lg overflow-y-auto">
+      <div
+        class={`fixed top-0 right-0 bottom-0 z-50 w-[90%] md:w-[90%] lg:w-[500px] bg-white shadow-lg overflow-y-auto transition-transform duration-200 ${visible.value ? 'translate-x-0' : 'translate-x-full'}`}
+      >
         <div class="p-4 flex flex-col gap-4">
           <div class="flex justify-between items-center">
             <h3 class="text-xl font-bold">Job #{job.job_id}</h3>
             <button
               class="px-2 py-1 text-sm border border-cloud-400 rounded hover:bg-cloud-200"
-              onClick={onClose}
+              onClick={handleClose}
             >
               Close
             </button>
