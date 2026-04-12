@@ -11,12 +11,25 @@ import { JobDrawer } from '../../components/Jobs/JobDrawer';
 
 const portal = getPortalContainer('modals');
 
+type PostWithJobs = {
+  jobs?: JobListItem[];
+};
+
+function getJobList(post: unknown): JobListItem[] {
+  if (!post || typeof post !== 'object' || !('jobs' in post)) {
+    return [];
+  }
+
+  const { jobs } = post as PostWithJobs;
+  return Array.isArray(jobs) ? jobs : [];
+}
+
 export function JobCard({ className }: CustomComponent) {
   const { post } = useDetailsPageContext();
   const collapsed = useSignal(true);
   const selectedJob = useSignal<JobDetail | null>(null);
 
-  const jobList: JobListItem[] = (post.value as any)?.jobs ?? [];
+  const jobList = getJobList(post.value);
 
   if (jobList.length === 0) {
     return null;

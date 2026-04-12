@@ -123,7 +123,9 @@ function StatusFilter() {
         >
           <option value="">All</option>
           {jobStatuses.value.map((status) => (
-            <option value={status}>{status}</option>
+            <option key={status} value={status}>
+              {status}
+            </option>
           ))}
         </select>
       </div>
