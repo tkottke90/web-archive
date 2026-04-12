@@ -15,6 +15,11 @@ export interface JobDetail {
   type: string;
   status: string;
   done: boolean;
+  // NOTE: Typed as `unknown` because the server stores this as Prisma `Json`,
+  // which can be any JSON value (object, array, string, number, or null).
+  // Currently all job data schemas are managed on the backend so this is
+  // effectively always a Record<string, unknown>, but the type here stays
+  // loose to match the actual database contract.
   data: unknown;
   jobNotes: string;
   createdAt: string;
