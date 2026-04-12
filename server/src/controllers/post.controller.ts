@@ -92,10 +92,11 @@ export class PostController {
 
       const jobs = await this.downloadJobDao.findByPostId(postId);
 
-      res.json({
-        ...this.postDao.toDTO(post),
-        jobs: jobs.map((job) => this.downloadJobDao.toJobListItem(job))
-      });
+      res.json(
+        this.postDao.toDTO(post, {
+          jobs: jobs.map((job) => this.downloadJobDao.toJobListItem(job))
+        })
+      );
     } catch (error) {
       next(error);
     }
