@@ -18,6 +18,7 @@ export function MediaCard({ className }: CustomComponent) {
   const showAddModal = useSignal(false);
   const showReplaceModal = useSignal(false);
   const fileQueue = useSignal<File[]>([]);
+  const uploadUrl = useSignal("");
   const replaceQueue = useSignal<File[]>([]);
   const editingFile = useSignal<PostFileDTO | undefined>(undefined);
 
@@ -27,6 +28,7 @@ export function MediaCard({ className }: CustomComponent) {
   useSignalEffect(() => {
     if (!showAddModal.value) {
       fileQueue.value = [];
+      uploadUrl.value = "";
     }
   });
 
@@ -192,12 +194,34 @@ export function MediaCard({ className }: CustomComponent) {
           }} id="file-input" type="file" className="hidden" />
         </label>
         <br />
+        <label className="flex flex-col gap-1">
+          <span>Or Upload from URL</span>
+          <input
+            type="url"
+            value={uploadUrl.value}
+            placeholder="https://..."
+            onInput={(e) => {
+              const target = e.target as HTMLInputElement;
+              uploadUrl.value = target.value;
+            }}
+            className="p-2 rounded bg-slate-700 border border-slate-500"
+          />
+        </label>
+        <br />
         <div className="actions">
           <button onClick={async () => {
             const { value } = fileQueue;
-            if (value.length === 0) return;
+            const targetUrl = uploadUrl.value.trim();
+            if (value.length === 0 && !targetUrl) return;
             try {
-              await PostService.uploadFilesToPost(post, value);
+              if (value.length > 0) {
+                await PostService.uploadFilesToPost(post, value);
+              }
+
+              if (targetUrl) {
+                await PostService.uploadFileUrlToPost(post, targetUrl);
+              }
+
               showAddModal.value = false;
             } catch (err) {
               console.error('Failed to upload files:', err);

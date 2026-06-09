@@ -41,10 +41,17 @@ import { FS_CONSTS } from '../constants';
 import { createReadStream } from 'fs';
 import { FileSystemFactory } from '../services';
 import { parseRangeHeader } from '../utilities/streaming.utils';
+import { basename, extname } from 'path';
+import { randomUUID } from 'crypto';
+import mime from 'mime-types';
 
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fieldSize: FS_CONSTS.MAX_UPLOAD_SIZE }
+});
+
+const PostUrlUploadSchema = z.object({
+  url: z.string().url()
 });
 
 @Controller(POSTS.ROOT.path)
@@ -348,6 +355,67 @@ export class PostController {
       );
 
       // Refresh post
+      const updatedPost = await this.postDao.getById(postId);
+
+      res.json(this.postDao.toDTO(updatedPost));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Post(POSTS.FILES_URL.path, [
+    ZodIdValidator('postId'),
+    ZodBodyValidator(PostUrlUploadSchema)
+  ])
+  async addFileUrlToPost(
+    @Params('postId') postId: number,
+    @Body() body: z.infer<typeof PostUrlUploadSchema>,
+    @Response() res: express.Response,
+    @Next() next: express.NextFunction
+  ) {
+    try {
+      const post = await this.postDao.getById(postId);
+
+      if (!post) {
+        throw new NotFoundError(`Post with id [${postId}] not found`);
+      }
+
+      const content = await fetch(body.url);
+      if (!content.ok) {
+        throw new BadRequestError(
+          `Unable to download media from provided URL: ${body.url}`
+        );
+      }
+
+      const data = Buffer.from(await content.arrayBuffer());
+      if (data.length === 0) {
+        throw new BadRequestError(`Downloaded file is empty: ${body.url}`);
+      }
+
+      const contentType =
+        content.headers.get('content-type')?.split(';')[0] ??
+        'application/octet-stream';
+      const sourceFilename = basename(new URL(body.url).pathname) || 'file';
+      const sourceExtension = extname(sourceFilename);
+      const mimeExtension = mime.extension(contentType) ?? 'bin';
+      const extension = sourceExtension || `.${mimeExtension}`;
+
+      const filename = await this.fileSystem.upload(
+        data,
+        `${randomUUID()}${extension}`
+      );
+
+      await this.postFileDao.create(postId, {
+        encoding: '',
+        filename,
+        mime: contentType,
+        original_filename:
+          sourceExtension.length > 0
+            ? sourceFilename
+            : `${sourceFilename}${extension}`,
+        size: data.length
+      });
+
       const updatedPost = await this.postDao.getById(postId);
 
       res.json(this.postDao.toDTO(updatedPost));
