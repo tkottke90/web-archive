@@ -12,7 +12,7 @@ export async function filterTagsByPost(postLink: string, filter: string) {
   const search = new URLSearchParams();
 
   search.append('limit', '5');
-  search.append('label', filter);
+  search.append('filter', filter);
 
   loadedTags.value = await get<TagDTO[]>(`${postLink}?${search.toString()}`);
 }
