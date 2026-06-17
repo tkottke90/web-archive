@@ -1,4 +1,5 @@
 import { Container, Inject, Injectable } from '@decorators/di';
+import { Prisma } from '@prisma/client';
 import { BaseDao } from './base.dao';
 import { Tag } from '@prisma/client';
 import { DBClient } from '../db';
@@ -28,13 +29,18 @@ export class TagDao extends BaseDao<Tag, TagDTO> {
 
   find(query: TagQueryDTO) {
     const { take, skip, orderBy, data } = this.parseQuery(query);
+    const { label, ...restData } = data;
 
-    return this.client.tag.findMany({
-      take,
-      skip,
-      orderBy: orderBy,
-      where: { ...this.toPersistance(data), NOT: data.NOT }
-    });
+    const where: Prisma.TagWhereInput = {
+      ...this.toPersistance(restData),
+      NOT: data.NOT
+    };
+
+    if (label) {
+      where.label = { contains: label, mode: 'insensitive' };
+    }
+
+    return this.client.tag.findMany({ take, skip, orderBy, where });
   }
 
   getByLabel(label: string) {
