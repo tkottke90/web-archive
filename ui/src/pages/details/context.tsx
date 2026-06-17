@@ -20,8 +20,8 @@ const pageContext = createContext(defaultContext)
 
 export function DetailsPageContext({ children }: CustomComponent) {
   const path = useSignal(window.location.pathname);
-  const prevPost = useSignal(window.location.pathname);
-  const nextPost = useSignal(window.location.pathname);
+  const prevPost = useSignal('');
+  const nextPost = useSignal('');
   const post = useSignal<PostDTO | undefined>(undefined);
 
   const showDeleteModal = useSignal(false);
@@ -29,6 +29,8 @@ export function DetailsPageContext({ children }: CustomComponent) {
 
   useSignalEffect(() => {
     loading.value = true;
+    prevPost.value = '';
+    nextPost.value = '';
 
     PostService.postDetails(path.value)
       .then(async (result) => {
@@ -37,8 +39,8 @@ export function DetailsPageContext({ children }: CustomComponent) {
         batch(() => {
           post.value = result;
           loading.value = false;
-          nextPost.value = newSiblings.next,
-          prevPost.value = newSiblings.previous
+          nextPost.value = newSiblings.next;
+          prevPost.value = newSiblings.previous;
         })
       })
       .finally(() => {
