@@ -25,12 +25,7 @@ function makeDao(findFirstStub: sinon.SinonStub): PostDao {
   const mockClient = {
     post: { findFirst: findFirstStub }
   };
-  return new PostDao(
-    mockClient as any,
-    {} as any,
-    {} as any,
-    {} as any
-  );
+  return new PostDao(mockClient as any, {} as any, {} as any, {} as any);
 }
 
 describe('PostDao.findByIdWithBeforeAndAfter', () => {
@@ -49,7 +44,9 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
     findFirstStub.onCall(1).resolves(makePost(4));
     findFirstStub.onCall(2).resolves(makePost(6));
 
-    const [prev, curr, next] = await makeDao(findFirstStub).findByIdWithBeforeAndAfter(5);
+    const [prev, curr, next] = await makeDao(
+      findFirstStub
+    ).findByIdWithBeforeAndAfter(5);
 
     prev!.should.equal('/post/4');
     curr!.should.equal('/post/5');
@@ -59,10 +56,12 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
   it('returns the correct adjacent posts when IDs have gaps (non-sequential indexing)', async () => {
     // Posts exist at IDs 1, 5, 10, 20 — current is 5
     findFirstStub.onCall(0).resolves(makePost(5));
-    findFirstStub.onCall(1).resolves(makePost(1));  // prev skips 2, 3, 4
+    findFirstStub.onCall(1).resolves(makePost(1)); // prev skips 2, 3, 4
     findFirstStub.onCall(2).resolves(makePost(10)); // next skips 6, 7, 8, 9
 
-    const [prev, curr, next] = await makeDao(findFirstStub).findByIdWithBeforeAndAfter(5);
+    const [prev, curr, next] = await makeDao(
+      findFirstStub
+    ).findByIdWithBeforeAndAfter(5);
 
     prev!.should.equal('/post/1');
     curr!.should.equal('/post/5');
@@ -71,10 +70,12 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
 
   it('returns undefined for previous when at the first post', async () => {
     findFirstStub.onCall(0).resolves(makePost(1));
-    findFirstStub.onCall(1).resolves(null);         // no post before first
+    findFirstStub.onCall(1).resolves(null); // no post before first
     findFirstStub.onCall(2).resolves(makePost(5));
 
-    const [prev, curr, next] = await makeDao(findFirstStub).findByIdWithBeforeAndAfter(1);
+    const [prev, curr, next] = await makeDao(
+      findFirstStub
+    ).findByIdWithBeforeAndAfter(1);
 
     (prev === undefined).should.equal(true);
     curr!.should.equal('/post/1');
@@ -84,9 +85,11 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
   it('returns undefined for next when at the last post', async () => {
     findFirstStub.onCall(0).resolves(makePost(20));
     findFirstStub.onCall(1).resolves(makePost(10));
-    findFirstStub.onCall(2).resolves(null);         // no post after last
+    findFirstStub.onCall(2).resolves(null); // no post after last
 
-    const [prev, curr, next] = await makeDao(findFirstStub).findByIdWithBeforeAndAfter(20);
+    const [prev, curr, next] = await makeDao(
+      findFirstStub
+    ).findByIdWithBeforeAndAfter(20);
 
     prev!.should.equal('/post/10');
     curr!.should.equal('/post/20');
@@ -98,7 +101,9 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
     findFirstStub.onCall(1).resolves(null);
     findFirstStub.onCall(2).resolves(null);
 
-    const [prev, curr, next] = await makeDao(findFirstStub).findByIdWithBeforeAndAfter(7);
+    const [prev, curr, next] = await makeDao(
+      findFirstStub
+    ).findByIdWithBeforeAndAfter(7);
 
     (prev === undefined).should.equal(true);
     curr!.should.equal('/post/7');
@@ -121,7 +126,9 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
     findFirstStub.onCall(1).resolves(makePost(2));
     findFirstStub.onCall(2).resolves(makePost(9));
 
-    const [prev, curr, next] = await makeDao(findFirstStub).findByIdWithBeforeAndAfter(5, {
+    const [prev, curr, next] = await makeDao(
+      findFirstStub
+    ).findByIdWithBeforeAndAfter(5, {
       author: 'author-a'
     } as any);
 

@@ -28,9 +28,11 @@ export function DetailsPageContext({ children }: CustomComponent) {
   const loading = useSignal(true);
 
   useSignalEffect(() => {
-    loading.value = true;
-    prevPost.value = '';
-    nextPost.value = '';
+    batch(() => {
+      loading.value = true;
+      prevPost.value = '';
+      nextPost.value = '';
+    });
 
     PostService.postDetails(path.value)
       .then(async (result) => {
