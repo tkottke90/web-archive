@@ -380,14 +380,43 @@ export class PostController {
         throw new NotFoundError(`Post with id [${postId}] not found`);
       }
 
-      const content = await fetch(body.url);
+      let content: Response;
+      try {
+        content = await fetch(body.url);
+      } catch (err: any) {
+        throw new BadRequestError(
+          `Failed to fetch URL [${body.url}]: ${err.message}`
+        );
+      }
+
       if (!content.ok) {
         throw new BadRequestError(
           `Unable to download media from provided URL: ${body.url}`
         );
       }
 
-      const data = Buffer.from(await content.arrayBuffer());
+      const contentLength = Number(content.headers.get('content-length') ?? 0);
+      if (contentLength > FS_CONSTS.MAX_UPLOAD_SIZE) {
+        throw new BadRequestError(
+          `Remote file size ${contentLength} exceeds the ${FS_CONSTS.MAX_UPLOAD_SIZE} byte limit`
+        );
+      }
+
+      let data: Buffer;
+      try {
+        data = Buffer.from(await content.arrayBuffer());
+      } catch (err: any) {
+        throw new BadRequestError(
+          `Failed to read response body from [${body.url}]: ${err.message}`
+        );
+      }
+
+      if (data.length > FS_CONSTS.MAX_UPLOAD_SIZE) {
+        throw new BadRequestError(
+          `Downloaded file size ${data.length} exceeds the ${FS_CONSTS.MAX_UPLOAD_SIZE} byte limit`
+        );
+      }
+
       if (data.length === 0) {
         throw new BadRequestError(`Downloaded file is empty: ${body.url}`);
       }
@@ -417,6 +446,10 @@ export class PostController {
       });
 
       const updatedPost = await this.postDao.getById(postId);
+
+      if (!updatedPost) {
+        throw new NotFoundError(`Post with id [${postId}] not found`);
+      }
 
       res.json(this.postDao.toDTO(updatedPost));
     } catch (error) {

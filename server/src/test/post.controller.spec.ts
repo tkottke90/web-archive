@@ -2,6 +2,7 @@ import chai from 'chai';
 import sinon from 'sinon';
 import express from 'express';
 import { PostController } from '../controllers/post.controller';
+import { BadRequestError, NotFoundError } from '../utilities/errors.util';
 
 chai.should();
 
@@ -37,17 +38,23 @@ describe('PostController - URL Upload', () => {
   });
 
   afterEach(() => {
+    // sinon.restore() handles method stubs (sinon.stub(obj, 'method')).
+    // These stubs are standalone, so the .reset() calls in beforeEach are
+    // what actually clear state. Kept for consistency with the rest of the suite.
     sinon.restore();
   });
 
-  it('should download url content and add file to post', async () => {
-    const controller = new PostController(
+  const makeController = () =>
+    new PostController(
       postDao as any,
       postFileDao as any,
       postTagDao,
       tagDao,
       fileSystem as any
     );
+
+  it('should download url content and add file to post', async () => {
+    const controller = makeController();
     const next = sinon.spy();
     const json = sinon.spy();
     const res = { json } as unknown as express.Response;
@@ -80,5 +87,76 @@ describe('PostController - URL Upload', () => {
 
     json.calledOnce.should.equal(true);
     next.called.should.equal(false);
+  });
+
+  it('should call next with NotFoundError when post does not exist', async () => {
+    postDao.getById.onFirstCall().resolves(null);
+    const next = sinon.spy();
+
+    await makeController().addFileUrlToPost(
+      123,
+      { url: 'https://example.com/a.mp3' },
+      { json: sinon.spy() } as any,
+      next
+    );
+
+    next.calledOnce.should.equal(true);
+    next.firstCall.args[0].should.be.instanceOf(NotFoundError);
+  });
+
+  it('should call next with BadRequestError when fetch response is not ok', async () => {
+    postDao.getById.onFirstCall().resolves({ id: 123 });
+    fetchStub.resolves({ ok: false, headers: new Headers() });
+    const next = sinon.spy();
+
+    await makeController().addFileUrlToPost(
+      123,
+      { url: 'https://example.com/a.mp3' },
+      { json: sinon.spy() } as any,
+      next
+    );
+
+    next.calledOnce.should.equal(true);
+    next.firstCall.args[0].should.be.instanceOf(BadRequestError);
+  });
+
+  it('should call next with BadRequestError when downloaded file is empty', async () => {
+    postDao.getById.onFirstCall().resolves({ id: 123 });
+    fetchStub.resolves({
+      ok: true,
+      headers: new Headers({ 'content-type': 'audio/mpeg' }),
+      arrayBuffer: async () => new ArrayBuffer(0)
+    });
+    const next = sinon.spy();
+
+    await makeController().addFileUrlToPost(
+      123,
+      { url: 'https://example.com/a.mp3' },
+      { json: sinon.spy() } as any,
+      next
+    );
+
+    next.calledOnce.should.equal(true);
+    const err = next.firstCall.args[0];
+    err.should.be.instanceOf(BadRequestError);
+    err.message.should.include('empty');
+  });
+
+  it('should call next with BadRequestError when fetch throws a network error', async () => {
+    postDao.getById.onFirstCall().resolves({ id: 123 });
+    fetchStub.rejects(new Error('ENOTFOUND example.com'));
+    const next = sinon.spy();
+
+    await makeController().addFileUrlToPost(
+      123,
+      { url: 'https://example.com/a.mp3' },
+      { json: sinon.spy() } as any,
+      next
+    );
+
+    next.calledOnce.should.equal(true);
+    const err = next.firstCall.args[0];
+    err.should.be.instanceOf(BadRequestError);
+    err.message.should.include('Failed to fetch URL');
   });
 });
