@@ -1,7 +1,7 @@
 import { Fragment } from 'preact';
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
-import { JobDetail } from '../../services/job.service';
+import { JobDetail, JOB_STATUS } from '../../services/job.service';
 import { statusColor } from './status-color';
 
 interface JobDrawerProps {
@@ -79,11 +79,11 @@ export function JobDrawer({ job, onClose, onRetry }: JobDrawerProps) {
             </pre>
           </div>
 
-          {job.status === 'ERROR' && (
+          {job.status === JOB_STATUS.ERROR && job.links.retry && (
             <div class="flex gap-2">
               <button
                 class="px-3 py-1 text-sm bg-burnt-500 text-slate-200 rounded hover:brightness-110"
-                onClick={() => onRetry(job.links.retry)}
+                onClick={() => onRetry(job.links.retry!)}
               >
                 Retry Job
               </button>

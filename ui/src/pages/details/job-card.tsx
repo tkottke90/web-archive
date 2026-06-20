@@ -4,7 +4,7 @@ import { createPortal } from 'preact/compat';
 import { Card } from '../../components/Layouts/Card';
 import { CustomComponent } from '../../utilities/component.utils';
 import { useDetailsPageContext } from './context';
-import { getJobDetail, JobDetail, retryJob } from '../../services/job.service';
+import { getJobDetail, JobDetail, JobListItem, retryJob } from '../../services/job.service';
 import { getPortalContainer } from '../../utilities/dom.utils';
 import { statusColor } from '../../components/Jobs/status-color';
 import { JobDrawer } from '../../components/Jobs/JobDrawer';
@@ -23,13 +23,31 @@ export function JobCard({ className }: CustomComponent) {
   }
 
   const openJobDetail = async (jobId: number) => {
-    const detail = await getJobDetail(jobId);
-    selectedJob.value = detail;
+    try {
+      const detail = await getJobDetail(jobId);
+      selectedJob.value = detail;
+    } catch (err) {
+      console.error('Failed to load job detail:', err);
+    }
   };
 
   const handleRetry = async (retryUrl: string) => {
-    const newJob = await retryJob(retryUrl);
-    selectedJob.value = newJob;
+    try {
+      const newJob = await retryJob(retryUrl);
+      selectedJob.value = newJob;
+      if (post.value) {
+        const listItem: JobListItem = {
+          job_id: newJob.job_id,
+          type: newJob.type,
+          status: newJob.status,
+          createdAt: newJob.createdAt,
+          updatedAt: newJob.updatedAt
+        };
+        post.value = { ...post.value, jobs: [listItem, ...(post.value.jobs ?? [])] };
+      }
+    } catch (err) {
+      console.error('Failed to retry job:', err);
+    }
   };
 
   return (

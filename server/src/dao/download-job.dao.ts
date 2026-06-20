@@ -49,7 +49,9 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
       updatedAt: entity.updatedAt.toISOString(),
       links: {
         self: JOBS.WITH_ID.url({ jobId: entity.id }),
-        retry: JOBS.RETRY.url({ jobId: entity.id })
+        ...(entity.status === JOB_STATUS.ERROR && {
+          retry: JOBS.RETRY.url({ jobId: entity.id })
+        })
       }
     };
   }

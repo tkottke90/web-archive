@@ -26,7 +26,7 @@ export interface JobDetail {
   updatedAt: string;
   links: {
     self: string;
-    retry: string;
+    retry?: string;
   };
 }
 
@@ -36,13 +36,20 @@ interface JobListResponse {
   pagination: Http.Pagination;
 }
 
+export const JOB_STATUS = {
+  QUEUED: 'QUEUED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETE: 'COMPLETE',
+  ERROR: 'ERROR'
+} as const;
+
 export const jobs = new Signal<Signal<JobListItem>[]>([]);
 export const jobStatuses = new Signal<string[]>([]);
 export const currentPage = new Signal(1);
 export const pageCount = new Signal(0);
 export const filterStatus = new Signal('');
 
-const PAGE_SIZE = 10;
+export const PAGE_SIZE = 10;
 
 export async function loadJobs(options?: {
   limit?: number;

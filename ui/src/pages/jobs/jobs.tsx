@@ -14,6 +14,7 @@ import {
   jobs,
   jobStatuses,
   loadJobs,
+  PAGE_SIZE,
   pageCount,
   retryJob
 } from '../../services/job.service';
@@ -24,10 +25,7 @@ import { JobDrawer } from '../../components/Jobs/JobDrawer';
 
 const portal = getPortalContainer('modals');
 
-const PAGE_SIZE = 10;
-
 export function JobsPage() {
-  const drawerState = useSignal(false);
   const selectedJob = useSignal<JobDetail | null>(null);
 
   useSignalEffect(() => {
@@ -39,26 +37,31 @@ export function JobsPage() {
   });
 
   const openJobDetail = async (jobId: number) => {
-    const detail = await getJobDetail(jobId);
-    selectedJob.value = detail;
+    try {
+      const detail = await getJobDetail(jobId);
+      selectedJob.value = detail;
+    } catch (err) {
+      console.error('Failed to load job detail:', err);
+    }
   };
 
   const handleRetry = async (retryUrl: string) => {
-    const newJob = await retryJob(retryUrl);
-    selectedJob.value = newJob;
-    const skip = (currentPage.value - 1) * PAGE_SIZE;
-    loadJobs({ skip, status: filterStatus.value || undefined });
+    try {
+      const newJob = await retryJob(retryUrl);
+      selectedJob.value = newJob;
+      const skip = (currentPage.value - 1) * PAGE_SIZE;
+      loadJobs({ skip, status: filterStatus.value || undefined });
+    } catch (err) {
+      console.error('Failed to retry job:', err);
+    }
   };
 
   return (
-    <DrawerLayout openDrawer={drawerState}>
-      <div class="bg-cloud-100 border rounded border-cloud-400 shadow-md p-4">
-        <h2 className="text-2xl">Jobs</h2>
-        <br />
+    <DrawerLayout>
+      <div class="bg-cloud-100 border rounded border-cloud-400 shadow-md p-4 flex flex-col gap-4">
+        <h2 class="text-2xl">Jobs</h2>
         <StatusFilter />
-        <br />
         <Table
-          className=""
           onRowClick={(data) => {
             openJobDetail(data.value.job_id);
           }}
@@ -81,7 +84,6 @@ export function JobsPage() {
             }
           ]}
         />
-        <br />
         <Pagination
           currentPage={currentPage}
           pageCount={pageCount}
