@@ -8,7 +8,7 @@ import {
   RedditPostMetadataKeys,
   RedditResponse
 } from '../interfaces/reddit.interface';
-import { PostCreateDTO } from '../dto/post.dto';
+import { PostCreateDTO } from '@web-archive/shared';
 import { FileSystemFactory } from './file.service';
 import { JSDOM } from 'jsdom';
 import { HTTPError, NotFoundError } from '../utilities/errors.util';

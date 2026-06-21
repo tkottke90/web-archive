@@ -8,7 +8,7 @@ import {
   TagDTO,
   TagQueryDTO,
   TagUpdateDTO
-} from '../dto/post-tag.dto';
+} from '@web-archive/shared';
 import { TAGS } from '../routes';
 
 @Injectable()

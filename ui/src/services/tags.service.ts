@@ -3,7 +3,7 @@ import {
   PostTagDTO,
   TagDTO,
   TagUpdateDTO
-} from '../../../server/src/dto/post-tag.dto';
+} from '@web-archive/shared';
 import { get, patch, post, put, remove } from '../utilities/http.utils';
 
 export const loadedTags = new Signal<TagDTO[]>([]);

@@ -6,7 +6,7 @@ import { ZodQueryValidator } from '../middleware/zod.middleware';
 import { JOBS } from '../routes';
 import { JOB_STATUS } from '../constants';
 import { z } from 'zod';
-import { FuzzyNumber } from '../dto/utilities';
+import { FuzzyNumber } from '@web-archive/shared';
 
 const JobQuerySchema = z.object({
   limit: FuzzyNumber.optional(),

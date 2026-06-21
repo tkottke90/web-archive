@@ -7,7 +7,9 @@
     "skipLibCheck": true,
     "paths": {
       "react": ["./node_modules/preact/compat/"],
-      "react-dom": ["./node_modules/preact/compat/"]
+      "react-dom": ["./node_modules/preact/compat/"],
+      "@web-archive/shared": ["../packages/shared/src/index.ts"],
+      "@web-archive/shared/*": ["../packages/shared/src/*"]
     },
 
     /* Bundler mode */

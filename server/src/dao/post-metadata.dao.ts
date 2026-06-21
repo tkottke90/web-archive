@@ -2,7 +2,7 @@ import { Container, Inject, Injectable } from '@decorators/di';
 import { BaseDao } from './base.dao';
 import { PostMetadata } from '@prisma/client';
 import { DBClient } from '../db';
-import { PostMetadataDTO } from '../dto/post-metadata.dto';
+import { PostMetadataDTO } from '@web-archive/shared';
 import { POSTS } from '../routes';
 
 @Injectable()

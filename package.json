@@ -1,11 +1,19 @@
 {
-  "name": "reddit-scraper",
+  "name": "web-archive",
   "version": "1.6.5",
   "description": "",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "server",
+    "ui"
+  ],
   "type": "module",
   "main": "index.js",
   "scripts": {
     "scrape": "node index.js",
+    "build:server": "npm run build --workspace=server",
+    "build:ui": "npm run build --workspace=ui",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

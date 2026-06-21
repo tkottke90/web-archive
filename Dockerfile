@@ -1,4 +1,4 @@
-FROM node:18 AS build_stage
+FROM node:24 AS build_stage
 
 ARG BRANCH
 ARG COMMIT
@@ -14,14 +14,14 @@ WORKDIR /usr/app/
 RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
 
 # Install Files
-COPY ./dist .
-COPY ./prisma ./prisma
-COPY ./public ./public
-COPY README.md .
-COPY package.json .
-COPY package-lock.json .
-COPY bin/entrypoint.sh .
-# COPY bin/youtube-dl /usr/local/bin/youtube-dl
+COPY ./server/dist .
+COPY ./server/prisma ./prisma
+COPY ./server/public ./public
+COPY ./server/README.md .
+COPY ./server/package.json .
+COPY ./server/package-lock.json .
+COPY ./server/bin/entrypoint.sh .
+# COPY ./server/bin/youtube-dl /usr/local/bin/youtube-dl
 
 RUN chmod a+rx /usr/local/bin/youtube-dl
 
@@ -30,7 +30,7 @@ RUN npx prisma generate
 
 CMD [ "./entrypoint.sh" ]
 
-ENV PORT 3000
-ENV NODE_ENV production
+ENV PORT=3000
+ENV NODE_ENV=production
 
 EXPOSE 3000
