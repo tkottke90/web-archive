@@ -6,7 +6,7 @@ import {
   PostFileCreateDTO,
   PostFileDTO,
   PostFileUpdateDTO
-} from '../dto/post-file.dto';
+} from '@web-archive/shared';
 import { FileSystemFactory } from '../services';
 import { POSTS } from '../routes';
 

@@ -9,7 +9,7 @@ import { CustomComponent, getPortalContainer } from "../../utilities/component.u
 import { returnFileSize } from "../../utilities/number.utils";
 import { useDetailsPageContext } from "./context";
 import * as PostService from '../../services/post.service';
-import { PostFileDTO } from "../../../../server/src/dto/post-file.dto";
+import { PostFileDTO } from "@web-archive/shared";
 
 const portal = getPortalContainer("modals");
 

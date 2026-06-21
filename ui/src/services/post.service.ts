@@ -1,5 +1,5 @@
 import { Signal, batch, computed, effect } from '@preact/signals';
-import { PostDTO } from '../../../server/src/dto/post.dto';
+import { PostDTO } from '@web-archive/shared';
 import { get, getPaged, postMultipart, putMultipart, remove } from '../utilities/http.utils';
 import { applyTagToPost } from './tags.service';
 import { Http } from '../interfaces/http.interface';

@@ -25,9 +25,9 @@ import {
   PostCreateDTO,
   PostCreateSchema,
   PostQueryDTO,
-  PostQuerySchema
-} from '../dto/post.dto';
-import { FuzzyBoolean } from '../dto/utilities';
+  PostQuerySchema,
+  FuzzyBoolean
+} from '@web-archive/shared';
 import { MultipartJson } from '../middleware';
 import {
   ZodBodyValidator,

@@ -19,7 +19,7 @@ import {
   TagQuerySchema,
   TagUpdateDTO,
   TagUpdateSchema
-} from '../dto/post-tag.dto';
+} from '@web-archive/shared';
 import {
   ZodBodyValidator,
   ZodIdValidator,
