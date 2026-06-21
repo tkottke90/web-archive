@@ -2,7 +2,7 @@ import { Container, Inject, Injectable } from '@decorators/di';
 import { BaseDao } from './base.dao';
 import { PostTag } from '@prisma/client';
 import { DBClient } from '../db';
-import { PostTagDTO } from '../dto/post-tag.dto';
+import { PostTagDTO } from '@web-archive/shared';
 import { PostTagAssociation } from '../interfaces';
 import { TagDao } from './tag.dao';
 import { POSTS } from '../routes';

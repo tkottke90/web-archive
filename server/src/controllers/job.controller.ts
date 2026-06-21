@@ -17,7 +17,7 @@ import {
 import { JOBS } from '../routes';
 import { JOB_STATUS } from '../constants';
 import { z } from 'zod';
-import { FuzzyNumber } from '../dto/utilities';
+import { FuzzyNumber } from '@web-archive/shared';
 import { NotFoundError, BadRequestError } from '../utilities/errors.util';
 
 const JobQuerySchema = z.object({

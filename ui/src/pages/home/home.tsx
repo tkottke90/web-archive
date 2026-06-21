@@ -7,7 +7,7 @@ import { DrawerLayout } from "../../components/Layouts/DrawerLayout";
 import { Table } from "../../components/Table/Table";
 import { currentPage, filterAuthor, filterKeyword, filterTags, getFilterParams, loadPosts, pageCount, posts, skip } from "../../services/post.service";
 import { getTags } from "../../services/tags.service";
-import { TagDTO } from "../../../../server/src/dto/post-tag.dto";
+import { TagDTO } from "@web-archive/shared";
 
 function currentPageQuery(pageId: number) {
   const url = new URL(location.href);

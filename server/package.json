@@ -20,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@web-archive/shared": "*",
     "@decorators/di": "2.0.0",
     "@decorators/express": "2.9.1",
     "@prisma/client": "^5.9.1",

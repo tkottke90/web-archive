@@ -1,7 +1,7 @@
 import { batch, Signal, useSignal, useSignalEffect } from "@preact/signals";
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
-import { PostDTO } from "../../../../server/src/dto/post.dto";
+import { PostDTO } from "@web-archive/shared";
 import * as PostService from '../../services/post.service';
 import { CustomComponent } from "../../utilities/component.utils";
 
