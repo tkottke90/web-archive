@@ -18,6 +18,9 @@ export function MediaCard({ className }: CustomComponent) {
   const showAddModal = useSignal(false);
   const showReplaceModal = useSignal(false);
   const fileQueue = useSignal<File[]>([]);
+  const uploadUrl = useSignal("");
+  const uploadError = useSignal<string>("");
+  const isUploading = useSignal(false);
   const replaceQueue = useSignal<File[]>([]);
   const editingFile = useSignal<PostFileDTO | undefined>(undefined);
 
@@ -27,6 +30,8 @@ export function MediaCard({ className }: CustomComponent) {
   useSignalEffect(() => {
     if (!showAddModal.value) {
       fileQueue.value = [];
+      uploadUrl.value = "";
+      uploadError.value = "";
     }
   });
 
@@ -192,17 +197,49 @@ export function MediaCard({ className }: CustomComponent) {
           }} id="file-input" type="file" className="hidden" />
         </label>
         <br />
+        <label className="flex flex-col gap-1">
+          <span>Or Upload from URL</span>
+          <input
+            type="url"
+            value={uploadUrl.value}
+            placeholder="https://..."
+            onInput={(e) => {
+              const target = e.target as HTMLInputElement;
+              uploadUrl.value = target.value;
+            }}
+            className="p-2 rounded bg-slate-700 border border-slate-500"
+          />
+        </label>
+        <br />
+        {uploadError.value && (
+          <div className="w-full border-red-600 bg-red-200 text-red-600 rounded p-4 mt-2">
+            <p>{uploadError.value}</p>
+          </div>
+        )}
         <div className="actions">
           <button onClick={async () => {
             const { value } = fileQueue;
-            if (value.length === 0) return;
+            const targetUrl = uploadUrl.value.trim();
+            if (value.length === 0 && !targetUrl) return;
+            isUploading.value = true;
+            uploadError.value = "";
             try {
-              await PostService.uploadFilesToPost(post, value);
+              if (value.length > 0) {
+                await PostService.uploadFilesToPost(post, value);
+              }
+
+              if (targetUrl) {
+                await PostService.uploadFileUrlToPost(post, targetUrl);
+              }
+
               showAddModal.value = false;
-            } catch (err) {
+            } catch (err: any) {
+              uploadError.value = err?.data?.message ?? err?.message ?? 'Upload failed. Please try again.';
               console.error('Failed to upload files:', err);
+            } finally {
+              isUploading.value = false;
             }
-          }} className="primary">Upload</button>
+          }} disabled={isUploading.value} className="primary">Upload</button>
         </div>
       </Modal>
       <Modal portal={portal} show={showReplaceModal} className="p-4">

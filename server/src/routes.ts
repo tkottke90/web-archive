@@ -14,6 +14,7 @@ export const POSTS = {
   WITH_ID: POSTS_ROOT.nest(':postId'),
   NAV: POSTS_ROOT.nest(':postId/navigation'),
   FILES: POSTS_ROOT.nest(':postId/files'),
+  FILES_URL: POSTS_ROOT.nest(':postId/files/url'),
   FILES_WITH_ID: POSTS_ROOT.nest(':postId/files/:fileId'),
   FILES_CONTENT: POSTS_ROOT.nest(':postId/files/:fileId/content'),
   TAG: POSTS_ROOT.nest(':postId/tags/:tagId'),
