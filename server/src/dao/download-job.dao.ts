@@ -4,6 +4,7 @@ import { DBClient } from '../db';
 import { NotImplementedError } from '../errors/generic-errors';
 import { JOB_STATUS } from '../constants';
 import { DownloadJob, Prisma } from '@prisma/client';
+import { JOBS } from '../routes';
 
 interface DownloadJobCreate {
   data: Record<string, any>;
@@ -36,8 +37,33 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
     };
   }
 
+  toJobDetail(entity: DownloadJob) {
+    return {
+      job_id: entity.id,
+      type: entity.parser,
+      status: entity.status,
+      done: entity.done,
+      data: entity.data,
+      jobNotes: entity.jobNotes,
+      createdAt: entity.createdAt.toISOString(),
+      updatedAt: entity.updatedAt.toISOString(),
+      links: {
+        self: JOBS.WITH_ID.url({ jobId: entity.id }),
+        ...(entity.status === JOB_STATUS.ERROR && {
+          retry: JOBS.RETRY.url({ jobId: entity.id })
+        })
+      }
+    };
+  }
+
   toPersistance(entity: any): Partial<any> {
     throw new NotImplementedError();
+  }
+
+  getById(id: number) {
+    return this.client.downloadJob.findUnique({
+      where: { id }
+    });
   }
 
   find(query: JobQueryDTO) {
@@ -49,6 +75,18 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
       take,
       skip,
       where,
+      orderBy: { id: 'desc' }
+    });
+  }
+
+  findByPostId(postId: number) {
+    return this.client.downloadJob.findMany({
+      where: {
+        data: {
+          path: ['postId'],
+          equals: postId
+        }
+      },
       orderBy: { id: 'desc' }
     });
   }
@@ -76,6 +114,26 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
     }
 
     return where;
+  }
+
+  retryJob(original: DownloadJob) {
+    const data =
+      typeof original.data === 'object' && original.data !== null
+        ? {
+            ...(original.data as Record<string, any>),
+            retriedFrom: original.id
+          }
+        : { retriedFrom: original.id };
+
+    return this.client.downloadJob.create({
+      data: {
+        parser: original.parser,
+        data,
+        status: JOB_STATUS.QUEUED,
+        jobNotes: '',
+        done: false
+      }
+    });
   }
 
   create(job: DownloadJobCreate[]) {

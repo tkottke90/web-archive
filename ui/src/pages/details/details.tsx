@@ -15,6 +15,7 @@ import { MediaCard } from "./media-card";
 import { MetadataCard } from "./metadata-card";
 import { PropertiesCard } from "./properties-card";
 import { TagCard } from "./tag-card";
+import { JobCard } from "./job-card";
 
 const portal = getPortalContainer("modals");
 
@@ -58,6 +59,7 @@ export function DetailsPage() {
           <PropertiesCard />
           <TagCard />
           <MetadataCard />
+          <JobCard />
           <MediaCard className="hidden md:block"/>
         </Loading>
 

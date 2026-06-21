@@ -208,7 +208,10 @@ export class PostDao extends BaseDao<Post, PostDTO> {
     };
   }
 
-  toDTO(input: PostWithAssociations): PostDTO {
+  toDTO(
+    input: PostWithAssociations,
+    options?: { jobs?: PostDTO['jobs'] }
+  ): PostDTO {
     return {
       id: input.id,
 
@@ -219,6 +222,7 @@ export class PostDao extends BaseDao<Post, PostDTO> {
       metadata: input.metadata.map(this.postMetadataDao.toDTO),
       files: input.files.map(this.postFileDao.toDTO),
       tags: input.postTags.map(this.postTagDao.toDTO),
+      jobs: options?.jobs,
 
       links: {
         self: POSTS.WITH_ID.url({ postId: input.id }),

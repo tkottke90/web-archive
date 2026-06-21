@@ -48,5 +48,7 @@ export const SYSTEM = {
 const JOBS_ROOT = API_ROOT.nest('jobs');
 
 export const JOBS = {
-  ROOT: JOBS_ROOT
+  ROOT: JOBS_ROOT,
+  WITH_ID: JOBS_ROOT.nest(':jobId'),
+  RETRY: JOBS_ROOT.nest(':jobId/retry')
 };
