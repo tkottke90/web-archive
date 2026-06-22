@@ -34,7 +34,7 @@ jobs:
             fi
           fi
 
-          IMAGE="${{ inputs.registry || 'ghcr.io' }}/${{ inputs.image_name || env.IMAGE_NAME }}"
+          IMAGE="${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ env.IMAGE_NAME }}"
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "image_tag=${IMAGE}:${VERSION}" >> $GITHUB_OUTPUT
@@ -42,11 +42,11 @@ jobs:
       - name: Build and Push
         uses: ./.github/actions/npm-app-docker
         with:
-          registry: ${{ inputs.registry || 'ghcr.io' }}
+          registry: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}
           image-tag: ${{ steps.version.outputs.image_tag }}
-          push: ${{ inputs.deploy == true || github.event_name == 'release' }}
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          push: ${{ github.event_name == 'release' }}
+          registry-username: ${{ secrets.REGISTRY_PASSWORD }}
+          registry-password: ${{ secrets.REGISTRY_USERNAME }}
           build-args: |
             COMMIT=${{ github.sha }}
             BRANCH=${{ github.ref }}
