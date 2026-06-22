@@ -15,7 +15,7 @@ export interface CmdOutput {
  * Bash understands this as a raw string and wont try and interpret
  * the contents.
  */
-export function escapedValue(value: any) {
+export function escapedValue(value: string | number | boolean) {
   return `'${value}'`;
 }
 

@@ -3,6 +3,10 @@ import chai from 'chai';
 import sinon from 'sinon';
 import { PostDao } from '../dao/post.dao';
 import { PostWithAssociations } from '../interfaces';
+import type { DBClient } from '../db';
+import type { PostFileDao } from '../dao/post-file.dao';
+import type { PostTagDao } from '../dao/post-tag.dao';
+import type { PostMetadataDao } from '../dao/post-metadata.dao';
 
 chai.should();
 
@@ -25,7 +29,12 @@ function makeDao(findFirstStub: sinon.SinonStub): PostDao {
   const mockClient = {
     post: { findFirst: findFirstStub }
   };
-  return new PostDao(mockClient as any, {} as any, {} as any, {} as any);
+  return new PostDao(
+    mockClient as unknown as DBClient,
+    {} as unknown as PostFileDao,
+    {} as unknown as PostTagDao,
+    {} as unknown as PostMetadataDao
+  );
 }
 
 describe('PostDao.findByIdWithBeforeAndAfter', () => {
@@ -48,9 +57,9 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
       findFirstStub
     ).findByIdWithBeforeAndAfter(5);
 
-    prev!.should.equal('/post/4');
-    curr!.should.equal('/post/5');
-    next!.should.equal('/post/6');
+    (prev as string).should.equal('/post/4');
+    (curr as string).should.equal('/post/5');
+    (next as string).should.equal('/post/6');
   });
 
   it('returns the correct adjacent posts when IDs have gaps (non-sequential indexing)', async () => {
@@ -63,9 +72,9 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
       findFirstStub
     ).findByIdWithBeforeAndAfter(5);
 
-    prev!.should.equal('/post/1');
-    curr!.should.equal('/post/5');
-    next!.should.equal('/post/10'); // NOT /post/6 which does not exist
+    (prev as string).should.equal('/post/1');
+    (curr as string).should.equal('/post/5');
+    (next as string).should.equal('/post/10'); // NOT /post/6 which does not exist
   });
 
   it('returns undefined for previous when at the first post', async () => {
@@ -78,8 +87,8 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
     ).findByIdWithBeforeAndAfter(1);
 
     (prev === undefined).should.equal(true);
-    curr!.should.equal('/post/1');
-    next!.should.equal('/post/5');
+    (curr as string).should.equal('/post/1');
+    (next as string).should.equal('/post/5');
   });
 
   it('returns undefined for next when at the last post', async () => {
@@ -91,8 +100,8 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
       findFirstStub
     ).findByIdWithBeforeAndAfter(20);
 
-    prev!.should.equal('/post/10');
-    curr!.should.equal('/post/20');
+    (prev as string).should.equal('/post/10');
+    (curr as string).should.equal('/post/20');
     (next === undefined).should.equal(true);
   });
 
@@ -106,7 +115,7 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
     ).findByIdWithBeforeAndAfter(7);
 
     (prev === undefined).should.equal(true);
-    curr!.should.equal('/post/7');
+    (curr as string).should.equal('/post/7');
     (next === undefined).should.equal(true);
   });
 
@@ -116,8 +125,8 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
     try {
       await makeDao(findFirstStub).findByIdWithBeforeAndAfter(999);
       throw new Error('Should have thrown');
-    } catch (err: any) {
-      err.message.should.include('Post Not Found with ID [999]');
+    } catch (err: unknown) {
+      (err as Error).message.should.include('Post Not Found with ID [999]');
     }
   });
 
@@ -130,13 +139,14 @@ describe('PostDao.findByIdWithBeforeAndAfter', () => {
       findFirstStub
     ).findByIdWithBeforeAndAfter(5, {
       author: 'author-a'
-    } as any);
+    } as unknown as Parameters<typeof findFirstStub>[0]);
 
-    prev!.should.equal('/post/2');
-    curr!.should.equal('/post/5');
-    next!.should.equal('/post/9');
+    (prev as string).should.equal('/post/2');
+    (curr as string).should.equal('/post/5');
+    (next as string).should.equal('/post/9');
 
     // All three findFirst calls must include the author filter in the where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     findFirstStub.args.forEach((args: any[]) => {
       args[0].where.author.should.deep.equal({
         contains: 'author-a',

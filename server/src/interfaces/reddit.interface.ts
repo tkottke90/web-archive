@@ -38,7 +38,7 @@ interface RedditPostData {
   media_metadata?: Record<string, MediaMetadataValue>;
 }
 
-export type RedditItem = RedditSchema<any>;
+export type RedditItem = RedditSchema<unknown>;
 export type RedditPost = RedditSchema<RedditPostData>;
 
 export type RedditListing = RedditSchema<{

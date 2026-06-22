@@ -1,7 +1,7 @@
 export class BaseError extends Error {
   constructor(
     public message: string,
-    readonly details: Record<string, any> = {}
+    readonly details: Record<string, unknown> = {}
   ) {
     super(message);
   }
@@ -20,12 +20,12 @@ export class BaseError extends Error {
 
 export class HTTPError extends Error {
   code: number;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 
   constructor(
     message: string,
     code: number,
-    details: Record<string, any> = {}
+    details: Record<string, unknown> = {}
   ) {
     super(message);
     this.code = code;

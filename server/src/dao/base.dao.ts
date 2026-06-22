@@ -1,8 +1,7 @@
 import type { DBClient } from '../db';
 import { basename } from 'path';
 
-type Optional<T> = T | undefined;
-type QueryDTO = Record<string, any> & {
+type QueryDTO = Record<string, unknown> & {
   limit?: number;
   skip?: number;
   sort?: { [key: string]: 'ASC' | 'DESC' };

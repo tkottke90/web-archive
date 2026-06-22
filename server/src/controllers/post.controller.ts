@@ -197,7 +197,7 @@ export class PostController {
         throw new NotFoundError('Unable to get file');
       }
 
-      await this.fileSystem.exists(content.filename).catch(async (err: any) => {
+      await this.fileSystem.exists(content.filename).catch(async () => {
         // If the file does not exist, we should remove the corresponding record
         // from the database
         await this.postFileDao.delete(content.id);
@@ -391,9 +391,11 @@ export class PostController {
       let content: Response;
       try {
         content = await fetch(body.url);
-      } catch (err: any) {
+      } catch (err: unknown) {
         throw new BadRequestError(
-          `Failed to fetch URL [${body.url}]: ${err.message}`
+          `Failed to fetch URL [${body.url}]: ${
+            err instanceof Error ? err.message : String(err)
+          }`
         );
       }
 
@@ -413,9 +415,11 @@ export class PostController {
       let data: Buffer;
       try {
         data = Buffer.from(await content.arrayBuffer());
-      } catch (err: any) {
+      } catch (err: unknown) {
         throw new BadRequestError(
-          `Failed to read response body from [${body.url}]: ${err.message}`
+          `Failed to read response body from [${body.url}]: ${
+            err instanceof Error ? err.message : String(err)
+          }`
         );
       }
 

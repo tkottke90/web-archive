@@ -8,7 +8,7 @@ import { TagDao } from './tag.dao';
 import { POSTS } from '../routes';
 
 @Injectable()
-export class PostTagDao extends BaseDao<PostTag, any> {
+export class PostTagDao extends BaseDao<PostTag, PostTagDTO> {
   constructor(
     @Inject('PrismaClient') private client: DBClient,
     @Inject('TagDao') private tagDao: TagDao
@@ -69,7 +69,7 @@ export class PostTagDao extends BaseDao<PostTag, any> {
       updatedAt: entity.updatedAt
     };
   }
-  toPersistance(entity: PostTagDTO): Partial<PostTag> {
+  toPersistance(_entity: PostTagDTO): Partial<PostTag> {
     throw new Error('Method not implemented.');
   }
 }

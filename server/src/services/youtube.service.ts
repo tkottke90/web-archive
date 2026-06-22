@@ -264,8 +264,9 @@ export class YoutubeParser {
             jobLogger.log('debug', 'Cleanup complete', {
               targetPath: path
             });
-          } catch (error: any) {
-            const details = error?.toString() ?? error.message;
+          } catch (error: unknown) {
+            const details =
+              error instanceof Error ? error.message : String(error);
 
             jobLogger.log('error', details);
             await this.downloadJobsDao.jobError(job.id, details);

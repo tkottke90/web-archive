@@ -11,7 +11,7 @@ import { FileSystemFactory } from '../services';
 import { POSTS } from '../routes';
 
 @Injectable()
-export class PostFileDao extends BaseDao<PostFile, any> {
+export class PostFileDao extends BaseDao<PostFile, PostFileDTO> {
   constructor(
     @Inject('PrismaClient') private readonly client: DBClient,
     @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory
@@ -102,7 +102,7 @@ export class PostFileDao extends BaseDao<PostFile, any> {
       updatedAt: entity.updatedAt
     };
   }
-  toPersistance(entity: any): Partial<PostFile> {
+  toPersistance(_entity: PostFileDTO): Partial<PostFile> {
     throw new Error('Method not implemented.');
   }
 }

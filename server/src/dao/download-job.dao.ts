@@ -7,7 +7,7 @@ import { DownloadJob, Prisma } from '@prisma/client';
 import { JOBS } from '../routes';
 
 interface DownloadJobCreate {
-  data: Record<string, any>;
+  data: Prisma.InputJsonValue;
   parser: string;
 }
 
@@ -23,7 +23,7 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
     super(client);
   }
 
-  toDTO(entity: any): any {
+  toDTO(_entity: unknown): unknown {
     throw new NotImplementedError();
   }
 
@@ -56,7 +56,7 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
     };
   }
 
-  toPersistance(entity: any): Partial<any> {
+  toPersistance(_entity: unknown): Partial<unknown> {
     throw new NotImplementedError();
   }
 
@@ -117,10 +117,10 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
   }
 
   retryJob(original: DownloadJob) {
-    const data =
+    const data: Prisma.InputJsonValue =
       typeof original.data === 'object' && original.data !== null
         ? {
-            ...(original.data as Record<string, any>),
+            ...(original.data as Prisma.JsonObject),
             retriedFrom: original.id
           }
         : { retriedFrom: original.id };

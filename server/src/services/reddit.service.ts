@@ -15,7 +15,7 @@ import { HTTPError, NotFoundError } from '../utilities/errors.util';
 import { LoggerService } from './logger.service';
 import { PostTagDao } from '../dao/post-tag.dao';
 import { NS_PER_SEC, NS_TO_MS, SYSTEM_TAGS } from '../constants';
-import { Post } from '@prisma/client';
+import { Post, Prisma } from '@prisma/client';
 import mime from 'mime-types';
 import { randomUUID } from 'crypto';
 import { basename } from 'path';
@@ -50,10 +50,8 @@ export class RedditScraper {
     const start = process.hrtime();
 
     const newPosts: RedditPost[] = [];
-    let postPageCount = 0;
 
     for await (const posts of this.getAllRedditItems(url, headers)) {
-      postPageCount++;
       // this.logger.log(
       //   'debug',
       //   `[RedditParser] Loading Posts from page: ${postPageCount}`,
@@ -227,7 +225,10 @@ export class RedditScraper {
       // Not part of the RedditListing structure
       // but when an error is returned then we see this property
       if ('error' in data) {
-        const { error, message } = data as any;
+        const { error, message } = data as unknown as {
+          error: number;
+          message: string;
+        };
 
         throw new HTTPError(message, error);
       }
@@ -513,7 +514,7 @@ export class RedditScraper {
 
     await this.downloadJobsDao.create(
       data.map((post) => ({
-        data: post,
+        data: post as unknown as Prisma.InputJsonValue,
         parser: REDDIT_JOB
       }))
     );

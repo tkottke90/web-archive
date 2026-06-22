@@ -3,7 +3,6 @@ import express from 'express';
 import pgk from '../../package.json';
 import { SERVER } from '../routes';
 
-const BRANCH = process.env.BRANCH ?? '';
 const COMMIT = process.env.COMMIT ?? '';
 
 @Controller('/')

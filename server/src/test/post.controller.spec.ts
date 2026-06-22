@@ -3,6 +3,12 @@ import sinon from 'sinon';
 import express from 'express';
 import { PostController } from '../controllers/post.controller';
 import { BadRequestError, NotFoundError } from '../utilities/errors.util';
+import type { PostDao } from '../dao/post.dao';
+import type { PostFileDao } from '../dao/post-file.dao';
+import type { PostTagDao } from '../dao/post-tag.dao';
+import type { TagDao } from '../dao/tag.dao';
+import type { FileSystemFactory } from '../services/file.service';
+import type { DownloadJobDao } from '../dao/download-job.dao';
 
 chai.should();
 
@@ -15,14 +21,14 @@ describe('PostController - URL Upload', () => {
   const postFileDao = {
     create: sinon.stub()
   };
-  const postTagDao = {} as any;
-  const tagDao = {} as any;
+  const postTagDao = {} as unknown as PostTagDao;
+  const tagDao = {} as unknown as TagDao;
   const fileSystem = {
     upload: sinon.stub()
   };
 
   before(() => {
-    (global as any).fetch = fetchStub;
+    (globalThis as Record<string, unknown>).fetch = fetchStub;
   });
 
   beforeEach(() => {
@@ -34,7 +40,7 @@ describe('PostController - URL Upload', () => {
   });
 
   after(() => {
-    delete (global as any).fetch;
+    delete (globalThis as Record<string, unknown>).fetch;
   });
 
   afterEach(() => {
@@ -46,11 +52,12 @@ describe('PostController - URL Upload', () => {
 
   const makeController = () =>
     new PostController(
-      postDao as any,
-      postFileDao as any,
+      postDao as unknown as PostDao,
+      postFileDao as unknown as PostFileDao,
       postTagDao,
       tagDao,
-      fileSystem as any
+      fileSystem as unknown as FileSystemFactory,
+      {} as unknown as DownloadJobDao
     );
 
   it('should download url content and add file to post', async () => {
@@ -96,7 +103,7 @@ describe('PostController - URL Upload', () => {
     await makeController().addFileUrlToPost(
       123,
       { url: 'https://example.com/a.mp3' },
-      { json: sinon.spy() } as any,
+      { json: sinon.spy() } as unknown as express.Response,
       next
     );
 
@@ -112,7 +119,7 @@ describe('PostController - URL Upload', () => {
     await makeController().addFileUrlToPost(
       123,
       { url: 'https://example.com/a.mp3' },
-      { json: sinon.spy() } as any,
+      { json: sinon.spy() } as unknown as express.Response,
       next
     );
 
@@ -132,7 +139,7 @@ describe('PostController - URL Upload', () => {
     await makeController().addFileUrlToPost(
       123,
       { url: 'https://example.com/a.mp3' },
-      { json: sinon.spy() } as any,
+      { json: sinon.spy() } as unknown as express.Response,
       next
     );
 
@@ -150,7 +157,7 @@ describe('PostController - URL Upload', () => {
     await makeController().addFileUrlToPost(
       123,
       { url: 'https://example.com/a.mp3' },
-      { json: sinon.spy() } as any,
+      { json: sinon.spy() } as unknown as express.Response,
       next
     );
 

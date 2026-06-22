@@ -2,15 +2,19 @@ import { Container } from '@decorators/di';
 
 const Log_Levels = ['error', 'warn', 'info', 'debug'] as const;
 
-type tempLevels = typeof Log_Levels[number];
+type tempLevels = (typeof Log_Levels)[number];
 
 interface ILoggerService<Levels extends string> {
-  log: (level: Levels, message: string, metadata?: Record<string, any>) => void;
+  log: (
+    level: Levels,
+    message: string,
+    metadata?: Record<string, unknown>
+  ) => void;
   error: (error: Error) => void;
 }
 
 export class LoggerService implements ILoggerService<tempLevels> {
-  constructor(private commonMetadata: Record<string, any> = {}) {}
+  constructor(private commonMetadata: Record<string, unknown> = {}) {}
 
   get Log_Level() {
     const envLevel = (process.env.LOG_LEVEL ?? 'info').toLocaleLowerCase();
@@ -28,7 +32,7 @@ export class LoggerService implements ILoggerService<tempLevels> {
     return logLevel <= this.Log_Level;
   }
 
-  log(level: tempLevels, message: string, metadata?: Record<string, any>) {
+  log(level: tempLevels, message: string, metadata?: Record<string, unknown>) {
     // Check if the severity is high enough to log;
     if (!this.isHighEnoughSeverity(level)) {
       return;
@@ -63,7 +67,7 @@ export class LoggerService implements ILoggerService<tempLevels> {
    * the logger by populating metadata into log messages
    * without having to add it each time
    */
-  createLogger(metadata?: Record<string, any>) {
+  createLogger(metadata?: Record<string, unknown>) {
     return new LoggerService({ ...this.commonMetadata, ...metadata });
   }
 }

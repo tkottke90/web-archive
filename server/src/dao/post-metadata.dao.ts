@@ -6,7 +6,7 @@ import { PostMetadataDTO } from '@web-archive/shared';
 import { POSTS } from '../routes';
 
 @Injectable()
-export class PostMetadataDao extends BaseDao<PostMetadata, any> {
+export class PostMetadataDao extends BaseDao<PostMetadata, PostMetadataDTO> {
   constructor(@Inject('PrismaClient') private client: DBClient) {
     super(client);
   }
@@ -28,7 +28,7 @@ export class PostMetadataDao extends BaseDao<PostMetadata, any> {
     };
   }
 
-  toPersistance(entity: any): Partial<PostMetadata> {
+  toPersistance(_entity: PostMetadataDTO): Partial<PostMetadata> {
     throw new Error('Method not implemented.');
   }
 }

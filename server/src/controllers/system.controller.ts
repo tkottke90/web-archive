@@ -33,7 +33,7 @@ export class SystemController {
 
   @Post(SYSTEM.POST_RECOVERY.path)
   async runPostRecovery(
-    @Query() query: any,
+    @Query() query: { cursor?: string; skip?: string; limit?: string },
     @Response() res: express.Response,
     @Next() next: express.NextFunction
   ) {
