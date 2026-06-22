@@ -19,13 +19,13 @@ COPY ./server/prisma ./prisma
 COPY ./server/public ./public
 COPY ./server/README.md .
 COPY ./server/package.json .
-COPY ./server/package-lock.json .
 COPY ./server/bin/entrypoint.sh .
 # COPY ./server/bin/youtube-dl /usr/local/bin/youtube-dl
 
+COPY ./node_modules ./node_modules
+
 RUN chmod a+rx /usr/local/bin/youtube-dl
 
-RUN npm install --production
 RUN npx prisma generate
 
 CMD [ "./entrypoint.sh" ]

@@ -1,0 +1,15 @@
+# Source (compiled output is copied from server/dist and server/public)
+server/src
+server/test
+ui/
+packages/shared/src
+
+# Git and config
+.git
+**/tsconfig*.json
+**/.eslintrc*
+**/.prettierrc*
+
+# Local env files
+**/.env
+**/.env.*

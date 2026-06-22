@@ -2,12 +2,20 @@
   "name": "@web-archive/shared",
   "version": "0.0.0",
   "description": "Shared types and DTOs for web-archive",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "types": "src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./dto": "./src/dto/index.ts",
-    "./dto/*": "./src/dto/*.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./dto": {
+      "types": "./src/dto/index.ts",
+      "default": "./dist/dto/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
   },
   "dependencies": {
     "zod": "3.22.4"

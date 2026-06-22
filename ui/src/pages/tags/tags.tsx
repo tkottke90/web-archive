@@ -3,7 +3,7 @@ import { Fragment } from 'preact';
 import { createPortal } from 'preact/compat';
 import { DrawerLayout } from '../../components/Layouts/DrawerLayout';
 import { getTags, loadedTags, updateTag } from '../../services/tags.service';
-import { TagDTO } from '../../../../server/src/dto/post-tag.dto';
+import { TagDTO } from '@web-archive/shared';
 import { getPortalContainer } from '../../utilities/dom.utils';
 
 const portal = getPortalContainer('modals');
