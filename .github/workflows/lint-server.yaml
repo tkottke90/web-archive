@@ -1,31 +1,122 @@
 name: Lint Server
 
 on:
-  workflow_call:
-
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   Linter:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node Env
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
 
-      - name: Install Packages
+      - name: Install packages
+        run: npm ci
+
+      - name: Format check
+        id: format
         working-directory: server
-        run: npm install
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx prettier --config .prettierrc --check 'src/**/*.ts' 2>&1 | tee format-report.txt
 
-      - name: Lint Server
+      - name: Lint
+        id: lint
         working-directory: server
-        run: ls -halt && npm run cicd-lint
+        continue-on-error: true
+        run: npm run cicd-lint
 
-      - name: Update summary
+      - name: Generate lint markdown
+        if: always()
         working-directory: server
         run: |
-          npm_config_yes=true npx github:10up/eslint-json-to-md --path ./eslint-report.json --output ./eslint-report.md
-          cat eslint-report.md >> $GITHUB_STEP_SUMMARY
+          if [ -f eslint-report.json ]; then
+            npm_config_yes=true npx github:10up/eslint-json-to-md \
+              --path ./eslint-report.json \
+              --output ./eslint-report.md
+          fi
+
+      - name: Build report
+        id: report
+        if: always()
+        working-directory: server
+        run: |
+          FORMAT_OUTCOME="${{ steps.format.outcome }}"
+          LINT_OUTCOME="${{ steps.lint.outcome }}"
+
+          if [[ "$FORMAT_OUTCOME" != "failure" && "$LINT_OUTCOME" != "failure" ]]; then
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "has_issues=true" >> $GITHUB_OUTPUT
+
+          {
+            echo "## Lint & Format Results"
+            echo ""
+
+            if [[ "$FORMAT_OUTCOME" == "failure" ]]; then
+              echo "### :art: Format Issues"
+              echo ""
+              echo '```'
+              cat format-report.txt
+              echo '```'
+              echo ""
+            fi
+
+            if [[ "$LINT_OUTCOME" == "failure" ]] && [ -f eslint-report.md ]; then
+              echo "### :mag: Lint Issues"
+              echo ""
+              cat eslint-report.md
+            fi
+          } | tee combined-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Post PR comment
+        if: always() && github.event_name == 'pull_request' && steps.report.outputs.has_issues == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- lint-server-report -->';
+            const body = fs.readFileSync('server/combined-report.md', 'utf8');
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.data.find(c => c.body.includes(marker));
+            const fullBody = `${marker}\n${body}`;
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: fullBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: fullBody,
+              });
+            }
+
+      - name: Fail if issues found
+        if: always() && steps.report.outputs.has_issues == 'true'
+        run: exit 1

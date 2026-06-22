@@ -1,65 +1,24 @@
 name: Docker Build
 
 on:
-  workflow_call:
-    inputs:
-      deploy:
-        type: boolean
-        default: false
-      dockerfile:
-        type: string
-        default: 'Dockerfile'
-      image_name:
-        type: string
-        required: false
-      image_tag:
-        type: string
-        default: 'latest'
-      registry:
-        type: string
-        default: 'ghcr.io'
-      target_dir:
-        type: string
-        default: "."
-    outputs:
-      image:
-        value: ${{ jobs.Builder.outputs.img }}
-
-
+  pull_request:
+  release:
+    types: [published]
+    
 env:
-  # github.repository as <account>/<repo>
   IMAGE_NAME: "@tkottke90/web-archive"
 
 jobs:
   Builder:
     runs-on: ubuntu-latest
     outputs:
-      img: ${{ steps.img_build.outputs.imgname }}
+      img: ${{ steps.version.outputs.image_tag }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node Env
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install Packages
-        working-directory: ${{ inputs.target_dir }}
-        run: npm install
-
-      - name: Build Server
-        working-directory: ${{ inputs.target_dir }}
-        run: npm run build
-
-      # Allows me to create various versions of the software depending on how the automation is run
-      #  - When a tag is created, a new latest tagged version is created
-      #  - When pushes are made to a `release` branch, a new Release Candidate is created
-      #  - When a PR is created/updated OR when the workflow is run manually, a snapshot image is created
-      #    - Importantly, PR builds are not pushed to the registry as that would get super messy
       - name: Get Version
         id: version
-        working-directory: ${{ inputs.target_dir }}
         env:
           REF_TYPE: ${{ github.ref_type }}
           REF: ${{ github.ref }}
@@ -75,43 +34,20 @@ jobs:
             fi
           fi
 
+          IMAGE="${{ inputs.registry || 'ghcr.io' }}/${{ inputs.image_name || env.IMAGE_NAME }}"
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "image_tag=${IMAGE}:${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Build Image
-        id: img_build
-        working-directory: ${{ inputs.target_dir }}
-        env:
-          API_IMAGE: "${{ inputs.registry }}/${{ inputs.image_name || env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
-          VERSION: ${{ steps.version.outputs.version }}
-          COMMIT: ${{ github.sha }}
-          BRANCH: ${{ github.ref }}
-          FILE: ${{ inputs.dockerfile }}
-        run: |
-          echo "# Image Details" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "COMMIT: $COMMIT" >> $GITHUB_STEP_SUMMARY
-          echo "BRANCH: $BRANCH" >> $GITHUB_STEP_SUMMARY
-          
-          docker build \
-            -f $FILE \
-            -t $API_IMAGE \
-            --build-arg "COMMIT=$(git rev-parse HEAD)" \
-            --build-arg "BRANCH=$(git rev-parse --abbrev-ref HEAD)"  \
-            --build-arg "VERSION=$VERSION"  \
-            .
-
-          echo "imgname=$API_IMAGE" >> $GITHUB_OUTPUT
-
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+      - name: Build and Push
+        uses: ./.github/actions/npm-app-docker
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push to Github Packeges
-        env:
-          API_IMAGE: "${{ inputs.registry }}/${{ inputs.image_name || env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
-        run: |
-          docker push $API_IMAGE
+          registry: ${{ inputs.registry || 'ghcr.io' }}
+          image-tag: ${{ steps.version.outputs.image_tag }}
+          push: ${{ inputs.deploy == true || github.event_name == 'release' }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          build-args: |
+            COMMIT=${{ github.sha }}
+            BRANCH=${{ github.ref }}
+            VERSION=${{ steps.version.outputs.version }}
