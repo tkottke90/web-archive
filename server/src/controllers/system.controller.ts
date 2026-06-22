@@ -40,12 +40,12 @@ export class SystemController {
     try {
       this.scannerLogger.log('info', 'Starting post recovery scan');
 
-      const cursor = parseInt(query.cursor, 10) || undefined;
+      const cursor = parseInt(query.cursor ?? '', 10) || undefined;
 
       const posts = await this.postDao.find({
         cursor,
-        skip: parseInt(query.skip, 10) || undefined,
-        limit: parseInt(query.limit, 10) || 100,
+        skip: parseInt(query.skip ?? '', 10) || undefined,
+        limit: parseInt(query.limit ?? '', 10) || 100,
         archived: false
       });
       let postsScanned = 0;
