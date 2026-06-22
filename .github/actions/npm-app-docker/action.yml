@@ -55,19 +55,11 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-
-    - name: Configure npm registry
-      if: inputs.npm-token != ''
-      shell: bash
-      run: |
-        REGISTRY_HOST=$(echo "${{ inputs.npm-registry }}" | sed 's|https\?://||')
-        echo "::add-mask::${{ inputs.npm-token }}"
-        echo "registry=${{ inputs.npm-registry }}" >> ~/.npmrc
-        echo "//${REGISTRY_HOST}/:_authToken=${{ inputs.npm-token }}" >> ~/.npmrc
-
-    - name: Install dependencies
-      shell: bash
-      run: npm ci
+    
+    - name: Setup Node.js and install dependencies
+      uses: tkottke90/js-libraries/actions/setup-node-cicd@4b026d8f465370d69e2ef328d7f5b57c7e95b5b8
+      with:
+        npm-token: ${{ inputs.npm-token }}
 
     - name: Format
       shell: bash
