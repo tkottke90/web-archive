@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get Version
         id: version
@@ -42,11 +44,13 @@ jobs:
       - name: Build and Push
         uses: ./.github/actions/npm-app-docker
         with:
-          registry: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}
           image-tag: ${{ steps.version.outputs.image_tag }}
+          npm-registry: ${{ vars.NPM_REGISTRY_URL }}
+          npm-token: ${{ secrets.NPM_REGISTRY_TOKEN  }}
           push: ${{ github.event_name == 'release' }}
-          registry-username: ${{ secrets.REGISTRY_PASSWORD }}
           registry-password: ${{ secrets.REGISTRY_USERNAME }}
+          registry-username: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}
           build-args: |
             COMMIT=${{ github.sha }}
             BRANCH=${{ github.ref }}
