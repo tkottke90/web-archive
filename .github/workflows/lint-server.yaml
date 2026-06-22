@@ -16,13 +16,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js and install dependencies
+        uses: tkottke90/js-libraries/actions/setup-node-cicd@3510e914a01ba743d09ad56557104fe23829c059
         with:
-          node-version: 24
-
-      - name: Install packages
-        run: npm ci
+          registry-url: ${{ vars.NPM_REGISTRY_URL }}
+          node-auth-token: ${{ secrets.NPM_REGISTRY_TOKEN }}
 
       - name: Format check
         id: format
