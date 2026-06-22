@@ -26,8 +26,11 @@ jobs:
         working-directory: server
         continue-on-error: true
         run: |
-          set -o pipefail
-          npx prettier --config .prettierrc --check 'src/**/*.ts' 2>&1 | tee format-report.txt
+          npx prettier --config .prettierrc --write 'src/**/*.ts'
+          git diff -- . | tee format-report.txt
+          EXIT_CODE=$([ -s format-report.txt ] && echo 1 || echo 0)
+          git restore .
+          exit $EXIT_CODE
 
       - name: Lint
         id: lint
