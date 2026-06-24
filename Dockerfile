@@ -23,6 +23,8 @@ COPY ./server/bin/entrypoint.sh .
 # COPY ./server/bin/youtube-dl /usr/local/bin/youtube-dl
 
 COPY ./node_modules ./node_modules
+COPY ./packages/shared/dist ./packages/shared/dist
+COPY ./packages/shared/package.json ./packages/shared/package.json
 
 RUN chmod a+rx /usr/local/bin/youtube-dl
 

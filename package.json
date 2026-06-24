@@ -14,7 +14,8 @@
     "scrape": "node index.js",
     "build:server": "npm run build --workspace=server",
     "build:ui": "npm run build --workspace=ui",
-    "build": "npm run build --workspace=packages/shared && npm run build:server && npm run build:ui && npm prune --omit=dev && docker build --build-arg BRANCH=$(git rev-parse --abbrev-ref HEAD) --build-arg COMMIT=$(git rev-parse --short HEAD) -t web-archive:local . && npm install",
+    "build": "npm run build --workspace=packages/shared && npm run build:server && npm run build:ui && npm prune --omit=dev && docker buildx build --platform linux/amd64 --build-arg BRANCH=$(git rev-parse --abbrev-ref HEAD) --build-arg COMMIT=$(git rev-parse --short HEAD) -t web-archive:local --load . && npm install",
+    "docker:deploy": "VERSION=$(node -p \"require('./package.json').version\") && docker tag web-archive:local docker.artifacts.tdkottke.com/web-archive:latest && docker tag web-archive:local docker.artifacts.tdkottke.com/web-archive:$VERSION && docker push docker.artifacts.tdkottke.com/web-archive:latest && docker push docker.artifacts.tdkottke.com/web-archive:$VERSION",
     "test": "npm run test --workspaces --if-present"
   },
   "keywords": [],
