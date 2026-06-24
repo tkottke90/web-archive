@@ -4,7 +4,9 @@ import {
   useSignal,
   useSignalEffect
 } from '@preact/signals';
+import { Fragment } from 'preact';
 import { createPortal } from 'preact/compat';
+import { useEffect } from 'preact/hooks';
 import { DrawerLayout } from '../../components/Layouts/DrawerLayout';
 import {
   currentPage,
@@ -27,6 +29,8 @@ const portal = getPortalContainer('modals');
 
 export function JobsPage() {
   const selectedJob = useSignal<JobDetail | null>(null);
+  const jobLoadError = useSignal('');
+  const pendingJobId = useSignal<number | null>(null);
 
   useSignalEffect(() => {
     const skip = (currentPage.value - 1) * PAGE_SIZE;
@@ -37,11 +41,14 @@ export function JobsPage() {
   });
 
   const openJobDetail = async (jobId: number) => {
+    selectedJob.value = null;
+    jobLoadError.value = '';
+    pendingJobId.value = jobId;
     try {
       const detail = await getJobDetail(jobId);
       selectedJob.value = detail;
-    } catch (err) {
-      console.error('Failed to load job detail:', err);
+    } catch (_err) {
+      jobLoadError.value = `Failed to load job #${jobId}. Please try again.`;
     }
   };
 
@@ -54,6 +61,12 @@ export function JobsPage() {
     } catch (err) {
       console.error('Failed to retry job:', err);
     }
+  };
+
+  const handleClose = () => {
+    selectedJob.value = null;
+    jobLoadError.value = '';
+    pendingJobId.value = null;
   };
 
   return (
@@ -97,14 +110,80 @@ export function JobsPage() {
         createPortal(
           <JobDrawer
             job={selectedJob.value}
-            onClose={() => {
-              selectedJob.value = null;
-            }}
+            onClose={handleClose}
             onRetry={handleRetry}
           />,
           portal
         )}
+
+      {jobLoadError.value &&
+        createPortal(
+          <JobErrorDrawer
+            jobId={pendingJobId.value}
+            message={jobLoadError.value}
+            onClose={handleClose}
+            onRetry={() => pendingJobId.value !== null && openJobDetail(pendingJobId.value)}
+          />,
+          portal
+        )}
     </DrawerLayout>
+  );
+}
+
+interface JobErrorDrawerProps {
+  jobId: number | null;
+  message: string;
+  onClose: () => void;
+  onRetry: () => void;
+}
+
+function JobErrorDrawer({ jobId, message, onClose, onRetry }: JobErrorDrawerProps) {
+  const visible = useSignal(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      visible.value = true;
+    });
+  }, []);
+
+  const handleClose = () => {
+    visible.value = false;
+    setTimeout(onClose, 200);
+  };
+
+  return (
+    <Fragment>
+      <div
+        class={`fixed inset-0 z-50 transition-opacity duration-200 ${visible.value ? 'bg-black bg-opacity-50' : 'bg-transparent'}`}
+        onClick={handleClose}
+      />
+      <div
+        class={`fixed top-0 right-0 bottom-0 z-50 w-[90%] md:w-[90%] lg:w-[500px] bg-white shadow-lg overflow-y-auto transition-transform duration-200 ${visible.value ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div class="p-4 flex flex-col gap-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xl font-bold">
+              {jobId !== null ? `Job #${jobId}` : 'Job Detail'}
+            </h3>
+            <button
+              class="px-2 py-1 text-sm border border-cloud-400 rounded hover:bg-cloud-200"
+              onClick={handleClose}
+            >
+              Close
+            </button>
+          </div>
+          <div class="border border-red-600 bg-red-200 text-red-600 rounded p-4">
+            <p>{message}</p>
+          </div>
+          <button
+            class="px-3 py-1 text-sm border border-cloud-400 rounded hover:bg-cloud-200 self-start"
+            onClick={onRetry}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    </Fragment>
   );
 }
 

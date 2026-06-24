@@ -62,7 +62,7 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
 
   getById(id: number) {
     return this.client.downloadJob.findUnique({
-      where: { id }
+      where: { id: Number(id) }
     });
   }
 
