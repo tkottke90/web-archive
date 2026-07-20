@@ -4,7 +4,8 @@
   "description": "Web application to store content I find on the web that I want to keep in a standardized way",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "prisma generate && tsc",
+    "generate": "prisma generate",
     "format": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "test": "nyc mocha",
     "scan": "sonar-scanner",
