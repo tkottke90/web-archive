@@ -32,6 +32,7 @@ export function DetailsPageContext({ children }: CustomComponent) {
       loading.value = true;
       prevPost.value = '';
       nextPost.value = '';
+      post.value = undefined;
     });
 
     PostService.postDetails(path.value)
