@@ -6,5 +6,4 @@ dist
 # Files
 secrets.json
 .DS_Store
-.npmrc
 bin/load-examples.sh
