@@ -11,7 +11,7 @@ export class ServerStatusController {
   getRoot(@Response() res: express.Response) {
     res.json({
       name: 'Web Storage',
-      version: pgk.version,
+      version: process.env.VERSION ?? pgk.version,
       commit: COMMIT
     });
   }

@@ -2,11 +2,13 @@ FROM node:24 AS build_stage
 
 ARG BRANCH
 ARG COMMIT
+ARG VERSION
 
 ENV BRANCH=${BRANCH}
 ENV COMMIT=${COMMIT}
+ENV VERSION=${VERSION}
 
-RUN echo "Image Details: $BRANCH | $COMMIT"
+RUN echo "Image Details: $BRANCH | $COMMIT | $VERSION"
 
 WORKDIR /usr/app/
 
