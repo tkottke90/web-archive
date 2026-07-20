@@ -3,17 +3,26 @@ FROM node:24 AS build_stage
 ARG BRANCH
 ARG COMMIT
 ARG VERSION
+ARG BUILD_DATE
 
 ENV BRANCH=${BRANCH}
 ENV COMMIT=${COMMIT}
 ENV VERSION=${VERSION}
+ENV BUILD_DATE=${BUILD_DATE}
 
 RUN echo "Image Details: $BRANCH | $COMMIT | $VERSION"
 
 WORKDIR /usr/app/
 
-# Lawsuit prevents the download of this tool
-RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
+# ffmpeg is required by yt-dlp to merge video/audio streams and by the transcode job
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Standalone yt-dlp binary (no Python dependency, supports self-update via --update)
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+      -o /usr/local/bin/yt-dlp \
+    && chmod a+rx /usr/local/bin/yt-dlp
 
 # Install Files
 COPY ./server/dist .
@@ -22,13 +31,10 @@ COPY ./server/public ./public
 COPY ./server/README.md .
 COPY ./server/package.json .
 COPY ./server/bin/entrypoint.sh .
-# COPY ./server/bin/youtube-dl /usr/local/bin/youtube-dl
 
 COPY ./node_modules ./node_modules
 COPY ./packages/shared/dist ./packages/shared/dist
 COPY ./packages/shared/package.json ./packages/shared/package.json
-
-RUN chmod a+rx /usr/local/bin/youtube-dl
 
 RUN npx prisma generate
 

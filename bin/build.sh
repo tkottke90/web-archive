@@ -15,6 +15,7 @@ docker buildx build \
   --build-arg BRANCH=$(git rev-parse --abbrev-ref HEAD) \
   --build-arg COMMIT=$(git rev-parse --short HEAD) \
   --build-arg VERSION=$(node -p "require('./package.json').version") \
+  --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
   -t $LOCAL_IMAGE_NAME .
 
 # Tag Image with Version
