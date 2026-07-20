@@ -6,4 +6,4 @@ dist
 # Files
 secrets.json
 .DS_Store
-bin/load-examples.sh
+bin/load-examples.sh.DS_Store
