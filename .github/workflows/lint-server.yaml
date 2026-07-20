@@ -16,10 +16,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js and install dependencies
-        uses: tkottke90/js-libraries/actions/setup-node-cicd@4b026d8f465370d69e2ef328d7f5b57c7e95b5b8
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          npm-token: ${{ secrets.NPM_REGISTRY_TOKEN }}
+          node-version: 24
+          cache: npm
+
+      - name: Setup npmrc
+        run: echo "//npm.artifacts.tdkottke.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Format check
         id: format

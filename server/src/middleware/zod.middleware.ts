@@ -71,7 +71,10 @@ export function ZodParamValidator<T extends ZodRawShape>(schema: ZodObject<T>) {
 export function ZodIdValidator(idField = 'id') {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      const parsed = z.number({ coerce: true }).int().parse(req.params[idField]);
+      const parsed = z
+        .number({ coerce: true })
+        .int()
+        .parse(req.params[idField]);
       (req.params as Record<string, unknown>)[idField] = parsed;
       next();
     } catch (err) {
