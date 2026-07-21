@@ -62,10 +62,7 @@ export class PostFileDao extends BaseDao<PostFile, PostFileDTO> {
 
   async getPlaceholderStatus() {
     const mediaFilter = {
-      OR: [
-        { mime: { startsWith: 'image' } },
-        { mime: { startsWith: 'video' } }
-      ]
+      OR: [{ mime: { startsWith: 'image' } }, { mime: { startsWith: 'video' } }]
     };
 
     const [total, pending, failed] = await Promise.all([
