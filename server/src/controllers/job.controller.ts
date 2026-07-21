@@ -19,6 +19,7 @@ import { JOB_STATUS } from '../constants';
 import { z } from 'zod';
 import { FuzzyNumber } from '@web-archive/shared';
 import { NotFoundError, BadRequestError } from '../utilities/errors.util';
+import { DownloadJob } from '@prisma/client';
 
 const JobQuerySchema = z.object({
   limit: FuzzyNumber.optional(),
@@ -43,7 +44,9 @@ export class JobController {
       const jobs = await this.downloadJobsDao.find(query);
 
       res.json({
-        jobs: jobs.map((job) => this.downloadJobsDao.toJobListItem(job)),
+        jobs: jobs.map((job: DownloadJob) =>
+          this.downloadJobsDao.toJobListItem(job)
+        ),
         statuses: Object.values(JOB_STATUS),
         pagination: await this.downloadJobsDao.paginationDetails(query)
       });

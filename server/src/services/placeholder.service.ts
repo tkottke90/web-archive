@@ -16,6 +16,11 @@ const BACKFILL_BATCH_SIZE = 25;
 // ~1kB as a base64 data URI while still hinting at the image contents.
 const PLACEHOLDER_WIDTH = 20;
 
+// How far into a video to seek before grabbing the poster frame, skipping
+// past any leading black frame/logo. Falls back to the first frame below
+// if the clip is shorter than this.
+const POSTER_SEEK_TIME = '00:00:01';
+
 const PROBE_TIMEOUT_MS = 10_000;
 const GENERATE_TIMEOUT_MS = 15_000;
 
@@ -49,7 +54,9 @@ export class PlaceholderService {
    * retry the file forever.
    */
   async generateForFile(file: PlaceholderSource): Promise<void> {
-    if (!file.mime.startsWith('image')) {
+    const isVideo = file.mime.startsWith('video');
+
+    if (!file.mime.startsWith('image') && !isVideo) {
       return;
     }
 
@@ -93,19 +100,51 @@ export class PlaceholderService {
         );
       }
 
-      const generate = await this.runCommand(
+      let generate = await this.runCommand(
         'Placeholder Generate',
         'ffmpeg',
-        [
-          '-y',
-          '-i',
-          file.filename,
-          '-vf',
-          `scale=${PLACEHOLDER_WIDTH}:-1`,
-          tempPath
-        ],
+        isVideo
+          ? [
+              '-y',
+              '-ss',
+              POSTER_SEEK_TIME,
+              '-i',
+              file.filename,
+              '-vframes',
+              '1',
+              '-vf',
+              `scale=${PLACEHOLDER_WIDTH}:-1`,
+              tempPath
+            ]
+          : [
+              '-y',
+              '-i',
+              file.filename,
+              '-vf',
+              `scale=${PLACEHOLDER_WIDTH}:-1`,
+              tempPath
+            ],
         { timeout: GENERATE_TIMEOUT_MS }
       );
+
+      // Clips shorter than the seek offset produce no frame; retry from the start.
+      if (!generate.success && isVideo) {
+        generate = await this.runCommand(
+          'Placeholder Generate',
+          'ffmpeg',
+          [
+            '-y',
+            '-i',
+            file.filename,
+            '-vframes',
+            '1',
+            '-vf',
+            `scale=${PLACEHOLDER_WIDTH}:-1`,
+            tempPath
+          ],
+          { timeout: GENERATE_TIMEOUT_MS }
+        );
+      }
 
       if (!generate.success) {
         throw new Error(`ffmpeg exited with code ${generate.code}`);

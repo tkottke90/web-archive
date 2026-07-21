@@ -61,6 +61,10 @@ runs:
       with:
         npm-token: ${{ inputs.npm-token }}
 
+    - name: Build
+      shell: bash
+      run: ${{ inputs.build-command }}
+
     - name: Format
       shell: bash
       run: npm run format --workspaces --if-present
@@ -72,10 +76,6 @@ runs:
     - name: Test
       shell: bash
       run: npm run test --workspaces --if-present
-
-    - name: Build
-      shell: bash
-      run: ${{ inputs.build-command }}
 
     - name: Log in to container registry
       if: inputs.push == 'true'

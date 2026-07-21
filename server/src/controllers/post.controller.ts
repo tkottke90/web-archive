@@ -225,7 +225,10 @@ export class PostController {
           'Content-Range': `bytes ${start}-${end}/${content.size}`,
           'Accept-Ranges': 'bytes',
           'Content-Length': contentLength,
-          'Content-Type': content.mime
+          'Content-Type': content.mime,
+          'Cache-Control': 'private, max-age=86400',
+          'Last-Modified': content.updatedAt.toUTCString(),
+          ETag: `"${content.id}-${content.size}-${content.updatedAt.getTime()}"`
         });
 
         const videoStream = createReadStream(content.filename, { start, end });
