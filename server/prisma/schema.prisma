@@ -31,10 +31,13 @@ model PostFile {
   postId Int
 
   original_filename  String
-  filename String 
+  filename String
   size Int
   mime String
   encoding String
+  width Int?
+  height Int?
+  placeholder String?
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 

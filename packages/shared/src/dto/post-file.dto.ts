@@ -8,7 +8,10 @@ export const PostFileSchema = BaseSchema(
     filename: z.string(),
     size: z.number(),
     mime: z.string(),
-    encoding: z.string()
+    encoding: z.string(),
+    width: z.number().nullable().optional(),
+    height: z.number().nullable().optional(),
+    placeholder: z.string().nullable().optional()
   })
 );
 
@@ -26,7 +29,10 @@ export const PostFileUpdateSchema = z.object({
   filename: z.string(),
   size: z.number(),
   mime: z.string(),
-  encoding: z.string()
+  encoding: z.string(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
+  placeholder: z.string().nullable().optional()
 });
 
 export type PostFileDTO = z.infer<typeof PostFileSchema>;

@@ -46,6 +46,28 @@ export class PostFileDao extends BaseDao<PostFile, PostFileDTO> {
     });
   }
 
+  setPlaceholder(
+    postFileId: number,
+    data: {
+      width: number | null;
+      height: number | null;
+      placeholder: string;
+    }
+  ) {
+    return this.client.postFile.update({
+      where: { id: postFileId },
+      data
+    });
+  }
+
+  findMissingPlaceholders(limit = 25) {
+    return this.client.postFile.findMany({
+      where: { mime: { startsWith: 'image' }, placeholder: null },
+      take: limit,
+      orderBy: { id: 'asc' }
+    });
+  }
+
   async replace(
     postFileId: number,
     dto: PostFileUpdateDTO,
@@ -85,6 +107,9 @@ export class PostFileDao extends BaseDao<PostFile, PostFileDTO> {
       original_filename: entity.original_filename,
       mime: entity.mime,
       size: entity.size,
+      width: entity.width,
+      height: entity.height,
+      placeholder: entity.placeholder,
 
       links: {
         self: POSTS.FILES_WITH_ID.url({

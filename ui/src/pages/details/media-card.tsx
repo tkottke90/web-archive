@@ -3,6 +3,7 @@ import { Modal } from "@tkottke90/preact-components";
 import { Pencil, Plus, Trash, X } from "lucide-preact";
 import { useEffect } from "preact/hooks";
 import { EmptyVideo } from "../../components/EmptyAsset";
+import { LazyImage } from "../../components/LazyImage";
 import { useAsyncResource } from "../../components/Layouts/AsyncResource";
 import { Card } from "../../components/Layouts/Card";
 import { CustomComponent, getPortalContainer } from "../../utilities/component.utils";
@@ -96,7 +97,14 @@ export function MediaCard({ className }: CustomComponent) {
           if (file.mime.startsWith("image")) {
             return (
               <div key={`details-media-img-${i}`} className={wrapperClass}>
-                <img src={file.links.media} className={`col-span-3 ${commonClasses}`} />
+                <LazyImage
+                  src={file.links.media}
+                  placeholder={file.placeholder}
+                  width={file.width}
+                  height={file.height}
+                  alt={file.original_filename}
+                  className={`col-span-3 ${commonClasses}`}
+                />
                 {mediaActions}
               </div>
             );

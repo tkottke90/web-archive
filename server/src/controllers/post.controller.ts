@@ -41,6 +41,7 @@ import { Prisma } from '@prisma/client';
 import { FS_CONSTS } from '../constants';
 import { createReadStream } from 'fs';
 import { FileSystemFactory } from '../services';
+import { PlaceholderService } from '../services/placeholder.service';
 import { parseRangeHeader } from '../utilities/streaming.utils';
 import { basename, extname } from 'path';
 import { randomUUID } from 'crypto';
@@ -63,7 +64,9 @@ export class PostController {
     @Inject('PostTagDao') private readonly postTagDao: PostTagDao,
     @Inject('TagDao') private readonly tagDao: TagDao,
     @Inject('FileSystemFactory') private readonly fileSystem: FileSystemFactory,
-    @Inject('DownloadJobDao') private readonly downloadJobDao: DownloadJobDao
+    @Inject('DownloadJobDao') private readonly downloadJobDao: DownloadJobDao,
+    @Inject('PlaceholderService')
+    private readonly placeholderService: PlaceholderService
   ) {}
 
   @Get('/', [ZodQueryValidator(PostQuerySchema)])
@@ -350,7 +353,7 @@ export class PostController {
       const { file: fileList } = files;
 
       // Create new files
-      await Promise.all(
+      const created = await Promise.all(
         fileList.map((file) =>
           this.postFileDao.create(postId, {
             encoding: file.encoding,
@@ -360,6 +363,10 @@ export class PostController {
             size: file.size
           })
         )
+      );
+
+      await Promise.allSettled(
+        created.map((file) => this.placeholderService.generateForFile(file))
       );
 
       // Refresh post
@@ -446,7 +453,7 @@ export class PostController {
         `${randomUUID()}${extension}`
       );
 
-      await this.postFileDao.create(postId, {
+      const created = await this.postFileDao.create(postId, {
         encoding: '',
         filename,
         mime: contentType,
@@ -456,6 +463,8 @@ export class PostController {
             : `${sourceFilename}${extension}`,
         size: data.length
       });
+
+      await this.placeholderService.generateForFile(created);
 
       const updatedPost = await this.postDao.getById(postId);
 
@@ -533,7 +542,10 @@ export class PostController {
             filename: newFile.path,
             mime: newFile.mimetype,
             original_filename: newFile.originalname,
-            size: newFile.size
+            size: newFile.size,
+            width: null,
+            height: null,
+            placeholder: null
           },
           oldFilename
         );
@@ -548,6 +560,12 @@ export class PostController {
         }
         throw replaceError;
       }
+
+      await this.placeholderService.generateForFile({
+        id: fileId,
+        mime: newFile.mimetype,
+        filename: newFile.path
+      });
 
       // Refresh post
       const updatedPost = await this.postDao.getById(postId);
@@ -586,6 +604,14 @@ export class PostController {
           size: f.size
         }))
       });
+
+      const createdPost = await this.postDao.getById(result.id);
+
+      await Promise.allSettled(
+        (createdPost?.files ?? []).map((file) =>
+          this.placeholderService.generateForFile(file)
+        )
+      );
 
       res.json(result);
     } catch (error) {
