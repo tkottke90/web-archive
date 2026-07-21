@@ -22,8 +22,10 @@ import { BaseError } from '../utilities/errors.util';
 const exec = promisify(childProcess.exec);
 
 const YOUTUBE_JOB = 'Youtube';
+const YOUTUBE_DL_UPDATE_JOB = 'YoutubeDL Update';
 const FFMPEG_VIDEO_CODEC = process.env.YOUTUBE_DL_VCODEC ?? 'libx264';
 const YOU_DL_CMD = process.env.YOUTUBE_DL_CMD ?? 'yt-dlp';
+const YT_DLP_UPDATE_CADENCE = process.env.YOUTUBE_DL_UPDATE_CRON ?? '';
 
 export class YoutubeParser {
   private parserLogger: LoggerService;
@@ -39,6 +41,7 @@ export class YoutubeParser {
     this.parserLogger = logger.createLogger({ location: 'YoutubeParser' });
 
     this.registerDownloadCronJob();
+    this.registerYTDLPUpdateJob();
   }
 
   async getVideoMetadata(url: string) {
@@ -309,6 +312,55 @@ export class YoutubeParser {
       },
       {
         timing: '* * * * *',
+        start: true
+      }
+    );
+  }
+
+  private registerYTDLPUpdateJob() {
+    if (!YT_DLP_UPDATE_CADENCE) {
+      this.logger.log(
+        'warn',
+        'YTDLP Update Cron Job Not Registered: No Cron Timing Provided'
+      );
+      return;
+    }
+
+    this.jobs.register(
+      YOUTUBE_DL_UPDATE_JOB,
+      async () => {
+        const jobLogger = this.logger.createLogger({
+          location: 'YoutubeParser | YTDLP Update'
+        });
+
+        jobLogger.log('info', 'Checking for yt-dlp updates');
+
+        try {
+          const updateCmd = await spawnCommand('YTDLP Update', YOU_DL_CMD, [
+            '--update'
+          ]);
+
+          if (!updateCmd.success) {
+            jobLogger.log('error', 'yt-dlp update failed', {
+              cmd: updateCmd.command,
+              code: updateCmd.code,
+              errors: updateCmd.stdErr
+            });
+            return;
+          }
+
+          jobLogger.log('info', 'yt-dlp update complete', {
+            output: updateCmd.stdOut.join('').trim()
+          });
+        } catch (error: unknown) {
+          const details =
+            error instanceof Error ? error.message : String(error);
+
+          jobLogger.log('error', 'yt-dlp update failed to run', { details });
+        }
+      },
+      {
+        timing: YT_DLP_UPDATE_CADENCE,
         start: true
       }
     );

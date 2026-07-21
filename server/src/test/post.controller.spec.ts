@@ -9,6 +9,7 @@ import type { PostTagDao } from '../dao/post-tag.dao';
 import type { TagDao } from '../dao/tag.dao';
 import type { FileSystemFactory } from '../services/file.service';
 import type { DownloadJobDao } from '../dao/download-job.dao';
+import type { PlaceholderService } from '../services/placeholder.service';
 
 chai.should();
 
@@ -26,6 +27,9 @@ describe('PostController - URL Upload', () => {
   const fileSystem = {
     upload: sinon.stub()
   };
+  const placeholderService = {
+    generateForFile: sinon.stub()
+  };
 
   before(() => {
     (globalThis as Record<string, unknown>).fetch = fetchStub;
@@ -37,6 +41,8 @@ describe('PostController - URL Upload', () => {
     postFileDao.create.reset();
     fileSystem.upload.reset();
     fetchStub.reset();
+    placeholderService.generateForFile.reset();
+    placeholderService.generateForFile.resolves();
   });
 
   after(() => {
@@ -57,7 +63,8 @@ describe('PostController - URL Upload', () => {
       postTagDao,
       tagDao,
       fileSystem as unknown as FileSystemFactory,
-      {} as unknown as DownloadJobDao
+      {} as unknown as DownloadJobDao,
+      placeholderService as unknown as PlaceholderService
     );
 
   it('should download url content and add file to post', async () => {

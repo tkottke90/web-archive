@@ -11,6 +11,7 @@ import { TagController } from './tag.controller';
 import { ParserController } from './parser.controller';
 import { SystemController } from './system.controller';
 import { JobController } from './job.controller';
+import { TempController } from './temp.controller';
 import { API_ROOT } from '../routes';
 import { HttpEventMiddleware } from '../middleware';
 
@@ -20,7 +21,8 @@ const controllers = [
   PostController,
   SystemController,
   ServerStatusController,
-  TagController
+  TagController,
+  TempController
 ];
 
 export default function (app: Application) {
