@@ -114,7 +114,13 @@ export function MediaCard({ className }: CustomComponent) {
             return (
               <div key={`details-media-vid-${i}`} className={wrapperClass}>
                 {file.size > 0
-                  ? <video src={file.links.media} loop controls className={`col-span-3 ${commonClasses}`} />
+                  ? <video
+                      src={file.links.media}
+                      poster={file.placeholder || undefined}
+                      loop
+                      controls
+                      className={`col-span-3 ${commonClasses}`}
+                    />
                   : <EmptyVideo className={`col-span-3 ${commonClasses}`} />
                 }
                 {mediaActions}

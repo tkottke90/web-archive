@@ -110,18 +110,74 @@ describe('PlaceholderService', () => {
       fileSystem.remove.calledOnce.should.equal(true);
     });
 
-    it('should no-op for non-image mime types', async () => {
+    it('should no-op for unsupported mime types', async () => {
       const service = makeService();
       const runCommand = sinon.stub(service as any, 'runCommand');
 
       await service.generateForFile({
         id: 42,
-        mime: 'video/mp4',
-        filename: '/uploads/clip.mp4'
+        mime: 'application/pdf',
+        filename: '/uploads/doc.pdf'
       });
 
       runCommand.called.should.equal(false);
       postFileDao.setPlaceholder.called.should.equal(false);
+    });
+
+    it('should generate a poster frame for video mime types by seeking ahead', async () => {
+      const service = makeService();
+      const runCommand = sinon.stub(service as any, 'runCommand');
+      runCommand
+        .onFirstCall()
+        .resolves(cmdResult({ stdOut: ['1920x1080\n'] }))
+        .onSecondCall()
+        .resolves(cmdResult());
+      sinon.stub(service as any, 'readFile').resolves(Buffer.from('tiny-jpeg'));
+
+      await service.generateForFile({
+        id: 43,
+        mime: 'video/mp4',
+        filename: '/uploads/clip.mp4'
+      });
+
+      runCommand.calledTwice.should.equal(true);
+      const generateArgs = runCommand.secondCall.args[2];
+      generateArgs.should.include('-ss');
+      generateArgs.should.include('-vframes');
+
+      const [fileId, data] = postFileDao.setPlaceholder.firstCall.args;
+      fileId.should.equal(43);
+      data.width.should.equal(1920);
+      data.height.should.equal(1080);
+      data.placeholder.should.match(/^data:image\/jpeg;base64,/);
+    });
+
+    it('should retry from the first frame when the seek offset is past a short clip', async () => {
+      const service = makeService();
+      const runCommand = sinon.stub(service as any, 'runCommand');
+      runCommand
+        .onFirstCall()
+        .resolves(cmdResult({ stdOut: ['640x360\n'] }))
+        .onSecondCall()
+        .resolves(cmdResult({ success: false, code: 1 }))
+        .onThirdCall()
+        .resolves(cmdResult());
+      sinon.stub(service as any, 'readFile').resolves(Buffer.from('tiny-jpeg'));
+
+      await service.generateForFile({
+        id: 44,
+        mime: 'video/mp4',
+        filename: '/uploads/short.mp4'
+      });
+
+      runCommand.calledThrice.should.equal(true);
+      const retryArgs = runCommand.thirdCall.args[2];
+      retryArgs.should.not.include('-ss');
+
+      postFileDao.setPlaceholder.calledOnce.should.equal(true);
+      postFileDao.setPlaceholder.firstCall.args[1].placeholder.should.match(
+        /^data:image\/jpeg;base64,/
+      );
     });
 
     it('should persist the sentinel when ffprobe fails', async () => {
