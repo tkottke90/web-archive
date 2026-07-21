@@ -61,6 +61,10 @@ runs:
       with:
         npm-token: ${{ inputs.npm-token }}
 
+    - name: Generate Prisma Client
+      shell: bash
+      run: npm run generate --workspaces --if-present
+
     - name: Format
       shell: bash
       run: npm run format --workspaces --if-present
