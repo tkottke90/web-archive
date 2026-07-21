@@ -61,9 +61,9 @@ runs:
       with:
         npm-token: ${{ inputs.npm-token }}
 
-    - name: Generate Prisma Client
+    - name: Build
       shell: bash
-      run: npm run generate --workspaces --if-present
+      run: ${{ inputs.build-command }}
 
     - name: Format
       shell: bash
@@ -76,10 +76,6 @@ runs:
     - name: Test
       shell: bash
       run: npm run test --workspaces --if-present
-
-    - name: Build
-      shell: bash
-      run: ${{ inputs.build-command }}
 
     - name: Log in to container registry
       if: inputs.push == 'true'
