@@ -60,6 +60,22 @@ export class PostFileDao extends BaseDao<PostFile, PostFileDTO> {
     });
   }
 
+  async getPlaceholderStatus() {
+    const imageFilter = { mime: { startsWith: 'image' } };
+
+    const [total, pending, failed] = await Promise.all([
+      this.client.postFile.count({ where: imageFilter }),
+      this.client.postFile.count({
+        where: { ...imageFilter, placeholder: null }
+      }),
+      this.client.postFile.count({
+        where: { ...imageFilter, placeholder: '' }
+      })
+    ]);
+
+    return { total, pending, failed, complete: total - pending - failed };
+  }
+
   findMissingPlaceholders(limit = 25) {
     return this.client.postFile.findMany({
       where: { mime: { startsWith: 'image' }, placeholder: null },

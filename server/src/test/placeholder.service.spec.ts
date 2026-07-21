@@ -12,7 +12,8 @@ chai.should();
 describe('PlaceholderService', () => {
   const postFileDao = {
     setPlaceholder: sinon.stub(),
-    findMissingPlaceholders: sinon.stub()
+    findMissingPlaceholders: sinon.stub(),
+    getPlaceholderStatus: sinon.stub()
   };
   const fileSystem = {
     createUploadPath: sinon.stub(),
@@ -54,6 +55,13 @@ describe('PlaceholderService', () => {
     postFileDao.setPlaceholder.reset();
     postFileDao.setPlaceholder.resolves();
     postFileDao.findMissingPlaceholders.reset();
+    postFileDao.getPlaceholderStatus.reset();
+    postFileDao.getPlaceholderStatus.resolves({
+      total: 10,
+      pending: 4,
+      failed: 1,
+      complete: 5
+    });
     fileSystem.createUploadPath.reset();
     fileSystem.createUploadPath.returns('/tmp/uploads/temp.placeholder.jpg');
     fileSystem.remove.reset();
@@ -196,6 +204,25 @@ describe('PlaceholderService', () => {
 
       generate.callCount.should.equal(3);
       generate.firstCall.args[0].should.deep.equal(batch[0]);
+    });
+
+    it('should log the remaining count after a batch', async () => {
+      const service = makeService();
+      sinon.stub(service, 'generateForFile').resolves();
+      postFileDao.findMissingPlaceholders.resolves([
+        { id: 1, mime: 'image/png', filename: '/uploads/a.png' }
+      ]);
+
+      await service.runBackfill();
+
+      const completeLog = log
+        .getCalls()
+        .find((c) => c.args[1] === 'Placeholder backfill batch complete');
+
+      chai.expect(completeLog).to.not.equal(undefined);
+      completeLog?.args[2].remaining.should.equal(4);
+      completeLog?.args[2].failed.should.equal(1);
+      completeLog?.args[2].total.should.equal(10);
     });
   });
 });

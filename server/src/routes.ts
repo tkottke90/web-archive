@@ -45,6 +45,19 @@ export const SYSTEM = {
   AUTO_ARCHIVE: SYSTEM_ROOT.nest('auto-archive')
 };
 
+/**
+ * @deprecated Temporary routes that exist to support one-off data
+ * migrations. The PLACEHOLDER_STATUS endpoint tracks the placeholder
+ * backfill job and should be removed (along with TempController) in the
+ * next version, once the backfill has completed in production.
+ */
+const TEMP_ROOT = API_ROOT.nest('v1/temp');
+
+export const TEMP = {
+  ROOT: TEMP_ROOT,
+  PLACEHOLDER_STATUS: TEMP_ROOT.nest('jobs/placeholder-status')
+};
+
 const JOBS_ROOT = API_ROOT.nest('jobs');
 
 export const JOBS = {

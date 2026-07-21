@@ -172,8 +172,14 @@ export class PlaceholderService {
       await this.generateForFile(file);
     }
 
+    const status = await this.postFileDao.getPlaceholderStatus();
+
     this.serviceLogger.log('info', 'Placeholder backfill batch complete', {
-      count: files.length
+      count: files.length,
+      remaining: status.pending,
+      failed: status.failed,
+      complete: status.complete,
+      total: status.total
     });
   }
 
