@@ -2,7 +2,7 @@ import { useSignal, useSignalEffect } from "@preact/signals";
 import { Modal } from "@tkottke90/preact-components";
 import { Pencil, Plus, Trash, X } from "lucide-preact";
 import { useEffect } from "preact/hooks";
-import { EmptyVideo } from "../../components/EmptyAsset";
+import { EmptyAudio, EmptyVideo } from "../../components/EmptyAsset";
 import { LazyImage } from "../../components/LazyImage";
 import { useAsyncResource } from "../../components/Layouts/AsyncResource";
 import { Card } from "../../components/Layouts/Card";
@@ -123,6 +123,25 @@ export function MediaCard({ className }: CustomComponent) {
                     />
                   : <EmptyVideo className={`col-span-3 ${commonClasses}`} />
                 }
+                {mediaActions}
+              </div>
+            );
+          }
+
+          if (file.mime.startsWith("audio")) {
+            return (
+              <div key={`details-media-aud-${i}`} className={wrapperClass}>
+                <div className="col-span-3 flex flex-col gap-1">
+                  <p className="text-sm truncate" title={file.original_filename}>{file.original_filename}</p>
+                  {file.size > 0
+                    ? <audio
+                        src={file.links.media}
+                        controls
+                        className="w-full"
+                      />
+                    : <EmptyAudio className="w-full h-12" />
+                  }
+                </div>
                 {mediaActions}
               </div>
             );
