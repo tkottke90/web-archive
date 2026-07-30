@@ -1,16 +1,14 @@
 import { useSignal, useSignalEffect } from "@preact/signals";
 import { Modal } from "@tkottke90/preact-components";
-import { Pencil, Plus, Trash, X } from "lucide-preact";
-import { useEffect } from "preact/hooks";
-import { EmptyAudio, EmptyVideo } from "../../components/EmptyAsset";
-import { LazyImage } from "../../components/LazyImage";
-import { useAsyncResource } from "../../components/Layouts/AsyncResource";
+import { Plus, X } from "lucide-preact";
+import { AnimatePresence } from "framer-motion";
 import { Card } from "../../components/Layouts/Card";
 import { CustomComponent, getPortalContainer } from "../../utilities/component.utils";
 import { returnFileSize } from "../../utilities/number.utils";
 import { useDetailsPageContext } from "./context";
 import * as PostService from '../../services/post.service';
 import { PostFileDTO } from "@web-archive/shared";
+import { MediaItem } from "./media-item";
 
 const portal = getPortalContainer("modals");
 
@@ -24,9 +22,6 @@ export function MediaCard({ className }: CustomComponent) {
   const isUploading = useSignal(false);
   const replaceQueue = useSignal<File[]>([]);
   const editingFile = useSignal<PostFileDTO | undefined>(undefined);
-
-  const TextLoader = useAsyncResource();
-
 
   useSignalEffect(() => {
     if (!showAddModal.value) {
@@ -43,6 +38,11 @@ export function MediaCard({ className }: CustomComponent) {
     }
   });
 
+  const handleReplace = (file: PostFileDTO) => {
+    editingFile.value = file;
+    showReplaceModal.value = true;
+  };
+
   return (
     <Card className={`col-span-4 md:col-span-2 ${className}`}>
       <div className="flex justify-between">
@@ -57,115 +57,17 @@ export function MediaCard({ className }: CustomComponent) {
       {!post.value?.files?.length && <p>No Media</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-min gap-2">
-        {post.value?.files?.map((file, i, fileList) => {
-          let commonClasses = "md:max-h-72";
-
-          if (fileList.length < 2) {
-            commonClasses += " col-span-3 m-auto";
-          }
-
-          const wrapperClass = `grid grid-cols-3 gap-1 ${fileList.length < 2 ? 'col-span-3' : ''}`;
-
-          const mediaActions = (
-            <div className="flex gap-1 justify-end col-span-3">
-              <button
-                title="Replace file"
-                className="rounded-full hover:bg-stone-400 p-1"
-                onClick={() => {
-                  editingFile.value = file;
-                  showReplaceModal.value = true;
-                }}
-              >
-                <Pencil className="w-5 h-5" />
-              </button>
-              <button
-                title="Delete file"
-                className="rounded-full hover:bg-stone-400 p-1"
-                onClick={async () => {
-                  try {
-                    await PostService.deleteFileFromPost(post, file.links.self);
-                  } catch (err) {
-                    console.error('Failed to delete file:', err);
-                  }
-                }}
-              >
-                <Trash className="w-5 h-5" />
-              </button>
-            </div>
-          );
-
-          if (file.mime.startsWith("image")) {
-            return (
-              <div key={`details-media-img-${i}`} className={wrapperClass}>
-                <LazyImage
-                  src={file.links.media}
-                  placeholder={file.placeholder}
-                  width={file.width}
-                  height={file.height}
-                  alt={file.original_filename}
-                  className={`col-span-3 ${commonClasses}`}
-                />
-                {mediaActions}
-              </div>
-            );
-          }
-
-          if (file.mime.startsWith("video")) {
-            return (
-              <div key={`details-media-vid-${i}`} className={wrapperClass}>
-                {file.size > 0
-                  ? <video
-                      src={file.links.media}
-                      poster={file.placeholder || undefined}
-                      loop
-                      controls
-                      className={`col-span-3 ${commonClasses}`}
-                    />
-                  : <EmptyVideo className={`col-span-3 ${commonClasses}`} />
-                }
-                {mediaActions}
-              </div>
-            );
-          }
-
-          if (file.mime.startsWith("audio")) {
-            return (
-              <div key={`details-media-aud-${i}`} className={wrapperClass}>
-                <div className="col-span-3 flex flex-col gap-1">
-                  <p className="text-sm truncate" title={file.original_filename}>{file.original_filename}</p>
-                  {file.size > 0
-                    ? <audio
-                        src={file.links.media}
-                        controls
-                        className="w-full"
-                      />
-                    : <EmptyAudio className="w-full h-12" />
-                  }
-                </div>
-                {mediaActions}
-              </div>
-            );
-          }
-
-          if (file.mime.startsWith('text')) {
-            const key = `details-media-text-${i}`;
-            const textValue = useSignal('');
-
-            useEffect(() => {
-              TextLoader.execute<string>(fetch(file.links.media)
-                .then(async res => textValue.value = await res.text()))
-            });
-
-            return (
-              <div key={key} className={wrapperClass}>
-                <TextLoader.Provider>
-                  <pre className="whitespace-pre-wrap p-2 overflow-hidden col-span-3" >{ textValue }</pre>
-                </TextLoader.Provider>
-                {mediaActions}
-              </div>
-            )
-          }
-        })}
+        <AnimatePresence mode="popLayout">
+          {post.value?.files?.map(file => (
+            <MediaItem
+              key={file.links.self}
+              file={file}
+              post={post}
+              fileCount={post.value?.files?.length ?? 0}
+              onReplace={handleReplace}
+            />
+          ))}
+        </AnimatePresence>
       </div>
       <Modal portal={portal} show={showAddModal} className="p-4">
         <h3>Upload File</h3>
@@ -176,22 +78,18 @@ export function MediaCard({ className }: CustomComponent) {
           onDragEnter={e => {
             e.preventDefault();
             const target = e.target as HTMLInputElement;
-
             target.classList.add('scale-[1.02]');
           }}
           onDragLeave={e => {
             e.preventDefault();
             const target = e.target as HTMLInputElement;
-
             target.classList.remove('scale-[1.02]');
           }}
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
             e.preventDefault();
-
             if (e.dataTransfer?.files) {
               const { files } = e.dataTransfer;
-
               fileQueue.value = [...fileQueue.value, ...files];
             } else {
               console.group('missingFiles');
@@ -210,10 +108,8 @@ export function MediaCard({ className }: CustomComponent) {
                 <X
                   onClick={(e) => {
                     e.preventDefault();
-
                     const newQueue = [...fileQueue.value];
                     newQueue.splice(index, 1);
-
                     fileQueue.value = newQueue;
                   }}
                   className="w-[24px] h-[24px]"
@@ -223,7 +119,6 @@ export function MediaCard({ className }: CustomComponent) {
           </div>
           <input multiple onChange={(e) => {
             const input = e.target as HTMLInputElement;
-
             if (input.files) {
               fileQueue.value = [...fileQueue.value, ...input.files];
             }
@@ -260,11 +155,9 @@ export function MediaCard({ className }: CustomComponent) {
               if (value.length > 0) {
                 await PostService.uploadFilesToPost(post, value);
               }
-
               if (targetUrl) {
                 await PostService.uploadFileUrlToPost(post, targetUrl);
               }
-
               showAddModal.value = false;
             } catch (err: any) {
               uploadError.value = err?.data?.message ?? err?.message ?? 'Upload failed. Please try again.';

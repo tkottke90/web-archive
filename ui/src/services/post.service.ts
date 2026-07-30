@@ -165,18 +165,8 @@ export async function uploadFileUrlToPost(
   post.value = updatedPost;
 }
 
-export async function deleteFileFromPost(
-  post: Signal<PostDTO | undefined>,
-  fileUrl: string
-) {
-  if (!post.value) {
-    throw new Error('No post loaded');
-  }
-
+export async function deleteFileFromPost(fileUrl: string): Promise<void> {
   await remove(fileUrl);
-
-  const updatedPost = await get<PostDTO>(`/api${post.value.links.self}`);
-  post.value = updatedPost;
 }
 
 export async function replaceFileInPost(

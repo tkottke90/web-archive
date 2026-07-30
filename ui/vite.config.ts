@@ -6,6 +6,7 @@ import { resolve } from 'path'
 export default defineConfig({
   resolve: {
     alias: {
+      '@': resolve(__dirname, './src'),
       '@web-archive/shared': resolve(__dirname, '../packages/shared/src')
     }
   },
