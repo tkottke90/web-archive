@@ -61,6 +61,17 @@ export function JobDrawer({ job, onClose, onRetry }: JobDrawerProps) {
               <span class="font-medium text-slate-600">Updated:</span>
               <span>{new Date(job.updatedAt).toLocaleString()}</span>
             </div>
+            {job.post_id !== undefined && (
+              <div class="flex gap-2">
+                <span class="font-medium text-slate-600">Post:</span>
+                <a
+                  class="text-burnt-500 underline hover:brightness-110"
+                  href={`/post/${job.post_id}`}
+                >
+                  View Post #{job.post_id}
+                </a>
+              </div>
+            )}
           </div>
 
           {job.jobNotes && (

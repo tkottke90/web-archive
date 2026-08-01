@@ -5,6 +5,7 @@ import {
   useSignalEffect
 } from '@preact/signals';
 import { Fragment } from 'preact';
+import { route } from 'preact-router';
 import { createPortal } from 'preact/compat';
 import { useEffect } from 'preact/hooks';
 import { DrawerLayout } from '../../components/Layouts/DrawerLayout';
@@ -82,6 +83,29 @@ export function JobsPage() {
           headers={[
             { key: 'job_id', label: 'Job ID', columnStyles: 'w-20' },
             { key: 'type', label: 'Type' },
+            {
+              key: 'post_id',
+              label: 'Post',
+              columnStyles: 'w-24',
+              transform: (postId) =>
+                postId ? (
+                  <a
+                    class="text-burnt-500 underline hover:brightness-110"
+                    href={`/post/${postId}`}
+                    onClick={(e) => {
+                      // Keep the row's open-drawer click handler from firing
+                      // and route client-side instead of a full page load
+                      e.stopPropagation();
+                      e.preventDefault();
+                      route(`/post/${postId}`);
+                    }}
+                  >
+                    #{postId}
+                  </a>
+                ) : (
+                  <span>—</span>
+                )
+            },
             {
               key: 'status',
               label: 'Status',

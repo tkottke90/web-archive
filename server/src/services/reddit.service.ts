@@ -494,6 +494,13 @@ export class RedditScraper {
                 // Add default tags
                 await this.addDefaultTags(newPost, post);
 
+                // Record the created post on the job so it can be linked
+                // back to the post later
+                await this.downloadJobsDao.updateJobData(job.id, {
+                  ...jobData,
+                  postId: newPost.id
+                } as Prisma.InputJsonValue);
+
                 await this.downloadJobsDao.completeJobs([job.id]);
               })
               .catch(async (err) => {
