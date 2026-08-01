@@ -8,6 +8,10 @@ export interface JobListItem {
   status: string;
   createdAt: string;
   updatedAt: string;
+  post_id?: number;
+  links?: {
+    post?: string;
+  };
 }
 
 export interface JobDetail {
@@ -24,8 +28,10 @@ export interface JobDetail {
   jobNotes: string;
   createdAt: string;
   updatedAt: string;
+  post_id?: number;
   links: {
     self: string;
+    post?: string;
     retry?: string;
   };
 }

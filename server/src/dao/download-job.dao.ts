@@ -4,7 +4,7 @@ import { DBClient } from '../db';
 import { NotImplementedError } from '../errors/generic-errors';
 import { JOB_STATUS } from '../constants';
 import { DownloadJob, Prisma } from '@prisma/client';
-import { JOBS } from '../routes';
+import { JOBS, UI_POSTS } from '../routes';
 
 interface DownloadJobCreate {
   data: Prisma.InputJsonValue;
@@ -27,17 +27,40 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
     throw new NotImplementedError();
   }
 
+  private extractPostId(data: Prisma.JsonValue): number | undefined {
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      !Array.isArray(data) &&
+      typeof data.postId === 'number'
+    ) {
+      return data.postId;
+    }
+
+    return undefined;
+  }
+
   toJobListItem(entity: DownloadJob) {
+    const postId = this.extractPostId(entity.data);
+
     return {
       job_id: entity.id,
       type: entity.parser,
       status: entity.status,
       createdAt: entity.createdAt.toISOString(),
-      updatedAt: entity.updatedAt.toISOString()
+      updatedAt: entity.updatedAt.toISOString(),
+      ...(postId !== undefined && {
+        post_id: postId,
+        links: {
+          post: UI_POSTS.url({ postId })
+        }
+      })
     };
   }
 
   toJobDetail(entity: DownloadJob) {
+    const postId = this.extractPostId(entity.data);
+
     return {
       job_id: entity.id,
       type: entity.parser,
@@ -47,8 +70,12 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
       jobNotes: entity.jobNotes,
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
+      ...(postId !== undefined && { post_id: postId }),
       links: {
         self: JOBS.WITH_ID.url({ jobId: entity.id }),
+        ...(postId !== undefined && {
+          post: UI_POSTS.url({ postId })
+        }),
         ...(entity.status === JOB_STATUS.ERROR && {
           retry: JOBS.RETRY.url({ jobId: entity.id })
         })
@@ -150,6 +177,13 @@ export class DownloadJobDao extends BaseDao<unknown, unknown> {
   countJobs(status: keyof typeof JOB_STATUS) {
     return this.client.downloadJob.count({
       where: { status }
+    });
+  }
+
+  updateJobData(jobId: number, data: Prisma.InputJsonValue) {
+    return this.client.downloadJob.update({
+      data: { data },
+      where: { id: jobId }
     });
   }
 
